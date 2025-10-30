@@ -1,0 +1,100 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: development
+    container_name: gitcode-frontend-dev
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=development
+      - PORT=${FRONTEND_PORT}
+      - API_GATEWAY_URL=http://api-gateway:${API_GATEWAY_PORT}
+    ports:
+      - '${FRONTEND_PORT}:${FRONTEND_PORT}'
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    networks:
+      - gitcodedev-network
+    restart: unless-stopped
+  api-gateway:
+    build:
+      context: ./backend/api-gateway
+      dockerfile: Dockerfile
+      target: development
+      args:
+        - NODE_ENV=development
+    container_name: api-gateway-dev
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=development
+      - PORT=${API_GATEWAY_PORT}
+      - AUTH_SERVICE_URL=http://auth-service:${AUTH_SERVICE_PORT}
+    ports:
+      - '${API_GATEWAY_PORT}:${API_GATEWAY_PORT}'
+    volumes:
+      - ./backend/api-gateway:/app
+      - /app/node_modules
+    depends_on:
+      - auth-service
+    networks:
+      - gitcodedev-network
+    restart: unless-stopped
+
+  auth-service:
+    build:
+      context: ./backend/auth-service
+      dockerfile: Dockerfile
+      target: development
+      args:
+        - NODE_ENV=development
+    container_name: auth-service-dev
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=development
+      - PORT=${AUTH_SERVICE_PORT}
+    ports:
+      - '${AUTH_SERVICE_PORT}:${AUTH_SERVICE_PORT}'
+    volumes:
+      - ./backend/auth-service:/app
+      - /app/node_modules
+    depends_on:
+      - auth-db
+    networks:
+      - gitcodedev-network
+    restart: unless-stopped
+
+  auth-db:
+    image: postgres:18-alpine
+    container_name: auth-db-dev
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_USER=${AUTH_SERVICE_DB_USER}
+      - POSTGRES_PASSWORD=${AUTH_SERVICE_DB_PASSWORD}
+      - POSTGRES_DB=${AUTH_SERVICE_DB_NAME}
+    ports:
+      - '${AUTH_SERVICE_DB_PORT}:5432'
+    volumes:
+      - auth-db-data-dev:/var/lib/postgresql
+    networks:
+      - gitcodedev-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${AUTH_SERVICE_DB_USER} -d ${AUTH_SERVICE_DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+networks:
+  gitcodedev-network:
+    driver: bridge
+
+volumes:
+  auth-db-data-dev:
