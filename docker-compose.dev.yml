@@ -22,28 +22,43 @@ services:
       - gitcodedev-network
     restart: unless-stopped
   api-gateway:
-    build:
-      context: ./backend/api-gateway
-      dockerfile: Dockerfile
-      target: development
-      args:
-        - NODE_ENV=development
+    image: traefik:v3.5
     container_name: api-gateway-dev
-    env_file:
-      - .env
-    environment:
-      - NODE_ENV=development
-      - PORT=${API_GATEWAY_PORT}
-      - AUTH_SERVICE_URL=http://auth-service:${AUTH_SERVICE_PORT}
     ports:
-      - '${API_GATEWAY_PORT}:${API_GATEWAY_PORT}'
+      - '${API_GATEWAY_PORT}:8080'
+      - '${TRAEFIK_API_PORT}:8081'
     volumes:
-      - ./backend/api-gateway:/app
-      - /app/node_modules
+      - ./backend/api-gateway/development/traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./backend/api-gateway/development/dynamic.yml:/etc/traefik/dynamic.yml:ro
     depends_on:
       - auth-service
     networks:
       - gitcodedev-network
+    restart: unless-stopped
+
+  swagger-docs-service:
+    build:
+      context: ./backend/swagger-docs
+      dockerfile: Dockerfile
+      target: development
+    container_name: swagger-docs-service
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=development
+      - PORT=${SWAGGER_DOCS_PORT}
+      - API_GATEWAY_URL=http://api-gateway:${API_GATEWAY_PORT}
+      - AUTH_SERVICE_URL=http://auth-service:${AUTH_SERVICE_PORT}
+    ports:
+      - '${SWAGGER_DOCS_PORT}:${SWAGGER_DOCS_PORT}'
+    volumes:
+      - ./backend/swagger-docs:/app
+      - /app/node_modules
+    networks:
+      - gitcodedev-network
+    depends_on:
+      - api-gateway
+      - auth-service
     restart: unless-stopped
 
   auth-service:
@@ -86,7 +101,11 @@ services:
     networks:
       - gitcodedev-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${AUTH_SERVICE_DB_USER} -d ${AUTH_SERVICE_DB_NAME}"]
+      test:
+        [
+          'CMD-SHELL',
+          'pg_isready -U ${AUTH_SERVICE_DB_USER} -d ${AUTH_SERVICE_DB_NAME}',
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
