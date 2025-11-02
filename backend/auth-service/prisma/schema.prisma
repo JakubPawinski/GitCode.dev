@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -26,7 +20,6 @@ model User {
   updatedAt     DateTime       @updatedAt @map("updated_at")
   
   oauthTokens   OAuthToken[]
-  refreshTokens RefreshToken[]
 
   @@map("users")
 }
@@ -47,18 +40,4 @@ model OAuthToken {
 
   @@unique([userId, provider])
   @@map("oauth_tokens")
-}
-
-model RefreshToken {
-  id         String   @id @default(uuid())
-  userId     String   @map("user_id")
-  tokenHash  String   @unique @map("token_hash")
-  expiresAt  DateTime @map("expires_at")
-  isRevoked  Boolean  @default(false) @map("is_revoked")
-  createdAt  DateTime @default(now()) @map("created_at")
-  
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@map("refresh_tokens")
 }

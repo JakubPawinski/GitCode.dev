@@ -11,13 +11,22 @@ import {
 import type { Response, Request } from 'express';
 import { ApiOperation, ApiTags, ApiQuery, ApiResponse } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
-import { AuthResponseDto } from './dto/auth-response.dto';
+import {
+  AuthResponseDto,
+  UserDto,
+  LogoutResponseDto,
+} from './dto/auth-response.dto';
+import { ApiResponseDto } from './dto/api-response.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { RedisService } from '../redis/redis.service';
 
 @Controller()
 @ApiTags('Authentication')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly redis: RedisService,
+  ) {}
 
   @Get('login')
   @ApiOperation({ summary: 'Initiate OAuth login flow' })
@@ -40,7 +49,9 @@ export class AuthController {
   }
 
   @Get('callback')
-  @ApiOperation({ summary: 'OAuth callback endpoint' })
+  @ApiOperation({
+    summary: 'OAuth callback endpoint - sets refresh token cookie',
+  })
   @ApiQuery({ name: 'code', required: true })
   @ApiQuery({ name: 'state', required: true })
   @ApiQuery({ name: 'error', required: false })
@@ -70,19 +81,17 @@ export class AuthController {
       }
 
       // Verify state to prevent CSRF
-      const storedState = req.cookies['oauth_state'];
-      if (!storedState || storedState !== state) {
-        console.error('State mismatch:', {
-          stored: storedState,
-          received: state,
-        });
+      const storedProvider = await this.redis.get(`oauth_state:${state}`);
+
+      if (!storedProvider) {
+        console.error('State not found in Redis or expired');
         return res.redirect(
-          `${process.env.FRONTEND_URL}/login?error=invalid_state&hint=try_again`,
+          `${process.env.FRONTEND_URL}/login?error=invalid_state`,
         );
       }
 
-      // Clear state cookie
-      res.clearCookie('oauth_state');
+      // Delete state from Redis (one-time use)
+      await this.redis.del(`oauth_state:${state}`);
 
       // Exchange code for tokens and create session
       const { accessToken, refreshToken, user } =
@@ -93,13 +102,14 @@ export class AuthController {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
-        path: '/auth/refresh',
+        path: '/auth',
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       });
-      //TODO RES WITH JSON CONTAINIG ACCESS TOKEN
-      // Redirect to frontend with access token
+
+      // Redirect to frontend WITHOUT token in URL
+      // Frontend will call POST /auth/refresh to get accessToken + user
       return res.redirect(
-        `${process.env.FRONTEND_URL}/auth/callback?token=${accessToken}`,
+        `${process.env.FRONTEND_URL}/auth/callback?success=true`,
       );
     } catch (error) {
       console.error('Callback error:', error);
@@ -112,22 +122,43 @@ export class AuthController {
         errorMessage = 'token_exchange_failed';
       }
 
+      // Redirect to login with error
       return res.redirect(
-        `${process.env.FRONTEND_URL}/login?error=${errorMessage}&hint=try_again`,
+        `${process.env.FRONTEND_URL}/login?error=${errorMessage}`,
       );
     }
   }
 
   @Post('refresh')
   @ApiOperation({ summary: 'Refresh access token using refresh token cookie' })
-  @ApiResponse({ status: 200, type: AuthResponseDto })
-  async refresh(@Req() req: Request, @Res() res: Response) {
+  @ApiResponse({
+    status: 200,
+    description: 'Token refreshed successfully',
+    type: AuthResponseDto,
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'No refresh token provided or invalid token',
+  })
+  async refresh(
+    @Req() req: Request,
+    @Res() res: Response,
+  ): Promise<Response<ApiResponseDto<AuthResponseDto>>> {
     try {
       const refreshToken = req.cookies['gc_refresh'];
 
       if (!refreshToken) {
         return res.status(HttpStatus.UNAUTHORIZED).json({
+          success: false,
+          statusCode: HttpStatus.UNAUTHORIZED,
           message: 'No refresh token provided',
+          data: null,
+          error: {
+            code: 'NO_REFRESH_TOKEN',
+            message: 'No refresh token provided',
+          },
+          timestamp: new Date().toISOString(),
+          path: req.url,
         });
       }
 
@@ -137,44 +168,98 @@ export class AuthController {
         user,
       } = await this.authService.refreshTokens(refreshToken);
 
-      // Rotate refresh token
       res.cookie('gc_refresh', newRefreshToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
-        path: '/auth/refresh',
+        path: '/auth',
         maxAge: 7 * 24 * 60 * 60 * 1000,
       });
 
-      return res.json({ accessToken, user });
+      return res.json({
+        success: true,
+        statusCode: 200,
+        message: 'Token refreshed successfully',
+        data: {
+          accessToken,
+          user,
+        },
+        timestamp: new Date().toISOString(),
+        path: req.url,
+      });
     } catch (error) {
-      res.clearCookie('gc_refresh');
+      res.clearCookie('gc_refresh', { path: '/auth' });
       return res.status(HttpStatus.UNAUTHORIZED).json({
+        success: false,
+        statusCode: HttpStatus.UNAUTHORIZED,
         message: 'Invalid refresh token',
+        data: null,
+        error: {
+          code: 'INVALID_REFRESH_TOKEN',
+          message: error.message || 'Invalid refresh token',
+        },
+        timestamp: new Date().toISOString(),
+        path: req.url,
       });
     }
   }
 
   @Post('logout')
   @ApiOperation({ summary: 'Logout and invalidate refresh token' })
-  async logout(@Req() req: Request, @Res() res: Response) {
+  @ApiResponse({
+    status: 200,
+    description: 'Logged out successfully',
+    type: LogoutResponseDto,
+  })
+  async logout(
+    @Req() req: Request,
+    @Res() res: Response,
+  ): Promise<Response<ApiResponseDto<LogoutResponseDto>>> {
     const refreshToken = req.cookies['gc_refresh'];
 
     if (refreshToken) {
-      await this.authService.logout(refreshToken);
+      try {
+        await this.authService.logout(refreshToken);
+      } catch (error) {
+        console.error('Logout error:', error);
+        // Continue anyway - clear cookie even if Redis delete fails
+      }
     }
 
-    res.clearCookie('gc_refresh', { path: '/auth/refresh' });
-    return res.json({ message: 'Logged out successfully' });
+    res.clearCookie('gc_refresh', { path: '/auth' });
+
+    return res.json({
+      success: true,
+      statusCode: 200,
+      message: 'Logged out successfully',
+      data: {
+        message: 'Logged out successfully',
+      },
+      timestamp: new Date().toISOString(),
+      path: req.url,
+    });
   }
 
   @Get('me')
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Get current user profile' })
-  @ApiResponse({ status: 200, type: AuthResponseDto })
-  async getProfile(@Req() req: any) {
+  @ApiResponse({
+    status: 200,
+    description: 'User profile retrieved successfully',
+    type: UserDto,
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized - invalid or missing token',
+  })
+  async getProfile(@Req() req: any): Promise<ApiResponseDto<UserDto>> {
     return {
-      user: req.user,
+      success: true,
+      statusCode: 200,
+      message: 'User profile retrieved successfully',
+      data: req.user,
+      timestamp: new Date().toISOString(),
+      path: req.url,
     };
   }
 }

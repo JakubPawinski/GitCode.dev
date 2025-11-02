@@ -213,86 +213,56 @@ export class AuthService {
 
   private async generateRefreshToken(userId: string) {
     const token = crypto.randomBytes(64).toString('hex');
-    const tokenHash = await bcrypt.hash(token, 10);
 
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7); // 7 days
-
-    await this.prisma.refreshToken.create({
-      data: {
-        userId,
-        tokenHash,
-        expiresAt,
-      },
-    });
+    await this.redis.set(`refresh_token:${token}`, userId, 7 * 24 * 60 * 60);
 
     return token;
   }
 
   async refreshTokens(refreshToken: string) {
-    // Find and validate refresh token
-    const tokens = await this.prisma.refreshToken.findMany({
-      where: {
-        isRevoked: false,
-        expiresAt: { gt: new Date() },
-      },
-      include: { user: true },
-    });
+    // Find in Redis
+    const userId = await this.redis.get(`refresh_token:${refreshToken}`);
 
-    let validToken: (typeof tokens)[0] | null = null;
-    for (const token of tokens) {
-      if (await bcrypt.compare(refreshToken, token.tokenHash)) {
-        validToken = token;
-        break;
-      }
+    if (!userId) {
+      throw new UnauthorizedException('Invalid or expired refresh token');
     }
 
-    if (!validToken) {
-      throw new UnauthorizedException('Invalid refresh token');
-    }
+    // Token rotation (dlete old one)
+    await this.redis.del(`refresh_token:${refreshToken}`);
 
-    // Revoke old refresh token (rotation)
-    await this.prisma.refreshToken.update({
-      where: { id: validToken.id },
-      data: { isRevoked: true },
+    // Get user
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
     });
+
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
 
     // Generate new tokens
-    const accessToken = this.generateAccessToken(validToken.user);
-    const newRefreshToken = await this.generateRefreshToken(validToken.userId);
+    const accessToken = this.generateAccessToken(user);
+    const newRefreshToken = await this.generateRefreshToken(user.id);
 
     return {
       accessToken,
       refreshToken: newRefreshToken,
       user: {
-        id: validToken.user.id,
-        username: validToken.user.username,
-        email: validToken.user.email,
-        firstName: validToken.user.firstName,
-        lastName: validToken.user.lastName,
-        avatarUrl: validToken.user.avatarUrl,
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        avatarUrl: user.avatarUrl,
       },
     };
   }
 
   async logout(refreshToken: string) {
-    const tokens = await this.prisma.refreshToken.findMany({
-      where: { isRevoked: false },
-    });
-
-    for (const token of tokens) {
-      if (await bcrypt.compare(refreshToken, token.tokenHash)) {
-        await this.prisma.refreshToken.update({
-          where: { id: token.id },
-          data: { isRevoked: true },
-        });
-        break;
-      }
-    }
+    await this.redis.del(`refresh_token:${refreshToken}`);
   }
 
   async validateUser(userId: string) {
-    return await this.prisma.user.findUnique({
+    const user = await this.prisma.user.findUnique({
       where: { id: userId },
       select: {
         id: true,
@@ -301,7 +271,14 @@ export class AuthService {
         firstName: true,
         lastName: true,
         avatarUrl: true,
+        emailVerified: true,
       },
     });
+
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    return user;
   }
 }
