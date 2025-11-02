@@ -2,12 +2,20 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import cookieParser from 'cookie-parser';
+import { ResponseInterceptor } from './interceptors/response.interceptor';
+import { HttpExceptionFilter } from './filters/http-exception.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   // Cookie parser middleware
   app.use(cookieParser());
+
+  // Global interceptor for response formatting
+  app.useGlobalInterceptors(new ResponseInterceptor());
+
+  // Global exception filter for error formatting
+  app.useGlobalFilters(new HttpExceptionFilter());
 
   // Global prefix
   app.setGlobalPrefix('auth');
