@@ -154,6 +154,8 @@ services:
       - KC_HOSTNAME_STRICT_BACKCHANNEL=false
       - KC_HTTP_ENABLED=true
       - KC_HEALTH_ENABLED=true
+    volumes:
+      - ./keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json:ro
     command: start-dev
     ports:
       - "${KEYCLOAK_PORT}:8080"
