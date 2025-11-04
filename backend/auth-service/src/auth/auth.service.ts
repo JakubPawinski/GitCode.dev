@@ -69,11 +69,6 @@ export class AuthService {
     const keycloakConfig = this.configService.get('keycloak');
     const callbackUrl = this.configService.get('api.callbackUrl');
 
-    console.log('Exchanging code for tokens...');
-    console.log('Token URL:', keycloakConfig.tokenUrl);
-    console.log('Callback URL:', callbackUrl);
-    console.log('Code:', code.substring(0, 50) + '...');
-
     try {
       const response = await axios.post(
         keycloakConfig.tokenUrl,
@@ -88,14 +83,6 @@ export class AuthService {
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         },
       );
-
-      console.log('Token exchange successful!');
-      console.log(
-        'Access token:',
-        response.data.access_token.substring(0, 50) + '...',
-      );
-      console.log('Token type:', response.data.token_type);
-      console.log('Expires in:', response.data.expires_in);
 
       return response.data;
     } catch (error) {
@@ -123,14 +110,10 @@ export class AuthService {
     const keycloakConfig = this.configService.get('keycloak');
 
     try {
-      console.log('Fetching user info from:', keycloakConfig.userInfoUrl);
-      console.log('Using access token:', accessToken.substring(0, 50) + '...');
-
       const response = await axios.get(keycloakConfig.userInfoUrl, {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
 
-      console.log('User info received:', response.data);
       return response.data;
     } catch (error) {
       console.error('UserInfo error:', {
