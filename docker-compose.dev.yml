@@ -155,8 +155,10 @@ services:
       - KC_HTTP_ENABLED=true
       - KC_HEALTH_ENABLED=true
     volumes:
-      - ./keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json:ro
-    command: start-dev
+      - ./keycloak/realm-export.json:/opt/keycloak/data/import/gitcode-dev-realm.json
+    command: >
+      start-dev
+      --import-realm
     ports:
       - "${KEYCLOAK_PORT}:8080"
     depends_on:

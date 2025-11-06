@@ -17,4 +17,5 @@ COPY . .
 
 EXPOSE 4001
 
-CMD ["npm", "run", "start:dev"]
+# Run migrations automatically before starting the app
+CMD ["sh", "-c", "npx prisma migrate deploy && npm run start:dev"]
