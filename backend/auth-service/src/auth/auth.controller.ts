@@ -81,17 +81,31 @@ export class AuthController {
       }
 
       // Verify state to prevent CSRF
-      const storedProvider = await this.redis.get(`oauth_state:${state}`);
+      const cookieState = req.cookies['oauth_state'];
 
-      if (!storedProvider) {
-        console.error('State not found in Redis or expired');
+      if (!cookieState || cookieState !== state) {
+        console.error(
+          'State mismatch or missing cookie - possible CSRF attack',
+        );
+        res.clearCookie('oauth_state');
         return res.redirect(
           `${process.env.FRONTEND_URL}/login?error=invalid_state`,
         );
       }
 
-      // Delete state from Redis (one-time use)
+      const storedProvider = await this.redis.get(`oauth_state:${state}`);
+
+      if (!storedProvider) {
+        console.error('State not found in Redis or expired');
+        res.clearCookie('oauth_state');
+        return res.redirect(
+          `${process.env.FRONTEND_URL}/login?error=invalid_state`,
+        );
+      }
+
+      // Delete state from Redis and cookie (one-time use)
       await this.redis.del(`oauth_state:${state}`);
+      res.clearCookie('oauth_state');
 
       // Exchange code for tokens and create session
       const { accessToken, refreshToken, user } =
