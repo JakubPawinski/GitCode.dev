@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   frontend:
@@ -14,7 +14,7 @@ services:
       - PORT=${FRONTEND_PORT}
       - API_GATEWAY_URL=http://api-gateway:${API_GATEWAY_PORT}
     ports:
-      - '${FRONTEND_PORT}:${FRONTEND_PORT}'
+      - "${FRONTEND_PORT}:${FRONTEND_PORT}"
     volumes:
       - ./frontend:/app
       - /app/node_modules
@@ -25,8 +25,8 @@ services:
     image: traefik:v3.5
     container_name: api-gateway-dev
     ports:
-      - '${API_GATEWAY_PORT}:8080'
-      - '${TRAEFIK_API_PORT}:8081'
+      - "${API_GATEWAY_PORT}:8080"
+      - "${TRAEFIK_API_PORT}:8081"
     volumes:
       - ./backend/api-gateway/development/traefik.yml:/etc/traefik/traefik.yml:ro
       - ./backend/api-gateway/development/dynamic.yml:/etc/traefik/dynamic.yml:ro
@@ -50,7 +50,7 @@ services:
       - API_GATEWAY_URL=http://api-gateway:${API_GATEWAY_PORT}
       - AUTH_SERVICE_URL=http://auth-service:${AUTH_SERVICE_PORT}
     ports:
-      - '${SWAGGER_DOCS_PORT}:${SWAGGER_DOCS_PORT}'
+      - "${SWAGGER_DOCS_PORT}:${SWAGGER_DOCS_PORT}"
     volumes:
       - ./backend/swagger-docs:/app
       - /app/node_modules
@@ -74,13 +74,24 @@ services:
     environment:
       - NODE_ENV=development
       - PORT=${AUTH_SERVICE_PORT}
+      - DATABASE_URL=postgresql://${AUTH_SERVICE_DB_USER}:${AUTH_SERVICE_DB_PASSWORD}@auth-db:5432/${AUTH_SERVICE_DB_NAME}
+      - REDIS_URL=redis://auth-redis:6379
+      - KEYCLOAK_URL=${KEYCLOAK_URL}
+      - KEYCLOAK_REALM=${KEYCLOAK_REALM}
+      - KEYCLOAK_CLIENT_ID=${KEYCLOAK_CLIENT_ID}
+      - KEYCLOAK_CLIENT_SECRET=${KEYCLOAK_CLIENT_SECRET}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_ACCESS_EXPIRES_IN=${JWT_ACCESS_EXPIRES_IN}
+      - JWT_REFRESH_EXPIRES_IN=${JWT_REFRESH_EXPIRES_IN}
     ports:
-      - '${AUTH_SERVICE_PORT}:${AUTH_SERVICE_PORT}'
+      - "${AUTH_SERVICE_PORT}:${AUTH_SERVICE_PORT}"
     volumes:
       - ./backend/auth-service:/app
       - /app/node_modules
     depends_on:
       - auth-db
+      - auth-redis
+      - keycloak
     networks:
       - gitcodedev-network
     restart: unless-stopped
@@ -95,16 +106,84 @@ services:
       - POSTGRES_PASSWORD=${AUTH_SERVICE_DB_PASSWORD}
       - POSTGRES_DB=${AUTH_SERVICE_DB_NAME}
     ports:
-      - '${AUTH_SERVICE_DB_PORT}:5432'
+      - "${AUTH_SERVICE_DB_PORT}:5432"
     volumes:
-      - auth-db-data-dev:/var/lib/postgresql
+      - auth-db-data-dev:/var/lib/postgresql/data
     networks:
       - gitcodedev-network
     healthcheck:
       test:
         [
-          'CMD-SHELL',
-          'pg_isready -U ${AUTH_SERVICE_DB_USER} -d ${AUTH_SERVICE_DB_NAME}',
+          "CMD-SHELL",
+          "pg_isready -U ${AUTH_SERVICE_DB_USER} -d ${AUTH_SERVICE_DB_NAME}",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  auth-redis:
+    image: redis:7-alpine
+    container_name: auth-redis-dev
+    ports:
+      - "${REDIS_PORT}:6379"
+    volumes:
+      - auth-redis-data-dev:/data
+    networks:
+      - gitcodedev-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:23.0
+    container_name: keycloak-dev
+    environment:
+      - KEYCLOAK_ADMIN=${KEYCLOAK_ADMIN_USER}
+      - KEYCLOAK_ADMIN_PASSWORD=${KEYCLOAK_ADMIN_PASSWORD}
+      - KC_DB=postgres
+      - KC_DB_URL=jdbc:postgresql://keycloak-db:5432/${KEYCLOAK_DB_NAME}
+      - KC_DB_USERNAME=${KEYCLOAK_DB_USER}
+      - KC_DB_PASSWORD=${KEYCLOAK_DB_PASSWORD}
+      - KC_HOSTNAME=localhost
+      - KC_HOSTNAME_PORT=8090
+      - KC_HOSTNAME_STRICT=false
+      - KC_HOSTNAME_STRICT_BACKCHANNEL=false
+      - KC_HTTP_ENABLED=true
+      - KC_HEALTH_ENABLED=true
+    volumes:
+      - ./keycloak/realm-export.json:/opt/keycloak/data/import/gitcode-dev-realm.json
+    command: >
+      start-dev
+      --import-realm
+    ports:
+      - "${KEYCLOAK_PORT}:8080"
+    depends_on:
+      keycloak-db:
+        condition: service_healthy
+    networks:
+      - gitcodedev-network
+    restart: unless-stopped
+
+  keycloak-db:
+    image: postgres:18-alpine
+    container_name: keycloak-db-dev
+    environment:
+      - POSTGRES_DB=${KEYCLOAK_DB_NAME}
+      - POSTGRES_USER=${KEYCLOAK_DB_USER}
+      - POSTGRES_PASSWORD=${KEYCLOAK_DB_PASSWORD}
+    volumes:
+      - keycloak-db-data-dev:/var/lib/postgresql/data
+    networks:
+      - gitcodedev-network
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${KEYCLOAK_DB_USER} -d ${KEYCLOAK_DB_NAME}",
         ]
       interval: 10s
       timeout: 5s
@@ -117,3 +196,5 @@ networks:
 
 volumes:
   auth-db-data-dev:
+  auth-redis-data-dev:
+  keycloak-db-data-dev:

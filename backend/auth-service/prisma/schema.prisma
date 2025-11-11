@@ -1,0 +1,43 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String         @id @default(uuid())
+  keycloakId    String         @unique @map("keycloak_id")
+  email         String         @unique
+  username      String         @unique
+  firstName     String?        @map("first_name")
+  lastName      String?        @map("last_name")
+  avatarUrl     String?        @map("avatar_url")
+  emailVerified Boolean        @default(false) @map("email_verified")
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+  
+  oauthTokens   OAuthToken[]
+
+  @@map("users")
+}
+
+model OAuthToken {
+  id            String   @id @default(uuid())
+  userId        String   @map("user_id")
+  provider      String   // 'github', 'keycloak', etc.
+  accessToken   String   @map("access_token") @db.Text
+  refreshToken  String?  @map("refresh_token") @db.Text
+  expiresAt     DateTime? @map("expires_at")
+  scope         String?
+  tokenType     String?  @map("token_type")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, provider])
+  @@map("oauth_tokens")
+}
