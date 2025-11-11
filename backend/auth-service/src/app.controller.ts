@@ -9,7 +9,6 @@ export class AppController {
 
   @Get()
   @ApiExcludeEndpoint()
-  @ApiOperation({ summary: 'Get Auth Service hello message' })
   getHello(): string {
     return this.appService.getHello();
   }
