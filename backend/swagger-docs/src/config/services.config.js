@@ -1,6 +1,6 @@
 module.exports = {
 	port: process.env.SWAGGER_DOCS_PORT || 4050,
-	buildDelay: 4000, 
+	buildDelay: 0, 
 
 	apiGatewaySpec: {
 		openapi: '3.0.0',
