@@ -20,7 +20,7 @@ import { ApiResponseDto } from './dto/api-response.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { RedisService } from '../redis/redis.service';
 
-@Controller()
+@Controller('auth')
 @ApiTags('Authentication')
 export class AuthController {
   constructor(

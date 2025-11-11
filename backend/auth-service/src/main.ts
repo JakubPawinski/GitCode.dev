@@ -17,9 +17,6 @@ async function bootstrap() {
   // Global exception filter for error formatting
   app.useGlobalFilters(new HttpExceptionFilter());
 
-  // Global prefix
-  app.setGlobalPrefix('auth');
-
   // Enable CORS with credentials
   app.enableCors({
     origin: process.env.FRONTEND_URL || 'http://localhost:3000',
