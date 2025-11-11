@@ -19,6 +19,7 @@ import {
 import { ApiResponseDto } from './dto/api-response.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { RedisService } from '../redis/redis.service';
+import { AppService } from '../app.service';
 
 @Controller('auth')
 @ApiTags('Authentication')
@@ -26,7 +27,14 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly redis: RedisService,
+    private readonly appService: AppService,
   ) {}
+
+  @Get('health')
+  @ApiOperation({ summary: 'Get Auth Service status' })
+  getHealth() {
+    return this.appService.getHealth();
+  }
 
   @Get('login')
   @ApiOperation({ summary: 'Initiate OAuth login flow' })
