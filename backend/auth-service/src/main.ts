@@ -17,9 +17,6 @@ async function bootstrap() {
   // Global exception filter for error formatting
   app.useGlobalFilters(new HttpExceptionFilter());
 
-  // Global prefix
-  app.setGlobalPrefix('auth');
-
   // Enable CORS with credentials
   app.enableCors({
     origin: process.env.FRONTEND_URL || 'http://localhost:3000',
@@ -30,10 +27,7 @@ async function bootstrap() {
   const config = new DocumentBuilder()
     .setTitle('GitCode.dev auth-service')
     .setDescription('Auth Service for GitCode.dev microservices architecture')
-    .addServer(
-      `http://localhost:${process.env.PORT ?? 4001}/auth`,
-      'Local server',
-    )
+    .addServer(`http://localhost:${process.env.PORT ?? 4001}`, 'Local server')
     .addBearerAuth()
     .setVersion('1.0')
     .build();

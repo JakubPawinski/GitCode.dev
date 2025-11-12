@@ -1,4 +1,4 @@
-version: "3.8"
+version: '3.8'
 
 services:
   frontend:
@@ -14,7 +14,7 @@ services:
       - PORT=${FRONTEND_PORT}
       - API_GATEWAY_URL=http://api-gateway:${API_GATEWAY_PORT}
     ports:
-      - "${FRONTEND_PORT}:${FRONTEND_PORT}"
+      - '${FRONTEND_PORT}:${FRONTEND_PORT}'
     volumes:
       - ./frontend:/app
       - /app/node_modules
@@ -25,8 +25,8 @@ services:
     image: traefik:v3.5
     container_name: api-gateway-dev
     ports:
-      - "${API_GATEWAY_PORT}:8080"
-      - "${TRAEFIK_API_PORT}:8081"
+      - '${API_GATEWAY_PORT}:8080'
+      - '${TRAEFIK_API_PORT}:8081'
     volumes:
       - ./backend/api-gateway/development/traefik.yml:/etc/traefik/traefik.yml:ro
       - ./backend/api-gateway/development/dynamic.yml:/etc/traefik/dynamic.yml:ro
@@ -50,15 +50,17 @@ services:
       - API_GATEWAY_URL=http://api-gateway:${API_GATEWAY_PORT}
       - AUTH_SERVICE_URL=http://auth-service:${AUTH_SERVICE_PORT}
     ports:
-      - "${SWAGGER_DOCS_PORT}:${SWAGGER_DOCS_PORT}"
+      - '${SWAGGER_DOCS_PORT}:${SWAGGER_DOCS_PORT}'
     volumes:
       - ./backend/swagger-docs:/app
       - /app/node_modules
     networks:
       - gitcodedev-network
     depends_on:
-      - api-gateway
-      - auth-service
+      api-gateway:
+        condition: service_started # In future, use healthcheck
+      auth-service:
+        condition: service_healthy
     restart: unless-stopped
 
   auth-service:
@@ -84,7 +86,7 @@ services:
       - JWT_ACCESS_EXPIRES_IN=${JWT_ACCESS_EXPIRES_IN}
       - JWT_REFRESH_EXPIRES_IN=${JWT_REFRESH_EXPIRES_IN}
     ports:
-      - "${AUTH_SERVICE_PORT}:${AUTH_SERVICE_PORT}"
+      - '${AUTH_SERVICE_PORT}:${AUTH_SERVICE_PORT}'
     volumes:
       - ./backend/auth-service:/app
       - /app/node_modules
@@ -94,6 +96,12 @@ services:
       - keycloak
     networks:
       - gitcodedev-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:${AUTH_SERVICE_PORT}/auth/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     restart: unless-stopped
 
   auth-db:
@@ -106,7 +114,7 @@ services:
       - POSTGRES_PASSWORD=${AUTH_SERVICE_DB_PASSWORD}
       - POSTGRES_DB=${AUTH_SERVICE_DB_NAME}
     ports:
-      - "${AUTH_SERVICE_DB_PORT}:5432"
+      - '${AUTH_SERVICE_DB_PORT}:5432'
     volumes:
       - auth-db-data-dev:/var/lib/postgresql/data
     networks:
@@ -114,8 +122,8 @@ services:
     healthcheck:
       test:
         [
-          "CMD-SHELL",
-          "pg_isready -U ${AUTH_SERVICE_DB_USER} -d ${AUTH_SERVICE_DB_NAME}",
+          'CMD-SHELL',
+          'pg_isready -U ${AUTH_SERVICE_DB_USER} -d ${AUTH_SERVICE_DB_NAME}',
         ]
       interval: 10s
       timeout: 5s
@@ -126,13 +134,13 @@ services:
     image: redis:7-alpine
     container_name: auth-redis-dev
     ports:
-      - "${REDIS_PORT}:6379"
+      - '${REDIS_PORT}:6379'
     volumes:
       - auth-redis-data-dev:/data
     networks:
       - gitcodedev-network
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ['CMD', 'redis-cli', 'ping']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -160,7 +168,7 @@ services:
       start-dev
       --import-realm
     ports:
-      - "${KEYCLOAK_PORT}:8080"
+      - '${KEYCLOAK_PORT}:8080'
     depends_on:
       keycloak-db:
         condition: service_healthy
@@ -182,8 +190,8 @@ services:
     healthcheck:
       test:
         [
-          "CMD-SHELL",
-          "pg_isready -U ${KEYCLOAK_DB_USER} -d ${KEYCLOAK_DB_NAME}",
+          'CMD-SHELL',
+          'pg_isready -U ${KEYCLOAK_DB_USER} -d ${KEYCLOAK_DB_NAME}',
         ]
       interval: 10s
       timeout: 5s
