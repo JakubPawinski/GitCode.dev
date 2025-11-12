@@ -25,7 +25,10 @@ export default () => ({
     url: process.env.FRONTEND_URL || 'http://localhost:3000',
   },
   api: {
-    callbackUrl:
-      process.env.API_CALLBACK_URL || 'http://localhost:4001/auth/callback',
+    callbackAuthUrl:
+      process.env.API_CALLBACK_AUTH_URL || 'http://localhost:4001/auth/callback',
+    callbackAccountUrl:
+      process.env.API_CALLBACK_ACCOUNT_URL ||
+      'http://localhost:4001/auth/account/callback',
   },
 });

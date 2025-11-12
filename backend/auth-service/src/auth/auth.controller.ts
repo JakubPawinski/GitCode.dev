@@ -32,7 +32,7 @@ export class AuthController {
 
   @Get('health')
   @ApiOperation({ summary: 'Get Auth Service status' })
-  getHealth() {
+  public getHealth() {
     return this.appService.getHealth();
   }
 
@@ -280,6 +280,31 @@ export class AuthController {
       statusCode: 200,
       message: 'User profile retrieved successfully',
       data: req.user,
+      timestamp: new Date().toISOString(),
+      path: req.url,
+    };
+  }
+
+  @Get('account')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Initiate account update via Keycloak' })
+  public async initiateAccountUpdate(@Res() res: Response) {
+    const { accountUpdateUrl } = await this.authService.initiateAccountUpdate();
+    return res.redirect(accountUpdateUrl);
+  }
+
+  @Get('account/callback')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Handle account update callback from Keycloak' })
+  public async handleAccountUpdateCallback(
+    @Req() req: Request,
+  ): Promise<ApiResponseDto<{ message: string }>> {
+    const result = await this.authService.handleAccountUpdateCallback();
+    return {
+      success: true,
+      statusCode: HttpStatus.OK,
+      message: result.message,
+      data: result,
       timestamp: new Date().toISOString(),
       path: req.url,
     };

@@ -23,7 +23,7 @@ export class AuthService {
     await this.redis.set(`oauth_state:${state}`, provider, 300); // 5 minutes
 
     const keycloakConfig = this.configService.get('keycloak');
-    const callbackUrl = this.configService.get('api.callbackUrl');
+    const callbackUrl = this.configService.get('api.callbackAuthUrl');
 
     const authUrl = new URL(keycloakConfig.authorizationUrl);
     authUrl.searchParams.append('client_id', keycloakConfig.clientId);
@@ -67,7 +67,7 @@ export class AuthService {
 
   private async exchangeCodeForTokens(code: string) {
     const keycloakConfig = this.configService.get('keycloak');
-    const callbackUrl = this.configService.get('api.callbackUrl');
+    const callbackUrl = this.configService.get('api.callbackAuthUrl');
 
     try {
       const response = await axios.post(
@@ -263,5 +263,32 @@ export class AuthService {
     }
 
     return user;
+  }
+
+  /*
+   * Initiate account update by redirecting to Keycloak account management
+   */
+  async initiateAccountUpdate() {
+    console.log('Initiating account update process');
+    const keycloakConfig = this.configService.get('keycloak');
+    const accountUpdateUrl = new URL(
+      `${keycloakConfig.url}/realms/${keycloakConfig.realm}/account`,
+    );
+
+    const callbackUrl = this.configService.get('api.callbackAccountUrl');
+
+    accountUpdateUrl.searchParams.append('referrer', keycloakConfig.clientId); // Client ID as referrer
+    accountUpdateUrl.searchParams.append('referrer_uri', callbackUrl); // Redirect back after update
+    return { accountUpdateUrl: accountUpdateUrl.toString() };
+  }
+
+  /*
+   * Handle account update callback from Keycloak
+   */
+  async handleAccountUpdateCallback() {
+    // Since Keycloak does not provide specific info on what was updated,
+    // we simply return a success message. Optionally, we could refresh
+    // the user's session or data here.
+    return { message: 'Profile updated successfully' };
   }
 }
