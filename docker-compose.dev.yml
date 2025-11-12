@@ -60,7 +60,7 @@ services:
       api-gateway:
         condition: service_started # In future, use healthcheck
       auth-service:
-        condition: service_healthy # In future, use healthcheck
+        condition: service_healthy
     restart: unless-stopped
 
   auth-service:
