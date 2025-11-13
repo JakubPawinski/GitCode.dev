@@ -1,4 +1,8 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
@@ -271,6 +275,8 @@ export class AuthService {
   async initiateAccountUpdate() {
     console.log('Initiating account update process');
     const keycloakConfig = this.configService.get('keycloak');
+
+    // Create account management URL
     const accountUpdateUrl = new URL(
       `${keycloakConfig.url}/realms/${keycloakConfig.realm}/account`,
     );
@@ -285,10 +291,40 @@ export class AuthService {
   /*
    * Handle account update callback from Keycloak
    */
-  async handleAccountUpdateCallback() {
-    // Since Keycloak does not provide specific info on what was updated,
-    // we simply return a success message. Optionally, we could refresh
-    // the user's session or data here.
-    return { message: 'Profile updated successfully' };
+  async handleAccountUpdateCallback(userId: string) {
+    try {
+      // Retrieve stored OAuth tokens for the user
+      const oauthToken = await this.prisma.oAuthToken.findUnique({
+        where: { userId_provider: { userId, provider: 'keycloak' } },
+      });
+
+      // If no tokens found, cannot refresh profile
+      if (!oauthToken) {
+        console.warn(
+          `No OAuth token found for user ${userId}, cannot refresh profile`,
+        );
+        return { message: 'Failed to update profile', success: false };
+      }
+
+      // Fetch updated user info using the access token
+      const userInfo = await this.getUserInfo(oauthToken.accessToken);
+
+      // Update user profile in the database
+      const tokens = {
+        access_token: oauthToken.accessToken,
+        refresh_token: oauthToken.refreshToken,
+        expires_in: oauthToken.expiresAt
+          ? Math.floor((oauthToken.expiresAt.getTime() - Date.now()) / 1000)
+          : null,
+        scope: oauthToken.scope,
+        token_type: oauthToken.tokenType,
+      };
+      await this.upsertUser(userInfo, tokens);
+
+      return { message: 'Profile updated successfully', success: true };
+    } catch (error) {
+      console.error('Account update callback error:', error);
+      return { message: 'Failed to update profile', success: false };
+    }
   }
 }

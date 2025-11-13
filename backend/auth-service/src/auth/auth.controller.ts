@@ -297,16 +297,19 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Handle account update callback from Keycloak' })
   public async handleAccountUpdateCallback(
-    @Req() req: Request,
-  ): Promise<ApiResponseDto<{ message: string }>> {
-    const result = await this.authService.handleAccountUpdateCallback();
-    return {
-      success: true,
-      statusCode: HttpStatus.OK,
-      message: result.message,
-      data: result,
-      timestamp: new Date().toISOString(),
-      path: req.url,
-    };
+    @Req() req: any,
+    @Res() res: Response,
+  ) {
+    // Process account update
+    const result = await this.authService.handleAccountUpdateCallback(
+      req.user.id,
+    );
+
+    // Redirect to frontend with update result
+    return res.redirect(
+      `${process.env.FRONTEND_URL}/account?update=${
+        result.success ? 'success' : 'failure'
+      }`,
+    );
   }
 }
