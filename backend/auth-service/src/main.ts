@@ -28,7 +28,6 @@ async function bootstrap() {
     .setTitle('GitCode.dev auth-service')
     .setDescription('Auth Service for GitCode.dev microservices architecture')
     .addServer(`http://localhost:${process.env.PORT ?? 4001}`, 'Local server')
-    .addBearerAuth()
     .setVersion('1.0')
     .build();
 

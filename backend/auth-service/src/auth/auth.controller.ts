@@ -9,7 +9,14 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import type { Response, Request } from 'express';
-import { ApiOperation, ApiTags, ApiQuery, ApiResponse } from '@nestjs/swagger';
+import {
+  ApiOperation,
+  ApiTags,
+  ApiQuery,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiSecurity,
+} from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import {
   AuthResponseDto,
@@ -124,7 +131,7 @@ export class AuthController {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
-        path: '/auth',
+        path: '/',
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       });
 
@@ -153,6 +160,7 @@ export class AuthController {
 
   @Post('refresh')
   @ApiOperation({ summary: 'Refresh access token using refresh token cookie' })
+  @ApiSecurity('RefreshTokenCookie')
   @ApiResponse({
     status: 200,
     description: 'Token refreshed successfully',
@@ -194,7 +202,7 @@ export class AuthController {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
-        path: '/auth',
+        path: '/',
         maxAge: 7 * 24 * 60 * 60 * 1000,
       });
 
@@ -210,7 +218,7 @@ export class AuthController {
         path: req.url,
       });
     } catch (error) {
-      res.clearCookie('gc_refresh', { path: '/auth' });
+      res.clearCookie('gc_refresh', { path: '/' });
       return res.status(HttpStatus.UNAUTHORIZED).json({
         success: false,
         statusCode: HttpStatus.UNAUTHORIZED,
@@ -248,7 +256,7 @@ export class AuthController {
       }
     }
 
-    res.clearCookie('gc_refresh', { path: '/auth' });
+    res.clearCookie('gc_refresh', { path: '/' });
 
     return res.json({
       success: true,
@@ -264,6 +272,7 @@ export class AuthController {
 
   @Get('me')
   @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('Bearer Auth')
   @ApiOperation({ summary: 'Get current user profile' })
   @ApiResponse({
     status: 200,
@@ -287,6 +296,7 @@ export class AuthController {
 
   @Get('account')
   @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('Bearer Auth')
   @ApiOperation({ summary: 'Initiate account update via Keycloak' })
   public async initiateAccountUpdate(@Res() res: Response) {
     const { accountUpdateUrl } = await this.authService.initiateAccountUpdate();
