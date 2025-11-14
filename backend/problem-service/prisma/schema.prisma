@@ -1,0 +1,249 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================ // MAIN ENTITIES // ============================================
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+model Problem {
+  id         String     @id @default(uuid())
+  problemId  String     @unique // internal ID from JSON
+  frontendId String     @unique // LeetCode frontend ID
+  title      String
+  difficulty Difficulty // Easy, Medium, Hard
+  problemSlug String    @unique
+  description String    @db.Text
+  solutions   String?   @db.Text // HTML editorial content
+  // Relations
+  topics          ProblemTopic[]
+  examples        Example[]
+  constraints     Constraint[]
+  followUps       FollowUp[]
+  hints           Hint[]
+  codeSnippets    CodeSnippet[]
+  testCases       TestCase[]
+  userSubmissions UserSubmission[]
+  problemStats ProblemStats[]
+  similarProblems SimilarProblem[] @relation("ProblemFrom")
+  similarFrom     SimilarProblem[] @relation("ProblemTo")
+  // Metadata
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  isActive  Boolean  @default(true) @map("is_active")
+  @@map("problems")
+  @@index([difficulty])
+  @@index([isActive])
+}
+
+// ============================================ // PROBLEM METADATA // ============================================
+model ProblemTopic {
+  id        String  @id @default(uuid())
+  problemId String
+  problem   Problem @relation(fields: [problemId], references: [id], onDelete: Cascade)
+  topic     String  // e.g., "Array", "Two Pointers"
+  @@unique([problemId, topic])
+  @@map("problem_topics")
+  @@index([problemId])
+}
+
+model Example {
+  id          String  @id @default(uuid())
+  problemId   String
+  problem     Problem @relation(fields: [problemId], references: [id], onDelete: Cascade)
+  exampleNum  Int     // Example number (1, 2, 3...)
+  inputText   String  @db.Text
+  outputText  String  @db.Text
+  explanation String? @db.Text
+  imageUrl    String? @map("image_url")
+  @@unique([problemId, exampleNum])
+  @@map("examples")
+  @@index([problemId])
+}
+
+model Constraint {
+  id          String  @id @default(uuid())
+  problemId   String
+  problem     Problem @relation(fields: [problemId], references: [id], onDelete: Cascade)
+  constraint  String  @db.Text // e.g., "1 <= nums.length <= 10^5"
+  orderIndex  Int     @map("order_index") // For ordering constraints
+  @@map("constraints")
+  @@index([problemId])
+}
+
+model FollowUp {
+  id         String  @id @default(uuid())
+  problemId  String
+  problem    Problem @relation(fields: [problemId], references: [id], onDelete: Cascade)
+  question   String  @db.Text
+  orderIndex Int     @map("order_index")
+  @@map("follow_ups")
+  @@index([problemId])
+}
+
+model Hint {
+  id         String  @id @default(uuid())
+  problemId  String
+  problem    Problem @relation(fields: [problemId], references: [id], onDelete: Cascade)
+  hintText   String  @db.Text
+  orderIndex Int     @map("order_index") // For progressive hint revealing
+  difficulty String? // Optional: "basic", "intermediate", "advanced"
+  @@map("hints")
+  @@index([problemId])
+}
+
+model CodeSnippet {
+  id          String  @id @default(uuid())
+  problemId   String
+  problem     Problem @relation(fields: [problemId], references: [id], onDelete: Cascade)
+  language    String  // "python", "java", "cpp", "javascript", "typescript"
+  starterCode String  @db.Text
+  @@unique([problemId, language])
+  @@map("code_snippets")
+  @@index([problemId])
+  @@index([language])
+}
+
+model TestCase {
+  id           String  @id @default(uuid())
+  problemId    String
+  problem      Problem @relation(fields: [problemId], references: [id], onDelete: Cascade)
+  input        String  @db.Text
+  expectedOutput String @db.Text @map("expected_output")
+  isPublic     Boolean @default(true) @map("is_public") // Public examples vs hidden tests
+  orderIndex   Int     @map("order_index")
+  @@map("test_cases")
+  @@index([problemId])
+  @@index([isPublic])
+}
+
+model SimilarProblem {
+  id            String  @id @default(uuid())
+  problemFromId String  @map("problem_from_id")
+  problemToId   String  @map("problem_to_id")
+  problemFrom   Problem @relation("ProblemFrom", fields: [problemFromId], references: [id], onDelete: Cascade)
+  problemTo     Problem @relation("ProblemTo", fields: [problemToId], references: [id], onDelete: Cascade)
+  @@unique([problemFromId, problemToId])
+  @@map("similar_problems")
+  @@index([problemFromId])
+  @@index([problemToId])
+}
+
+// ============================================ // USER SUBMISSIONS & ATTEMPTS // ============================================
+model UserSubmission {
+  id              String     @id @default(uuid())
+  userId          String     // Reference to auth-service User
+  problemId       String
+  problem         Problem    @relation(fields: [problemId], references: [id], onDelete: Cascade)
+  // Status tracking
+  status          String     @default("in_progress") // "in_progress", "submitted", "accepted", "rejected"
+  currentLanguage String     @map("current_language") // "python", "javascript", etc.
+  currentCode     String     @db.Text @map("current_code")
+  // Results
+  lastAttemptId   String?    @map("last_attempt_id")
+  acceptedAt      DateTime?  @map("accepted_at")
+  passedTestCases Int        @default(0) @map("passed_test_cases")
+  totalTestCases  Int        @map("total_test_cases")
+  // GitHub integration
+  commitHash      String?    @map("commit_hash") // SHA of commit pushed to GitHub
+  githubUrl       String?    @map("github_url") // Full GitHub link
+  // Metadata
+  createdAt       DateTime   @default(now()) @map("created_at")
+  updatedAt       DateTime   @updatedAt @map("updated_at")
+  submittedAt     DateTime?  @map("submitted_at")
+  // Relations
+  attempts        SolutionAttempt[]
+  feedbacks       AIFeedback[]
+  @@unique([userId, problemId])
+  @@map("user_submissions")
+  @@index([userId])
+  @@index([problemId])
+  @@index([status])
+  @@index([acceptedAt])
+}
+
+model SolutionAttempt {
+  id            String     @id @default(uuid())
+  submissionId  String
+  submission    UserSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  // Submission details
+  code          String     @db.Text
+  language      String
+  attemptNumber Int        @map("attempt_number")
+  // Execution results
+  status        String     // "pending", "running", "success", "error", "timeout", "runtime_error"
+  executionTime Float?     @map("execution_time") // in ms
+  memoryUsed    Int?       @map("memory_used") // in MB
+  errorMessage  String?    @db.Text @map("error_message")
+  // Test results
+  passedTests   Int        @default(0) @map("passed_tests")
+  failedTests   Int        @default(0) @map("failed_tests")
+  totalTests    Int        @map("total_tests")
+  testResults   TestResult[] // Detailed per-test results
+  // Metadata
+  createdAt     DateTime   @default(now()) @map("created_at")
+  completedAt   DateTime?  @map("completed_at")
+  @@map("solution_attempts")
+  @@index([submissionId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model TestResult {
+  id             String     @id @default(uuid())
+  attemptId      String
+  attempt        SolutionAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  testCaseId     String
+  testIndex      Int        @map("test_index")
+  passed         Boolean
+  input          String     @db.Text
+  expectedOutput String     @db.Text @map("expected_output")
+  actualOutput   String?    @db.Text @map("actual_output")
+  errorMessage   String?    @db.Text @map("error_message")
+  @@map("test_results")
+  @@index([attemptId])
+  @@index([passed])
+}
+
+// ============================================ // AI FEEDBACK (Optional - for future feature) // ============================================
+model AIFeedback {
+  id            String     @id @default(uuid())
+  submissionId  String
+  submission    UserSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  feedbackType  String     // "style", "optimization", "hint", "explanation"
+  content       String     @db.Text
+  severity      String?    // "info", "warning", "critical"
+  createdAt     DateTime   @default(now()) @map("created_at")
+  @@map("ai_feedbacks")
+  @@index([submissionId])
+}
+
+// ============================================ // PROBLEM STATISTICS (Optional - for analytics) // ============================================
+model ProblemStats {
+  id                 String  @id @default(uuid())
+  problemId          String  @unique
+  problem            Problem @relation(fields: [problemId], references: [id], onDelete: Cascade)
+  totalSubmissions   Int     @default(0) @map("total_submissions")
+  acceptedSubmissions Int    @default(0) @map("accepted_submissions")
+  acceptanceRate     Float   @default(0) @map("acceptance_rate") // percentage
+  avgExecutionTime   Float?  @map("avg_execution_time")
+  avgMemoryUsed      Float?  @map("avg_memory_used")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+  @@map("problem_stats")
+  @@index([problemId])
+}
