@@ -1,10 +1,8 @@
 import { api } from '@/api/axios'
 import { useCallback, useEffect, useState } from 'react'
-interface GetTaskProps {
-  title: string
-}
-export const useGetTask = ({ title }: GetTaskProps) => {
-  const [data, setData] = useState()
+
+export const useGetTasks = <T>() => {
+  const [data, setData] = useState<T>()
   const [loading, setLoading] = useState<boolean>(false)
   const [error, setError] = useState<any>()
   const controller = new AbortController()
@@ -13,7 +11,7 @@ export const useGetTask = ({ title }: GetTaskProps) => {
     setLoading(true)
     setError(null)
     api
-      .get(`/tasks/${title}`, { signal: controller.signal })
+      .get('/tasks', { signal: controller.signal })
       .then((res) => setData(res.data))
       .catch((err) => setError(err))
       .finally(() => setLoading(false))
@@ -23,7 +21,7 @@ export const useGetTask = ({ title }: GetTaskProps) => {
     if (!data) getQuery()
 
     return () => controller.abort()
-  }, [title])
+  }, [])
 
   return { data, loading, error }
 }

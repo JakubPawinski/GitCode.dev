@@ -1,7 +1,7 @@
 import { api } from '@/api/axios'
 import { useCallback, useEffect, useState } from 'react'
 
-export const useGetTasks = () => {
+export const useGetTestCases = ({ submissionId }: { submissionId: string }) => {
   const [data, setData] = useState()
   const [loading, setLoading] = useState<boolean>(false)
   const [error, setError] = useState<any>()
@@ -11,7 +11,7 @@ export const useGetTasks = () => {
     setLoading(true)
     setError(null)
     api
-      .get('/tasks', { signal: controller.signal })
+      .get(`/submission/${submissionId}`, { signal: controller.signal })
       .then((res) => setData(res.data))
       .catch((err) => setError(err))
       .finally(() => setLoading(false))

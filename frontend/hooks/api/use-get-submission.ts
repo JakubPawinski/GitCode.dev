@@ -1,8 +1,8 @@
+'use client'
 import { api } from '@/api/axios'
 import { useCallback, useEffect, useState } from 'react'
-
-export const useGetTestCases = (submissionId: { submissionId: string }) => {
-  const [data, setData] = useState()
+export const useGetSubmission = <T>({ title }: { title: string }) => {
+  const [data, setData] = useState<T>()
   const [loading, setLoading] = useState<boolean>(false)
   const [error, setError] = useState<any>()
   const controller = new AbortController()
@@ -11,7 +11,7 @@ export const useGetTestCases = (submissionId: { submissionId: string }) => {
     setLoading(true)
     setError(null)
     api
-      .get(`/submission/${submissionId}`, { signal: controller.signal })
+      .get(`/tasks/${title}/submissions`, { signal: controller.signal })
       .then((res) => setData(res.data))
       .catch((err) => setError(err))
       .finally(() => setLoading(false))
@@ -21,7 +21,7 @@ export const useGetTestCases = (submissionId: { submissionId: string }) => {
     if (!data) getQuery()
 
     return () => controller.abort()
-  }, [])
+  }, [title])
 
   return { data, loading, error }
 }

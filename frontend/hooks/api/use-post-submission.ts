@@ -1,3 +1,4 @@
+'use client'
 import { api } from '@/api/axios'
 import { useCallback, useState } from 'react'
 export interface PostProps<T> {
@@ -6,6 +7,7 @@ export interface PostProps<T> {
     [key: string]: string
   }
 }
+export type PostMutationType<T> = ({ payload, headers }: PostProps<T>) => void
 
 export const usePostSubmission = <T>() => {
   const [data, setData] = useState<T>()

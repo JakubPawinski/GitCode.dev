@@ -18,7 +18,7 @@ export const Submission = ({ data, loading, error }: SubmissionProps) => {
   if (loading) {
     return (
       <div className="flex h-full items-center justify-center">
-        <ClipLoader color="#2563eb" />
+        <ClipLoader className="text-primary" />
       </div>
     )
   }

@@ -14,7 +14,7 @@ interface TestCasesProps {
 export const TestScreen = ({ data, loading, error }: TestCasesProps) => {
   const [activeTab, setActiveTab] = useState(0)
   if (loading) {
-    return <ClipLoader />
+    return <ClipLoader className="text-primary" />
   }
   return (
     <section className="rounded-lg bg-white p-4 text-black shadow">
