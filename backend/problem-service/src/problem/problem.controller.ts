@@ -6,8 +6,10 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { ProblemService } from './problem.service';
+import { PaginatedResponseDto, PaginationDto } from './dto/pagination.dto';
 
 @Controller('problem')
 export class ProblemController {
@@ -19,8 +21,8 @@ export class ProblemController {
   }
 
   @Get()
-  findAll() {
-    return this.problemService.findAll();
+  findAll(@Query() paginationDto: PaginationDto) {
+    return this.problemService.getPaginatedProblems(paginationDto);
   }
 
   @Get(':slug')

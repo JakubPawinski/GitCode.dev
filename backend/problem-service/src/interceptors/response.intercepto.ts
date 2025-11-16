@@ -22,12 +22,14 @@ export class ResponseInterceptor<T>
     return next.handle().pipe(
       map((data) => {
         const statusCode = response.statusCode || 200;
+        const { pagination, ...rest } = data || {};
 
         return {
           success: true,
           statusCode,
-          message: data?.message || 'Operation successful', 
-          data: data?.data !== undefined ? data.data : data,
+          message: data?.message || 'Operation successful',
+          data: rest?.data !== undefined ? rest.data : rest,
+          ...(pagination && { pagination }),
           timestamp: new Date().toISOString(),
           path: request.url,
         };
