@@ -10,7 +10,8 @@ import { RedisService } from '../redis/redis.service';
 import axios from 'axios';
 import * as crypto from 'crypto';
 import * as bcrypt from 'bcrypt';
-
+import { mapRolesToPermissions } from './mappers/permissions.mapper';
+import { mapRealmRolesToAppRoles } from './mappers/roles.mapper';
 @Injectable()
 export class AuthService {
   constructor(
@@ -45,9 +46,20 @@ export class AuthService {
 
     // Get user info from IdP
     const userInfo = await this.getUserInfo(tokens.access_token);
+    console.log('Userinfo :', userInfo);
+
+    // Extract and map roles
+    const realmRoles = this.getRealmRoles(tokens.access_token);
+    const appRoles = mapRealmRolesToAppRoles(realmRoles);
+    const appPermissions = mapRolesToPermissions(realmRoles);
+    console.log('Mapped app permissions:', appPermissions);
+    console.log('Mapped app roles:', appRoles);
 
     // Create or update user in database
-    const user = await this.upsertUser(userInfo, tokens);
+    const user = await this.upsertUser(
+      { ...userInfo, roles: appRoles, permissions: appPermissions },
+      tokens,
+    );
 
     // Generate our own JWT access token
     const accessToken = this.generateAccessToken(user);
@@ -130,16 +142,38 @@ export class AuthService {
     }
   }
 
+  /*
+   * Extract realm and client roles from access token
+   */
+  private getRealmRoles(accessToken: string) {
+    const [, payloadBase64] = accessToken.split('.');
+    if (!payloadBase64) {
+      return { realmRoles: [], clientRoles: [] };
+    }
+
+    const payloadJson = Buffer.from(payloadBase64, 'base64').toString('utf8');
+    const payload = JSON.parse(payloadJson);
+
+    const keycloakConfig = this.configService.get('keycloak');
+    const clientId = keycloakConfig.clientId;
+
+    const realmRoles = payload.realm_access?.roles ?? [];
+
+    return realmRoles;
+  }
+
   private async upsertUser(userInfo: any, tokens: any) {
     const user = await this.prisma.user.upsert({
       where: { keycloakId: userInfo.sub },
       update: {
         email: userInfo.email,
-        username: userInfo.preferred_username || userInfo.email.split('@')[0],
+        username: userInfo.preferred_username,
         firstName: userInfo.given_name,
         lastName: userInfo.family_name,
         avatarUrl: userInfo.picture,
         emailVerified: userInfo.email_verified || false,
+        roles: userInfo.roles,
+        permissions: userInfo.permissions,
       },
       create: {
         keycloakId: userInfo.sub,
@@ -149,6 +183,8 @@ export class AuthService {
         lastName: userInfo.family_name,
         avatarUrl: userInfo.picture,
         emailVerified: userInfo.email_verified || false,
+        roles: userInfo.roles,
+        permissions: userInfo.permissions,
       },
     });
 
@@ -190,7 +226,10 @@ export class AuthService {
       sub: user.id,
       username: user.username,
       email: user.email,
+      roles: user.roles,
+      permissions: user.permissions,
     };
+    console.log('Generating access token with payload:', payload);
 
     return this.jwtService.sign(payload, {
       secret: this.configService.get('jwt.secret'),
@@ -221,6 +260,7 @@ export class AuthService {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
     });
+    console.log('User found for refresh token:', user);
 
     if (!user) {
       throw new UnauthorizedException('User not found');
