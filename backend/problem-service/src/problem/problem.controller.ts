@@ -11,7 +11,7 @@ import {
 import { ProblemService } from './problem.service';
 import { PaginatedResponseDto, PaginationDto } from './dto/pagination.dto';
 
-@Controller('problem')
+@Controller('problems')
 export class ProblemController {
   constructor(private readonly problemService: ProblemService) {}
 
