@@ -1,65 +1,166 @@
-import Image from 'next/image'
+//GitCode.dev/frontend/app/page.tsx
+'use client';
 
-export default function Home() {
+import { useAuth } from '@/contexts/AuthContext';
+import { ProtectedRoute } from '@/components/ProtectedRoute';
+import Image from 'next/image';
+import { useState } from 'react';
+
+function DashboardContent() {
+  const { user, logout } = useAuth();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    await logout();
+    // Nie ustawiaj setIsLoggingOut(false) bo komponent zostanie unmountowany po przekierowaniu
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between bg-white px-16 py-32 sm:items-start dark:bg-black">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl leading-10 font-semibold tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{' '}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{' '}
-            or the{' '}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{' '}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="bg-foreground text-background flex h-12 w-full items-center justify-center gap-2 rounded-full px-5 transition-colors hover:bg-[#383838] md:w-[158px] dark:hover:bg-[#ccc]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
+    <div className="flex min-h-screen flex-col bg-zinc-50 font-sans dark:bg-black">
+      {/* Header */}
+      <header className="border-b border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4">
+          <div className="flex items-center gap-3">
             <Image
               className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+              src="/next.svg"
+              alt="GitCode.dev"
+              width={100}
+              height={20}
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] md:w-[158px] dark:border-white/[.145] dark:hover:bg-[#1a1a1a]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+            <span className="text-sm text-gray-500 dark:text-gray-400">Dashboard</span>
+          </div>
+          
+          <div className="flex items-center gap-4">
+            <div className="text-right">
+              <div className="font-medium text-gray-900 dark:text-white">
+                {user?.firstName} {user?.lastName}
+              </div>
+              <div className="text-sm text-gray-500 dark:text-gray-400">
+                {user?.email}
+              </div>
+            </div>
+            
+            {user?.avatarUrl && (
+              <Image
+                src={user.avatarUrl}
+                alt="Profile"
+                width={40}
+                height={40}
+                className="rounded-full"
+              />
+            )}
+            
+            <button
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+              className="rounded-md bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isLoggingOut ? 'Logging out...' : 'Logout'}
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="flex-1 px-4 py-8">
+        <div className="mx-auto max-w-7xl">
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+              Welcome back, {user?.firstName}!
+            </h1>
+            <p className="mt-2 text-gray-600 dark:text-gray-400">
+              Ready to start coding and collaborating?
+            </p>
+          </div>
+
+          {/* Dashboard Stats */}
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className="rounded-lg bg-white p-6 shadow-sm dark:bg-gray-800">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                Your Projects
+              </h3>
+              <p className="mt-2 text-3xl font-bold text-blue-600">0</p>
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                Create your first project
+              </p>
+            </div>
+
+            <div className="rounded-lg bg-white p-6 shadow-sm dark:bg-gray-800">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                Repositories
+              </h3>
+              <p className="mt-2 text-3xl font-bold text-green-600">0</p>
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                Start coding today
+              </p>
+            </div>
+
+            <div className="rounded-lg bg-white p-6 shadow-sm dark:bg-gray-800">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                Collaborations
+              </h3>
+              <p className="mt-2 text-3xl font-bold text-purple-600">0</p>
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                Invite team members
+              </p>
+            </div>
+          </div>
+
+          {/* Quick Actions */}
+          <div className="mt-8">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+              Quick Actions
+            </h2>
+            <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+              <button className="rounded-lg border border-gray-200 bg-white p-6 text-left hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700">
+                <div className="text-lg font-medium text-gray-900 dark:text-white">
+                  New Repository
+                </div>
+                <div className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                  Create a new code repository
+                </div>
+              </button>
+
+              <button className="rounded-lg border border-gray-200 bg-white p-6 text-left hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700">
+                <div className="text-lg font-medium text-gray-900 dark:text-white">
+                  Join Project
+                </div>
+                <div className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                  Collaborate with others
+                </div>
+              </button>
+
+              <button className="rounded-lg border border-gray-200 bg-white p-6 text-left hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700">
+                <div className="text-lg font-medium text-gray-900 dark:text-white">
+                  Profile Settings
+                </div>
+                <div className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                  Manage your account
+                </div>
+              </button>
+
+              <button className="rounded-lg border border-gray-200 bg-white p-6 text-left hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700">
+                <div className="text-lg font-medium text-gray-900 dark:text-white">
+                  Documentation
+                </div>
+                <div className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                  Learn how to use GitCode
+                </div>
+              </button>
+            </div>
+          </div>
         </div>
       </main>
     </div>
-  )
+  );
+}
+
+export default function Home() {
+  return (
+    <ProtectedRoute>
+      <DashboardContent />
+    </ProtectedRoute>
+  );
 }

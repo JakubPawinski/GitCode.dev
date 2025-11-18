@@ -124,7 +124,8 @@ export class AuthController {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
-        path: '/auth',
+        path: '/api/auth',
+        //path: '/auth',
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       });
 
@@ -194,7 +195,8 @@ export class AuthController {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
-        path: '/auth',
+        path: '/api/auth',
+        //path: '/auth',
         maxAge: 7 * 24 * 60 * 60 * 1000,
       });
 
@@ -248,7 +250,7 @@ export class AuthController {
       }
     }
 
-    res.clearCookie('gc_refresh', { path: '/auth' });
+    res.clearCookie('gc_refresh', { path: '/api/auth' });
 
     return res.json({
       success: true,
