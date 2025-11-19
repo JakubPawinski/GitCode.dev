@@ -18,11 +18,18 @@ model User {
   emailVerified Boolean        @default(false) @map("email_verified")
   createdAt     DateTime       @default(now()) @map("created_at")
   updatedAt     DateTime       @updatedAt @map("updated_at")
-  roles         Json         @default("[]")
-  permissions   Json          @default("[]")
+  roles         Json           @default("[]")
+  permissions   Json           @default("[]")
+  bio           String?        @db.Text
+  isActive     Boolean         @default(true) @map("is_active")
+  lastLogin    DateTime?       @default(now()) @map("last_login")
   
   oauthTokens   OAuthToken[]
+  preferences   UserPreferences?
 
+  @@index([email])
+  @@index([username])  
+  @@index([isActive])  
   @@map("users")
 }
 
@@ -40,6 +47,24 @@ model OAuthToken {
   
   user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([userId]) 
+  @@index([provider]) 
   @@unique([userId, provider])
   @@map("oauth_tokens")
+}
+
+model UserPreferences {  
+  id              String   @id @default(uuid())
+  userId          String   @unique @map("user_id")
+  theme           String   @default("light")
+  language        String   @default("en")
+  notifications   Boolean  @default(true)
+  privacyLevel    String   @default("public")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+  
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("user_preferences")
 }
