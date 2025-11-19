@@ -23,7 +23,7 @@ import {
   UserDto,
   LogoutResponseDto,
 } from './dto/auth-response.dto';
-import { ApiResponseDto } from './dto/api-response.dto';
+import { ApiResponseDto } from '../dto/api-response.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { RedisService } from '../redis/redis.service';
 import { AppService } from '../app.service';

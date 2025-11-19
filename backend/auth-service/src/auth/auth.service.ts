@@ -174,6 +174,7 @@ export class AuthService {
         emailVerified: userInfo.email_verified || false,
         roles: userInfo.roles,
         permissions: userInfo.permissions,
+        bio: userInfo.bio,
       },
       create: {
         keycloakId: userInfo.sub,
@@ -185,6 +186,15 @@ export class AuthService {
         emailVerified: userInfo.email_verified || false,
         roles: userInfo.roles,
         permissions: userInfo.permissions,
+        bio: userInfo.bio,
+        preferences: {
+          create: {
+            theme: 'LIGHT',
+            language: 'en',
+            notifications: true,
+            privacyLevel: 'PUBLIC',
+          },
+        },
       },
     });
 
@@ -295,10 +305,8 @@ export class AuthService {
         id: true,
         username: true,
         email: true,
-        firstName: true,
-        lastName: true,
-        avatarUrl: true,
-        emailVerified: true,
+        permissions: true,
+        roles: true,
       },
     });
 
