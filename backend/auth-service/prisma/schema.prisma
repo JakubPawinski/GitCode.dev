@@ -56,10 +56,10 @@ model OAuthToken {
 model UserPreferences {  
   id              String   @id @default(uuid())
   userId          String   @unique @map("user_id")
-  theme           String   @default("light")
+  theme           Theme   @default(LIGHT)
   language        String   @default("en")
   notifications   Boolean  @default(true)
-  privacyLevel    String   @default("public")
+  privacyLevel    PrivacyLevel   @default(PUBLIC)
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
   
@@ -67,4 +67,15 @@ model UserPreferences {
 
   @@index([userId])
   @@map("user_preferences")
+}
+
+enum PrivacyLevel {
+  PUBLIC
+  PRIVATE
+  FRIENDS_ONLY
+}
+
+enum Theme {
+  LIGHT
+  DARK
 }
