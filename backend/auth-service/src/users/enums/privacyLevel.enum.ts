@@ -1,5 +1,5 @@
 export enum privacyLevelEnum {
-  PUBLIC = 'public',
-  PRIVATE = 'private',
-  FRIENDS_ONLY = 'friends_only',
+  PUBLIC = 'PUBLIC',
+  PRIVATE = 'PRIVATE',
+  FRIENDS_ONLY = 'FRIENDS_ONLY',
 }

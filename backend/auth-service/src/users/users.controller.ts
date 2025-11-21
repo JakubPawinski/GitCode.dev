@@ -16,6 +16,7 @@ import {
   ApiTags,
   ApiExtraModels,
   getSchemaPath,
+  ApiBody,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AppPermission } from '../auth/enums/permissions.enum';
@@ -23,20 +24,33 @@ import { PermissionsGuards } from '../auth/guards/permissions.guard';
 import { RequirePermissions } from '../auth/decorators/permissions.decorator';
 import { User } from '../auth/decorators/current-user.decorator';
 import { ApiResponseDto } from '../dto/api-response.dto';
-import { PatchPreferencesDto, PreferencesDto } from './dtos/preferences.dto';
-import { PatchUsersDto, UsersDto } from './dtos/users.dto';
 import { patch } from 'axios';
 import { GetUsersQueryDto } from './dtos/get-users-query.dto';
+import { GetProfileDto } from './dtos/get-profile.dto';
+import { PatchProfileDto } from './dtos/patch-profile.dto';
+import type { AuthenticatedUser } from '../types';
+import { GetPreferencesDto } from './dtos/get-preferences.dto';
+import { PatchPreferencesDto } from './dtos/patch-preferences.dto';
+import { GetPublicProfileDto } from './dtos/get-public-profile.dto';
+import { GetUserDto } from './dtos/get-user.dto';
 
 @Controller('users')
 @ApiTags('Users management')
-@ApiExtraModels(ApiResponseDto, PreferencesDto, UsersDto)
+@ApiExtraModels(
+  ApiResponseDto,
+  GetPreferencesDto,
+  PatchProfileDto,
+  GetProfileDto,
+  PatchPreferencesDto,
+  GetPublicProfileDto,
+  GetUserDto,
+)
+@UseGuards(JwtAuthGuard, PermissionsGuards)
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get('/me')
-  @UseGuards(JwtAuthGuard, PermissionsGuards)
-  @RequirePermissions(AppPermission.USER_READ)
+  @RequirePermissions(AppPermission.USER_READ_SELF)
   @ApiBearerAuth('Bearer Auth')
   @ApiOperation({ summary: "Get current user's profile" })
   @ApiResponse({
@@ -48,7 +62,7 @@ export class UsersController {
         {
           properties: {
             data: {
-              $ref: getSchemaPath(UsersDto),
+              $ref: getSchemaPath(GetProfileDto),
             },
           },
         },
@@ -58,29 +72,83 @@ export class UsersController {
   /*
    * Get current user's profile
    */
-  public getMe(@User() user: any) {
+  public getMe(@User() user: AuthenticatedUser): Promise<GetProfileDto> {
     return this.usersService.getUserProfile(user.id);
   }
 
   @Patch('/me')
+  @RequirePermissions(AppPermission.USER_UPDATE_SELF)
+  @ApiBearerAuth('Bearer Auth')
+  @ApiOperation({ summary: "Update current user's profile" })
+  @ApiResponse({
+    status: 200,
+    description: 'User profile updated successfully',
+    schema: {
+      allOf: [
+        { $ref: getSchemaPath(ApiResponseDto) },
+        {
+          properties: {
+            data: {
+              $ref: getSchemaPath(GetProfileDto),
+            },
+          },
+        },
+      ],
+    },
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        bio: { type: 'string', example: 'Updated bio' },
+        avatarUrl: {
+          type: 'string',
+          example: 'https://example.com/new-avatar.jpg',
+        },
+      },
+    },
+  })
   /*
    * Update current user's profile
    */
-  public updateMe(@User() user: any, @Body() patchUsersDto: PatchUsersDto) {
-    return this.usersService.updateUserProfile(user.id, patchUsersDto);
+  public updateMe(
+    @User() user: AuthenticatedUser,
+    @Body() patchProfileDto: PatchProfileDto,
+  ): Promise<GetProfileDto> {
+    return this.usersService.updateUserProfile(user.id, patchProfileDto);
   }
 
   @Delete('/me')
+  @RequirePermissions(AppPermission.USER_DELETE_SELF)
+  @ApiBearerAuth('Bearer Auth')
+  @ApiOperation({ summary: "Soft delete current user's account" })
+  @ApiResponse({
+    status: 200,
+    description: 'User account deleted successfully',
+    schema: {
+      allOf: [
+        { $ref: getSchemaPath(ApiResponseDto) },
+        {
+          properties: {
+            data: {
+              $ref: getSchemaPath(GetProfileDto),
+            },
+          },
+        },
+      ],
+    },
+  })
   /*
    * Delete current user's account
    */
-  public deleteMe(@User() user: any) {
-    return this.usersService.softDeleteUserAccount(user.id);
+  public async deleteMe(@User() user: AuthenticatedUser) {
+    const deletedUser = await this.usersService.softDeleteUserAccount(user.id);
+    return { message: 'User account deleted successfully', data: deletedUser };
   }
 
   @Get('/me/preferences')
   @UseGuards(JwtAuthGuard, PermissionsGuards)
-  @RequirePermissions(AppPermission.USER_READ)
+  @RequirePermissions(AppPermission.USER_PREFERENCE_READ)
   @ApiBearerAuth('Bearer Auth')
   @ApiOperation({ summary: "Get current user's preferences" })
   @ApiResponse({
@@ -91,7 +159,7 @@ export class UsersController {
         {
           properties: {
             data: {
-              $ref: getSchemaPath(PreferencesDto),
+              $ref: getSchemaPath(GetPreferencesDto),
             },
           },
         },
@@ -102,18 +170,40 @@ export class UsersController {
   /*
    * Get current user's preferences
    */
-  public getPreferences(@User() user: any) {
+  public getPreferences(
+    @User() user: AuthenticatedUser,
+  ): Promise<GetPreferencesDto> {
     return this.usersService.getUserPreferences(user.id);
   }
 
   @Patch('/me/preferences')
+  @UseGuards(JwtAuthGuard, PermissionsGuards)
+  @RequirePermissions(AppPermission.USER_PREFERENCE_UPDATE)
+  @ApiBearerAuth('Bearer Auth')
+  @ApiOperation({ summary: "Update current user's preferences" })
+  @ApiResponse({
+    status: 200,
+    description: "User's preferences updated successfully",
+    schema: {
+      allOf: [
+        { $ref: getSchemaPath(ApiResponseDto) },
+        {
+          properties: {
+            data: {
+              $ref: getSchemaPath(GetPreferencesDto),
+            },
+          },
+        },
+      ],
+    },
+  })
   /*
    * Update current user's preferences
    */
   public updatePreferences(
-    @User() user: any,
+    @User() user: AuthenticatedUser,
     @Body() patchPreferencesDto: PatchPreferencesDto,
-  ) {
+  ): Promise<GetPreferencesDto> {
     return this.usersService.updateUserPreferences(
       user.id,
       patchPreferencesDto,
@@ -121,16 +211,57 @@ export class UsersController {
   }
 
   @Get('/:id/profile')
+  @UseGuards(JwtAuthGuard, PermissionsGuards)
+  @RequirePermissions(AppPermission.USER_READ_PUBLIC)
+  @ApiBearerAuth('Bearer Auth')
+  @ApiOperation({ summary: 'Get user profile by ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'User profile retrieved successfully',
+    schema: {
+      allOf: [
+        { $ref: getSchemaPath(ApiResponseDto) },
+        {
+          properties: {
+            data: {
+              $ref: getSchemaPath(GetPublicProfileDto),
+            },
+          },
+        },
+      ],
+    },
+  })
   /*
    * Get user profile by ID
    */
-  public getUserProfile(@Param('id') id: string) {
-    return this.usersService.getUserProfile(id);
+  public getUserPublicProfile(
+    @Param('id') id: string,
+  ): Promise<GetPublicProfileDto> {
+    return this.usersService.getUserPublicProfile(id);
   }
 
-  //Admin and moderator endpoints
-
   @Get()
+  @UseGuards(JwtAuthGuard, PermissionsGuards)
+  @RequirePermissions(AppPermission.USER_MANAGE) // Require admin-level permission
+  @ApiBearerAuth('Bearer Auth')
+  @ApiOperation({ summary: 'Get all users' })
+  @ApiResponse({
+    status: 200,
+    description: 'Users retrieved successfully',
+    schema: {
+      allOf: [
+        { $ref: getSchemaPath(ApiResponseDto) },
+        {
+          properties: {
+            data: {
+              type: 'array',
+              items: { $ref: getSchemaPath(GetUserDto) },
+            },
+          },
+        },
+      ],
+    },
+  })
   /*
    * Get all users
    */
@@ -139,18 +270,66 @@ export class UsersController {
   }
 
   @Get(':id')
+  @UseGuards(JwtAuthGuard, PermissionsGuards)
+  @RequirePermissions(AppPermission.USER_READ_PRIVATE)
+  @ApiBearerAuth('Bearer Auth')
+  @ApiOperation({ summary: 'Get user by ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'User retrieved successfully',
+    schema: {
+      allOf: [
+        { $ref: getSchemaPath(ApiResponseDto) },
+        {
+          properties: {
+            data: {
+              $ref: getSchemaPath(GetUserDto),
+            },
+          },
+        },
+      ],
+    },
+  })
   /*
-   * Get user by ID
+   * Get user by ID with all details
    */
-  public getUserById(@Param('id') id: string) {
+  public getUserById(@Param('id') id: string): Promise<GetUserDto> {
     return this.usersService.getUserById(id);
   }
 
-  // @Delete(':id')
-  // /*
-  //  * Delete user by ID
-  //  */
-  // public deleteUserById() {
-  //   return this.usersService.deleteUserById();
-  // }
+  @Delete(':id/ban')
+  @UseGuards(JwtAuthGuard, PermissionsGuards)
+  @RequirePermissions(AppPermission.USER_MANAGE) // Require admin-level permission
+  @ApiBearerAuth('Bearer Auth')
+  @ApiOperation({ summary: 'Ban user by ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'User banned successfully',
+    schema: {
+      allOf: [
+        { $ref: getSchemaPath(ApiResponseDto) },
+        {
+          properties: {
+            data: {
+              $ref: getSchemaPath(GetUserDto),
+            },
+          },
+        },
+      ],
+    },
+  })
+  /*
+   * Ban user by id
+   */
+  public async banUserById(@Param('id') id: string): Promise<GetUserDto> {
+    const bannedUser = await this.usersService.banUserById(id);
+    return bannedUser;
+  }
+
+  /*
+  TODO:
+
+  Post /users/:id/restore   Restore a banned user by ID (admin only)
+  GET /users/search?query=...   Search users by username or email (admin only)
+  */
 }

@@ -2,9 +2,8 @@ import { IsBoolean, IsEnum, IsString } from 'class-validator';
 import { themeEnum } from '../enums/theme.enum';
 import { privacyLevelEnum } from '../enums/privacyLevel.enum';
 import { ApiProperty } from '@nestjs/swagger';
-import { PartialType } from '@nestjs/mapped-types';
 
-export class PreferencesDto {
+export class GetPreferencesDto {
   @ApiProperty({
     enum: themeEnum,
     description: 'User interface theme preference',
@@ -27,5 +26,3 @@ export class PreferencesDto {
   @IsEnum(privacyLevelEnum)
   privacyLevel: privacyLevelEnum;
 }
-
-export class PatchPreferencesDto extends PartialType(PreferencesDto) {}

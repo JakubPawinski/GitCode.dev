@@ -1,6 +1,18 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { GetUsersQueryDto } from '../dtos/get-users-query.dto';
+import { GetProfileDto } from '../dtos/get-profile.dto';
+import { App } from 'supertest/types';
+import { AppRole } from '../../auth/enums/roles.enum';
+import { UUID } from '../../types';
+import { PatchProfileDto } from '../dtos/patch-profile.dto';
+import { GetPreferencesDto } from '../dtos/get-preferences.dto';
+import { privacyLevelEnum } from '../enums/privacyLevel.enum';
+import { themeEnum } from '../enums/theme.enum';
+import { PatchPreferencesDto } from '../dtos/patch-preferences.dto';
+import { GetPublicProfileDto } from '../dtos/get-public-profile.dto';
+import { GetUserDto } from '../dtos/get-user.dto';
+import { AppPermission } from '../../auth/enums/permissions.enum';
 
 @Injectable()
 export class UsersService {
@@ -9,7 +21,7 @@ export class UsersService {
   /*
    * Get current user's profile
    */
-  public async getUserProfile(id) {
+  public async getUserProfile(id): Promise<GetProfileDto> {
     const userProfile = await this.prismaService.user.findUnique({
       where: { id },
     });
@@ -17,13 +29,48 @@ export class UsersService {
     if (!userProfile) {
       throw new NotFoundException('User not found');
     }
-    return userProfile;
+    const profileDto: GetProfileDto = {
+      id: userProfile.id,
+      email: userProfile.email,
+      username: userProfile.username,
+      firstName: userProfile.firstName,
+      lastName: userProfile.lastName,
+      avatarUrl: userProfile.avatarUrl,
+      bio: userProfile.bio,
+      emailVerified: userProfile.emailVerified,
+      roles: userProfile.roles as AppRole[],
+    };
+    return profileDto;
+  }
+
+  /*
+   * Get user public profile by ID
+   */
+  public async getUserPublicProfile(id: UUID): Promise<GetPublicProfileDto> {
+    const userProfile = await this.getUserById(id);
+
+    if (!userProfile) {
+      throw new NotFoundException('User not found');
+    }
+
+    const publicProfileDto: GetPublicProfileDto = {
+      id: userProfile.id,
+      username: userProfile.username,
+      firstName: userProfile.firstName,
+      lastName: userProfile.lastName,
+      avatarUrl: userProfile.avatarUrl,
+      bio: userProfile.bio,
+    };
+    return publicProfileDto;
   }
 
   /*
    * Update current user's profile
    */
-  public async updateUserProfile(userId, patchUsersDto) {
+  public async updateUserProfile(
+    userId: UUID,
+    patchUsersDto: PatchProfileDto,
+  ): Promise<GetProfileDto> {
     const existingUser = await this.prismaService.user.findUnique({
       where: { id: userId },
     });
@@ -39,16 +86,27 @@ export class UsersService {
       },
       omit: {
         permissions: true,
-        roles: true,
       },
     });
-    return updatedUser;
+
+    const profileDto: GetProfileDto = {
+      id: updatedUser.id,
+      email: updatedUser.email,
+      username: updatedUser.username,
+      firstName: updatedUser.firstName,
+      lastName: updatedUser.lastName,
+      avatarUrl: updatedUser.avatarUrl,
+      bio: updatedUser.bio,
+      emailVerified: updatedUser.emailVerified,
+      roles: updatedUser.roles as AppRole[],
+    };
+    return profileDto;
   }
 
   /*
    * Soft delete current user's account
    */
-  public async softDeleteUserAccount(userId) {
+  public async softDeleteUserAccount(userId: UUID): Promise<GetProfileDto> {
     const existingUser = await this.prismaService.user.findUnique({
       where: { id: userId },
     });
@@ -64,16 +122,27 @@ export class UsersService {
       },
       omit: {
         permissions: true,
-        roles: true,
       },
     });
-    return softDeletedUser;
+
+    const profileDto: GetProfileDto = {
+      id: softDeletedUser.id,
+      email: softDeletedUser.email,
+      username: softDeletedUser.username,
+      firstName: softDeletedUser.firstName,
+      lastName: softDeletedUser.lastName,
+      avatarUrl: softDeletedUser.avatarUrl,
+      bio: softDeletedUser.bio,
+      emailVerified: softDeletedUser.emailVerified,
+      roles: softDeletedUser.roles as AppRole[],
+    };
+    return profileDto;
   }
 
   /*
    * Get current user's preferences
    */
-  public async getUserPreferences(userId) {
+  public async getUserPreferences(userId: UUID): Promise<GetPreferencesDto> {
     const userPreferences = await this.prismaService.userPreferences.findUnique(
       {
         where: { userId: userId },
@@ -83,13 +152,22 @@ export class UsersService {
     if (!userPreferences) {
       throw new NotFoundException('User preferences not found');
     }
-    return userPreferences;
+    const preferencesDto: GetPreferencesDto = {
+      theme: userPreferences.theme as themeEnum,
+      language: userPreferences.language,
+      notifications: userPreferences.notifications,
+      privacyLevel: userPreferences.privacyLevel as privacyLevelEnum,
+    };
+    return preferencesDto;
   }
 
   /*
    * Update current user's preferences
    */
-  public async updateUserPreferences(userId, patchPreferencesDto) {
+  public async updateUserPreferences(
+    userId: UUID,
+    patchPreferencesDto: PatchPreferencesDto,
+  ): Promise<GetPreferencesDto> {
     const existingPreferences =
       await this.prismaService.userPreferences.findUnique({
         where: { userId },
@@ -98,21 +176,25 @@ export class UsersService {
     if (!existingPreferences) {
       throw new NotFoundException('User preferences not found');
     }
-
-    return this.prismaService.userPreferences.update({
+    const updatedPreferences = await this.prismaService.userPreferences.update({
       where: { userId },
       data: {
         ...patchPreferencesDto,
       },
     });
+    const preferencesDto: GetPreferencesDto = {
+      theme: updatedPreferences.theme as themeEnum,
+      language: updatedPreferences.language,
+      notifications: updatedPreferences.notifications,
+      privacyLevel: updatedPreferences.privacyLevel as privacyLevelEnum,
+    };
+    return preferencesDto;
   }
 
-  //Admin routes
-
   /*
-   * Get user by ID
+   * Get user by ID with all details
    */
-  public async getUserById(id: string) {
+  public async getUserById(id: UUID): Promise<GetUserDto> {
     const user = await this.prismaService.user.findUnique({
       where: { id },
       include: { preferences: true },
@@ -121,7 +203,31 @@ export class UsersService {
     if (!user) {
       throw new NotFoundException('User not found');
     }
-    return user;
+    const userDto: GetUserDto = {
+      id: user.id,
+      email: user.email,
+      username: user.username,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      avatarUrl: user.avatarUrl,
+      bio: user.bio,
+      emailVerified: user.emailVerified,
+      roles: user.roles as AppRole[],
+      isActive: user.isActive,
+      createdAt: user.createdAt.toISOString(),
+      updatedAt: user.updatedAt.toISOString(),
+      lastLogin: user.lastLogin ? user.lastLogin.toISOString() : null,
+      preferences: user.preferences
+        ? {
+            theme: user.preferences.theme as themeEnum,
+            language: user.preferences.language,
+            notifications: user.preferences.notifications,
+            privacyLevel: user.preferences.privacyLevel as privacyLevelEnum,
+          }
+        : null,
+      permissions: user.permissions as AppPermission[],
+    };
+    return userDto;
   }
   /*
    * Get all users
@@ -154,5 +260,52 @@ export class UsersService {
     };
   }
 
-  // public deleteUserById() {}
+  /*
+   * Ban user by ID (delete from database)
+   */
+  public async banUserById(id: string): Promise<GetUserDto> {
+    const userToBan = await this.prismaService.user.findUnique({
+      where: { id },
+    });
+
+    if (!userToBan) {
+      throw new NotFoundException('User not found');
+    }
+
+    // TODO: remove from keycloak
+    
+    const bannedUser = await this.prismaService.user.delete({
+      where: { id },
+      include: { preferences: true },
+    });
+
+    const userDto: GetUserDto = {
+      id: bannedUser.id,
+      email: bannedUser.email,
+      username: bannedUser.username,
+      firstName: bannedUser.firstName,
+      lastName: bannedUser.lastName,
+      avatarUrl: bannedUser.avatarUrl,
+      bio: bannedUser.bio,
+      emailVerified: bannedUser.emailVerified,
+      roles: bannedUser.roles as AppRole[],
+      isActive: bannedUser.isActive,
+      createdAt: bannedUser.createdAt.toISOString(),
+      updatedAt: bannedUser.updatedAt.toISOString(),
+      lastLogin: bannedUser.lastLogin
+        ? bannedUser.lastLogin.toISOString()
+        : null,
+      preferences: bannedUser.preferences
+        ? {
+            theme: bannedUser.preferences.theme as themeEnum,
+            language: bannedUser.preferences.language,
+            notifications: bannedUser.preferences.notifications,
+            privacyLevel: bannedUser.preferences
+              .privacyLevel as privacyLevelEnum,
+          }
+        : null,
+      permissions: bannedUser.permissions as AppPermission[],
+    };
+    return userDto;
+  }
 }
