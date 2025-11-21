@@ -53,6 +53,7 @@ export enum AppPermission {
   // --- User management ---
   USER_READ_PUBLIC = 'user:read:public', // Permission to read public user profiles in the User Service. Allows viewing basic information like username, bio, and public activity.
   USER_READ_PRIVATE = 'user:read:private', // Permission to read private user profiles in the User Service. Enables access to additional details such as email, preferences, and activity history (typically for admins).
+  USER_READ_SELF = 'user:read:self', // Permission to read own user profile in the User Service. Allows users to access their personal information, settings, and activity data.
   USER_UPDATE_SELF = 'user:update:self', // Permission to update own user profile in the User Service. Allows modifying personal information, profile picture, and other settings.
   USER_DELETE_SELF = 'user:delete:self', // Permission to delete own user account in the User Service. Enables users to remove their account and associated data from the platform.
   USER_MANAGE = 'user:manage', // Permission to manage other user accounts in the User Service. Allows admins to update, suspend, or delete user accounts.
