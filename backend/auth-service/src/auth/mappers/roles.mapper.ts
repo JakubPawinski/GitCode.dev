@@ -15,9 +15,6 @@ export function mapRealmRolesToAppRoles(realmRoles: string[]): AppRoles {
   if (realmRoles.includes('moderator')) {
     appRoles.push(AppRole.MODERATOR);
   }
-  if (realmRoles.includes('instructor')) {
-    appRoles.push(AppRole.INSTRUCTOR);
-  }
   if (realmRoles.includes('premium_user')) {
     appRoles.push(AppRole.PREMIUM_USER);
   }

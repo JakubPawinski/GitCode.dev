@@ -1,7 +1,7 @@
 import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Observable } from 'rxjs';
-import { AppPermissions } from '../enums/permissions.enum';
+import { AppPermission, AppPermissions } from '../enums/permissions.enum';
 import { PERMISSIONS_KEY } from '../decorators/permissions.decorator';
 
 @Injectable()
@@ -34,6 +34,6 @@ export class PermissionsGuards implements CanActivate {
     // Verify that user has all required permissions
     return requiredPermissions.every((permission) =>
       user.permissions.includes(permission),
-    );
+    ) || user.permissions.includes(AppPermission.ADMIN_ALL);
   }
 }
