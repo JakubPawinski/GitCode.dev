@@ -19,10 +19,14 @@ import { Prisma } from '@prisma/client';
 import { PaginatedResult } from '../../types/pagination.interface';
 import { SearchUsersAdminDto } from '../dtos/search-users-admin.dto';
 import { UserStatus } from '../../auth/enums/user-status.enum';
+import { AuthService } from '../../auth/auth.service';
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly authService: AuthService,
+  ) {}
 
   /*
    * Get current user's profile
@@ -350,6 +354,9 @@ export class UsersService {
         where: { userId: id },
       }),
     ]);
+
+    // Revoke all tokens for the user
+    await this.authService.revokeAllUserTokens(id);
 
     // Map to GetUserDto
     const userDto: GetUserDto = {

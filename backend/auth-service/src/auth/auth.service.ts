@@ -12,6 +12,8 @@ import * as crypto from 'crypto';
 import * as bcrypt from 'bcrypt';
 import { mapRolesToPermissions } from './mappers/permissions.mapper';
 import { mapRealmRolesToAppRoles } from './mappers/roles.mapper';
+
+const USER_BLACKLIST_TTL = 7 * 24 * 60 * 60; // 24 hours in seconds (greater than refresh token TTL)
 @Injectable()
 export class AuthService {
   constructor(
@@ -299,11 +301,29 @@ export class AuthService {
     };
   }
 
+  /*
+   * Revoke all refresh tokens for a user (e.g ban)
+   */
+  public async revokeAllUserTokens(userId: string) {
+    // Add user to blacklist in Redis
+    await this.redis.set(
+      `blacklist:user:${userId}`,
+      new Date().toISOString(),
+      USER_BLACKLIST_TTL,
+    );
+  }
+
   async logout(refreshToken: string) {
     await this.redis.del(`refresh_token:${refreshToken}`);
   }
 
   async validateUser(userId: string) {
+    // Check if user is blacklisted
+    const isBlacklisted = await this.redis.exists(`blacklist:user:${userId}`);
+    if (isBlacklisted) {
+      throw new UnauthorizedException('User is blacklisted');
+    }
+
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       select: {
