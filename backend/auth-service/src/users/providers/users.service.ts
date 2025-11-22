@@ -28,13 +28,17 @@ export class UsersService {
    * Get current user's profile
    */
   public async getUserProfile(id): Promise<GetProfileDto> {
+    // Fetch user from database
     const userProfile = await this.prismaService.user.findUnique({
       where: { id },
     });
 
+    // Check if user exists
     if (!userProfile) {
       throw new NotFoundException('User not found');
     }
+
+    // Map to GetProfileDto
     const profileDto: GetProfileDto = {
       id: userProfile.id,
       email: userProfile.email,
@@ -53,16 +57,20 @@ export class UsersService {
    * Get user public profile by ID
    */
   public async getUserPublicProfile(id: UUID): Promise<GetPublicProfileDto> {
+    // Fetch user from database
     const userProfile = await this.getUserById(id);
 
+    // Check if user exists
     if (!userProfile) {
       throw new NotFoundException('User not found');
     }
 
+    // Check if user is active
     if (userProfile.userStatus !== UserStatus.ACTIVE) {
       throw new NotFoundException('User not found');
     }
 
+    // Map to GetPublicProfileDto
     const publicProfileDto: GetPublicProfileDto = {
       id: userProfile.id,
       username: userProfile.username,
@@ -81,14 +89,17 @@ export class UsersService {
     userId: UUID,
     patchUsersDto: PatchProfileDto,
   ): Promise<GetProfileDto> {
+    // Fetch user from database
     const existingUser = await this.prismaService.user.findUnique({
       where: { id: userId },
     });
 
+    // Check if user exists
     if (!existingUser) {
       throw new NotFoundException('User not found');
     }
 
+    // Update user in database
     const updatedUser = await this.prismaService.user.update({
       where: { id: userId },
       data: {
@@ -99,6 +110,7 @@ export class UsersService {
       },
     });
 
+    // Map to GetProfileDto
     const profileDto: GetProfileDto = {
       id: updatedUser.id,
       email: updatedUser.email,
@@ -117,6 +129,7 @@ export class UsersService {
    * Soft delete current user's account
    */
   public async softDeleteUserAccount(userId: UUID): Promise<GetProfileDto> {
+    // Check if user exists
     const existingUser = await this.prismaService.user.findUnique({
       where: { id: userId },
     });
@@ -125,6 +138,7 @@ export class UsersService {
       throw new NotFoundException('User not found');
     }
 
+    // Soft delete user in database
     const softDeletedUser = await this.prismaService.user.update({
       where: { id: userId },
       data: {
@@ -135,6 +149,7 @@ export class UsersService {
       },
     });
 
+    // Map to GetProfileDto
     const profileDto: GetProfileDto = {
       id: softDeletedUser.id,
       email: softDeletedUser.email,
@@ -153,6 +168,7 @@ export class UsersService {
    * Get current user's preferences
    */
   public async getUserPreferences(userId: UUID): Promise<GetPreferencesDto> {
+    // Fetch user preferences from database
     const userPreferences = await this.prismaService.userPreferences.findUnique(
       {
         where: { userId: userId },
@@ -162,6 +178,8 @@ export class UsersService {
     if (!userPreferences) {
       throw new NotFoundException('User preferences not found');
     }
+
+    // Map to GetPreferencesDto
     const preferencesDto: GetPreferencesDto = {
       theme: userPreferences.theme as themeEnum,
       language: userPreferences.language,
@@ -178,6 +196,7 @@ export class UsersService {
     userId: UUID,
     patchPreferencesDto: PatchPreferencesDto,
   ): Promise<GetPreferencesDto> {
+    // Fetch existing user preferences from database
     const existingPreferences =
       await this.prismaService.userPreferences.findUnique({
         where: { userId },
@@ -186,12 +205,16 @@ export class UsersService {
     if (!existingPreferences) {
       throw new NotFoundException('User preferences not found');
     }
+
+    // Update preferences in database
     const updatedPreferences = await this.prismaService.userPreferences.update({
       where: { userId },
       data: {
         ...patchPreferencesDto,
       },
     });
+
+    // Map to GetPreferencesDto
     const preferencesDto: GetPreferencesDto = {
       theme: updatedPreferences.theme as themeEnum,
       language: updatedPreferences.language,
@@ -205,14 +228,18 @@ export class UsersService {
    * Get user by ID with all details
    */
   public async getUserById(id: UUID): Promise<GetUserDto> {
+    // Fetch user from database
     const user = await this.prismaService.user.findUnique({
       where: { id },
       include: { preferences: true },
     });
 
+    // Check if user exists
     if (!user) {
       throw new NotFoundException('User not found');
     }
+
+    // Map to GetUserDto
     const userDto: GetUserDto = {
       id: user.id,
       email: user.email,
@@ -245,6 +272,7 @@ export class UsersService {
   public async getAllUsers(
     query: GetUsersQueryDto,
   ): Promise<PaginatedResult<GetUserDto>> {
+    // Fetch users from database with pagination
     const { page = 1, limit = 10 } = query;
     const skip = (page - 1) * limit;
 
@@ -259,6 +287,7 @@ export class UsersService {
 
     const totalPages = Math.ceil(totalItems / limit);
 
+    // Map to GetUserDto[]
     const mappedUsers: GetUserDto[] = users.map((user) => ({
       id: user.id,
       email: user.email,
@@ -301,6 +330,7 @@ export class UsersService {
    * Ban user by ID (delete from database)
    */
   public async banUserById(id: string): Promise<GetUserDto> {
+    // Check if user exists
     const userToBan = await this.prismaService.user.findUnique({
       where: { id },
     });
@@ -309,17 +339,21 @@ export class UsersService {
       throw new NotFoundException('User not found');
     }
 
-    const bannedUser = await this.prismaService.user.update({
-      where: { id },
-      data: { userStatus: UserStatus.BANNED },
-      include: { preferences: true },
-    });
+    // Ban user in database
+    const [bannedUser] = await this.prismaService.$transaction([
+      this.prismaService.user.update({
+        where: { id },
+        data: { userStatus: UserStatus.BANNED },
+        include: { preferences: true },
+      }),
+      this.prismaService.oAuthToken.deleteMany({
+        where: { userId: id },
+      }),
+    ]);
 
-    // Remove all access tokens associated with the user
-    await this.prismaService.oAuthToken.deleteMany({
-      where: { userId: id },
-    });
+    // TODO Delete tokens from redis authService.revokeAllTokens(id)
 
+    // Map to GetUserDto
     const userDto: GetUserDto = {
       id: bannedUser.id,
       email: bannedUser.email,
@@ -356,6 +390,7 @@ export class UsersService {
   public async searchUsers(
     searchUsersDto: SearchUsersDto,
   ): Promise<PaginatedResult<GetPublicProfileDto>> {
+    // Search users by username with pagination
     const { username } = searchUsersDto;
     const { limit = 10, page = 1 } = searchUsersDto;
     const skip = (page - 1) * limit;
@@ -390,6 +425,7 @@ export class UsersService {
 
     const totalPages = Math.ceil(totalItems / limit);
 
+    // Map to GetPublicProfileDto[]
     const publicProfiles = usersFound.map((user) => ({
       id: user.id,
       username: user.username,
@@ -417,6 +453,7 @@ export class UsersService {
   public async searchUsersAdmin(
     searchUsersAdminDto: SearchUsersAdminDto,
   ): Promise<PaginatedResult<GetUserDto>> {
+    // Search users by email and username with pagination
     const { username, email } = searchUsersAdminDto;
     const { limit = 10, page = 1 } = searchUsersAdminDto;
     const skip = (page - 1) * limit;
@@ -457,6 +494,7 @@ export class UsersService {
 
     const totalPages = Math.ceil(totalItems / limit);
 
+    // Map to GetUserDto[]
     const mappedUsers: GetUserDto[] = usersFound.map((user) => ({
       id: user.id,
       email: user.email,
@@ -499,6 +537,7 @@ export class UsersService {
    * Restore user by ID
    */
   public async restoreUserById(id: UUID): Promise<GetUserDto> {
+    // Fetch user from database
     const existingUser = await this.prismaService.user.findUnique({
       where: { id },
     });
@@ -514,6 +553,7 @@ export class UsersService {
       },
     });
 
+    // Map to GetUserDto
     const mappedUser: GetUserDto = {
       id: updatedUser.id,
       email: updatedUser.email,

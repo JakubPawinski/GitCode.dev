@@ -3,7 +3,11 @@ import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class GetUsersQueryDto {
-  @ApiProperty({ example: 1, description: 'Page number for pagination' })
+  @ApiProperty({
+    example: 1,
+    description: 'Page number for pagination',
+    required: false,
+  })
   @IsInt()
   @IsOptional()
   @Type(() => Number)
@@ -13,6 +17,7 @@ export class GetUsersQueryDto {
   @ApiProperty({
     example: 10,
     description: 'Number of users per page for pagination',
+    required: false,
   })
   @IsInt()
   @IsOptional()

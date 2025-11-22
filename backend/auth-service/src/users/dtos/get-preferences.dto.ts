@@ -7,21 +7,26 @@ export class GetPreferencesDto {
   @ApiProperty({
     enum: themeEnum,
     description: 'User interface theme preference',
+    example: themeEnum.DARK,
   })
   @IsEnum(themeEnum)
   theme: themeEnum;
 
-  @ApiProperty({ description: 'Preferred language' })
+  @ApiProperty({ description: 'Preferred language', example: 'en' })
   @IsString()
   language: string;
 
-  @ApiProperty({ description: 'Enable or disable notifications' })
+  @ApiProperty({
+    description: 'Enable or disable notifications',
+    example: true,
+  })
   @IsBoolean()
   notifications: boolean;
 
   @ApiProperty({
     enum: privacyLevelEnum,
     description: 'Privacy level preference',
+    example: privacyLevelEnum.PUBLIC,
   })
   @IsEnum(privacyLevelEnum)
   privacyLevel: privacyLevelEnum;

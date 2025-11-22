@@ -19,6 +19,7 @@ import {
   ApiExtraModels,
   getSchemaPath,
   ApiBody,
+  ApiParam,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AppPermission } from '../auth/enums/permissions.enum';
@@ -54,6 +55,9 @@ import { PaginatedResult } from '../types/pagination.interface';
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
+  /*
+   * Get current user's profile
+   */
   @Get('/me')
   @RequirePermissions(AppPermission.USER_READ_SELF)
   @ApiBearerAuth('Bearer Auth')
@@ -74,13 +78,13 @@ export class UsersController {
       ],
     },
   })
-  /*
-   * Get current user's profile
-   */
   public getMe(@User() user: AuthenticatedUser): Promise<GetProfileDto> {
     return this.usersService.getUserProfile(user.id);
   }
 
+  /*
+   * Update current user's profile
+   */
   @Patch('/me')
   @RequirePermissions(AppPermission.USER_UPDATE_SELF)
   @ApiBearerAuth('Bearer Auth')
@@ -113,9 +117,6 @@ export class UsersController {
       },
     },
   })
-  /*
-   * Update current user's profile
-   */
   public updateMe(
     @User() user: AuthenticatedUser,
     @Body() patchProfileDto: PatchProfileDto,
@@ -123,6 +124,9 @@ export class UsersController {
     return this.usersService.updateUserProfile(user.id, patchProfileDto);
   }
 
+  /*
+   * Delete current user's account
+   */
   @Delete('/me')
   @RequirePermissions(AppPermission.USER_DELETE_SELF)
   @ApiBearerAuth('Bearer Auth')
@@ -143,14 +147,14 @@ export class UsersController {
       ],
     },
   })
-  /*
-   * Delete current user's account
-   */
   public async deleteMe(@User() user: AuthenticatedUser) {
     const deletedUser = await this.usersService.softDeleteUserAccount(user.id);
     return { message: 'User account deleted successfully', data: deletedUser };
   }
 
+  /*
+   * Get current user's preferences
+   */
   @Get('/me/preferences')
   @UseGuards(JwtAuthGuard, PermissionsGuards)
   @RequirePermissions(AppPermission.USER_PREFERENCE_READ)
@@ -172,15 +176,15 @@ export class UsersController {
     },
     description: "User's preferences retrieved successfully",
   })
-  /*
-   * Get current user's preferences
-   */
   public getPreferences(
     @User() user: AuthenticatedUser,
   ): Promise<GetPreferencesDto> {
     return this.usersService.getUserPreferences(user.id);
   }
 
+  /*
+   * Update current user's preferences
+   */
   @Patch('/me/preferences')
   @UseGuards(JwtAuthGuard, PermissionsGuards)
   @RequirePermissions(AppPermission.USER_PREFERENCE_UPDATE)
@@ -202,9 +206,6 @@ export class UsersController {
       ],
     },
   })
-  /*
-   * Update current user's preferences
-   */
   public updatePreferences(
     @User() user: AuthenticatedUser,
     @Body() patchPreferencesDto: PatchPreferencesDto,
@@ -215,11 +216,21 @@ export class UsersController {
     );
   }
 
+  /*
+   * Get user profile by ID
+   */
   @Get('/:id/profile')
   @UseGuards(JwtAuthGuard, PermissionsGuards)
   @RequirePermissions(AppPermission.USER_READ_PUBLIC)
   @ApiBearerAuth('Bearer Auth')
   @ApiOperation({ summary: 'Get user profile by ID' })
+  @ApiParam({
+    name: 'id',
+    description: 'UUID of the user',
+    type: 'string',
+    format: 'uuid',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
   @ApiResponse({
     status: 200,
     description: 'User profile retrieved successfully',
@@ -236,15 +247,15 @@ export class UsersController {
       ],
     },
   })
-  /*
-   * Get user profile by ID
-   */
   public getUserPublicProfile(
     @Param('id', new ParseUUIDPipe()) id: UUID,
   ): Promise<GetPublicProfileDto> {
     return this.usersService.getUserPublicProfile(id);
   }
 
+  /*
+   * Get all users
+   */
   @Get()
   @UseGuards(JwtAuthGuard, PermissionsGuards)
   @RequirePermissions(AppPermission.USER_MANAGE) // Require admin-level permission
@@ -267,20 +278,27 @@ export class UsersController {
       ],
     },
   })
-  /*
-   * Get all users
-   */
   public getAllUsers(
     @Query() getUsersQueryDto: GetUsersQueryDto,
   ): Promise<PaginatedResult<GetUserDto>> {
     return this.usersService.getAllUsers(getUsersQueryDto);
   }
 
+  /*
+   * Get user by ID with all details
+   */
   @Get(':id')
   @UseGuards(JwtAuthGuard, PermissionsGuards)
   @RequirePermissions(AppPermission.USER_READ_PRIVATE)
   @ApiBearerAuth('Bearer Auth')
   @ApiOperation({ summary: 'Get user by ID' })
+  @ApiParam({
+    name: 'id',
+    description: 'UUID of the user to retrieve',
+    type: 'string',
+    format: 'uuid',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
   @ApiResponse({
     status: 200,
     description: 'User retrieved successfully',
@@ -297,20 +315,27 @@ export class UsersController {
       ],
     },
   })
-  /*
-   * Get user by ID with all details
-   */
   public getUserById(
     @Param('id', new ParseUUIDPipe()) id: UUID,
   ): Promise<GetUserDto> {
     return this.usersService.getUserById(id);
   }
 
-  @Delete(':id/ban')
+  /*
+   * Ban user by id
+   */
+  @Post(':id/ban')
   @UseGuards(JwtAuthGuard, PermissionsGuards)
   @RequirePermissions(AppPermission.USER_MANAGE) // Require admin-level permission
   @ApiBearerAuth('Bearer Auth')
   @ApiOperation({ summary: 'Ban user by ID' })
+  @ApiParam({
+    name: 'id',
+    description: 'UUID of the user to ban',
+    type: 'string',
+    format: 'uuid',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
   @ApiResponse({
     status: 200,
     description: 'User banned successfully',
@@ -327,33 +352,105 @@ export class UsersController {
       ],
     },
   })
-  /*
-   * Ban user by id
-   */
   public async banUserById(
     @Param('id', new ParseUUIDPipe()) id: UUID,
   ): Promise<GetUserDto> {
     return this.usersService.banUserById(id);
   }
 
-  @Get('/search')
   /*
    * Search users by username
    */
+  @Get('/search')
+  @UseGuards(JwtAuthGuard, PermissionsGuards)
+  @RequirePermissions(AppPermission.USER_READ_PUBLIC)
+  @ApiBearerAuth('Bearer Auth')
+  @ApiOperation({ summary: 'Search users by username' })
+  @ApiResponse({
+    status: 200,
+    description: 'Users retrieved successfully',
+    schema: {
+      allOf: [
+        { $ref: getSchemaPath(ApiResponseDto) },
+        {
+          properties: {
+            data: {
+              type: 'array',
+              items: { $ref: getSchemaPath(GetPublicProfileDto) },
+            },
+          },
+        },
+      ],
+    },
+  })
   public async searchUsers(
     @Query() searchUsersDto: SearchUsersDto,
   ): Promise<PaginatedResult<GetPublicProfileDto>> {
     return this.usersService.searchUsers(searchUsersDto);
   }
 
+  /*
+   * Admin search users with more detailed info
+   */
   @Get('/search/admin')
+  @UseGuards(JwtAuthGuard, PermissionsGuards)
+  @RequirePermissions(AppPermission.USER_MANAGE) // Require admin-level permission
+  @ApiBearerAuth('Bearer Auth')
+  @ApiOperation({ summary: 'Admin search users with detailed info' })
+  @ApiResponse({
+    status: 200,
+    description: 'Users retrieved successfully',
+    schema: {
+      allOf: [
+        { $ref: getSchemaPath(ApiResponseDto) },
+        {
+          properties: {
+            data: {
+              type: 'array',
+              items: { $ref: getSchemaPath(GetUserDto) },
+            },
+          },
+        },
+      ],
+    },
+  })
   public searchUsersAdmin(
     @Query() searchUsersAdminDto: SearchUsersAdminDto,
   ): Promise<PaginatedResult<GetUserDto>> {
     return this.usersService.searchUsersAdmin(searchUsersAdminDto);
   }
 
+  /*
+   * Restore a soft-deleted user by ID
+   */
   @Post('/:id/restore')
+  @UseGuards(JwtAuthGuard, PermissionsGuards)
+  @RequirePermissions(AppPermission.USER_MANAGE) // Require admin-level permission
+  @ApiBearerAuth('Bearer Auth')
+  @ApiOperation({ summary: 'Restore a soft-deleted user by ID' })
+  @ApiParam({
+    name: 'id',
+    description: 'UUID of the user to restore',
+    type: 'string',
+    format: 'uuid',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'User restored successfully',
+    schema: {
+      allOf: [
+        { $ref: getSchemaPath(ApiResponseDto) },
+        {
+          properties: {
+            data: {
+              $ref: getSchemaPath(GetUserDto),
+            },
+          },
+        },
+      ],
+    },
+  })
   public restoreUser(@Param('id', new ParseUUIDPipe()) id: UUID) {
     return this.usersService.restoreUserById(id);
   }
