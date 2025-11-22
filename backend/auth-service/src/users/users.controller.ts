@@ -5,6 +5,7 @@ import {
   Param,
   ParseUUIDPipe,
   Patch,
+  Post,
   Query,
   UseGuards,
 } from '@nestjs/common';
@@ -332,8 +333,7 @@ export class UsersController {
   public async banUserById(
     @Param('id', new ParseUUIDPipe()) id: UUID,
   ): Promise<GetUserDto> {
-    const bannedUser = await this.usersService.banUserById(id);
-    return bannedUser;
+    return this.usersService.banUserById(id);
   }
 
   @Get('/search')
@@ -352,10 +352,9 @@ export class UsersController {
   ): Promise<PaginatedResult<GetUserDto>> {
     return this.usersService.searchUsersAdmin(searchUsersAdminDto);
   }
-  /*
-  TODO:
 
-  Post /users/:id/restore   Restore a banned user by ID (admin only)
-  GET /users/search?query=...   Search users by username or email (admin only)
-  */
+  @Post('/:id/restore')
+  public restoreUser(@Param('id', new ParseUUIDPipe()) id: UUID) {
+    return this.usersService.restoreUserById(id);
+  }
 }

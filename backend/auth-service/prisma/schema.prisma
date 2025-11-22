@@ -21,15 +21,15 @@ model User {
   roles         Json           @default("[]")
   permissions   Json           @default("[]")
   bio           String?        @db.Text
-  isActive     Boolean         @default(true) @map("is_active")
-  lastLogin    DateTime?       @default(now()) @map("last_login")
+  userStatus    UserStatus     @default(ACTIVE) @map("user_status")
+  lastLogin     DateTime?      @default(now()) @map("last_login")
   
   oauthTokens   OAuthToken[]
   preferences   UserPreferences?
 
   @@index([email])
   @@index([username])  
-  @@index([isActive])  
+  @@index([userStatus])  
   @@map("users")
 }
 
@@ -78,4 +78,11 @@ enum PrivacyLevel {
 enum Theme {
   LIGHT
   DARK
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  BANNED  // Banned users
+  DELETED // Soft-deleted users
 }

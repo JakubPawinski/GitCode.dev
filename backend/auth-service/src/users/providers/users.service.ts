@@ -18,6 +18,7 @@ import { contains } from 'class-validator';
 import { Prisma } from '@prisma/client';
 import { PaginatedResult } from '../../types/pagination.interface';
 import { SearchUsersAdminDto } from '../dtos/search-users-admin.dto';
+import { UserStatus } from '../../auth/enums/user-status.enum';
 
 @Injectable()
 export class UsersService {
@@ -55,6 +56,10 @@ export class UsersService {
     const userProfile = await this.getUserById(id);
 
     if (!userProfile) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (userProfile.userStatus !== UserStatus.ACTIVE) {
       throw new NotFoundException('User not found');
     }
 
@@ -123,7 +128,7 @@ export class UsersService {
     const softDeletedUser = await this.prismaService.user.update({
       where: { id: userId },
       data: {
-        isActive: false,
+        userStatus: UserStatus.DELETED,
       },
       omit: {
         permissions: true,
@@ -218,7 +223,7 @@ export class UsersService {
       bio: user.bio,
       emailVerified: user.emailVerified,
       roles: user.roles as AppRole[],
-      isActive: user.isActive,
+      userStatus: user.userStatus as UserStatus,
       createdAt: user.createdAt.toISOString(),
       updatedAt: user.updatedAt.toISOString(),
       lastLogin: user.lastLogin ? user.lastLogin.toISOString() : null,
@@ -264,7 +269,7 @@ export class UsersService {
       bio: user.bio,
       emailVerified: user.emailVerified,
       roles: user.roles as AppRole[],
-      isActive: user.isActive,
+      userStatus: user.userStatus as UserStatus,
       createdAt: user.createdAt.toISOString(),
       updatedAt: user.updatedAt.toISOString(),
       lastLogin: user.lastLogin ? user.lastLogin.toISOString() : null,
@@ -304,11 +309,15 @@ export class UsersService {
       throw new NotFoundException('User not found');
     }
 
-    // TODO: remove from keycloak
-
-    const bannedUser = await this.prismaService.user.delete({
+    const bannedUser = await this.prismaService.user.update({
       where: { id },
+      data: { userStatus: UserStatus.BANNED },
       include: { preferences: true },
+    });
+
+    // Remove all access tokens associated with the user
+    await this.prismaService.oAuthToken.deleteMany({
+      where: { userId: id },
     });
 
     const userDto: GetUserDto = {
@@ -321,7 +330,7 @@ export class UsersService {
       bio: bannedUser.bio,
       emailVerified: bannedUser.emailVerified,
       roles: bannedUser.roles as AppRole[],
-      isActive: bannedUser.isActive,
+      userStatus: bannedUser.userStatus as UserStatus,
       createdAt: bannedUser.createdAt.toISOString(),
       updatedAt: bannedUser.updatedAt.toISOString(),
       lastLogin: bannedUser.lastLogin
@@ -356,7 +365,7 @@ export class UsersService {
         contains: username,
         mode: 'insensitive',
       },
-      isActive: true,
+      userStatus: UserStatus.ACTIVE,
     };
 
     const [usersFound, totalItems] = await Promise.all([
@@ -458,7 +467,7 @@ export class UsersService {
       bio: user.bio,
       emailVerified: user.emailVerified,
       roles: user.roles as AppRole[],
-      isActive: user.isActive,
+      userStatus: user.userStatus as UserStatus,
       createdAt: user.createdAt.toISOString(),
       updatedAt: user.updatedAt.toISOString(),
       lastLogin: user.lastLogin ? user.lastLogin.toISOString() : null,
@@ -484,5 +493,45 @@ export class UsersService {
         hasPreviousPage: page > 1,
       },
     };
+  }
+
+  /*
+   * Restore user by ID
+   */
+  public async restoreUserById(id: UUID): Promise<GetUserDto> {
+    const existingUser = await this.prismaService.user.findUnique({
+      where: { id },
+    });
+
+    if (!existingUser) {
+      throw new NotFoundException('User not found');
+    }
+
+    const updatedUser = await this.prismaService.user.update({
+      where: { id },
+      data: {
+        userStatus: UserStatus.ACTIVE,
+      },
+    });
+
+    const mappedUser: GetUserDto = {
+      id: updatedUser.id,
+      email: updatedUser.email,
+      username: updatedUser.username,
+      firstName: updatedUser.firstName,
+      lastName: updatedUser.lastName,
+      avatarUrl: updatedUser.avatarUrl,
+      bio: updatedUser.bio,
+      emailVerified: updatedUser.emailVerified,
+      roles: updatedUser.roles as AppRole[],
+      userStatus: updatedUser.userStatus as UserStatus,
+      createdAt: updatedUser.createdAt.toISOString(),
+      updatedAt: updatedUser.updatedAt.toISOString(),
+      lastLogin: updatedUser.lastLogin
+        ? updatedUser.lastLogin.toISOString()
+        : null,
+      permissions: updatedUser.permissions as AppPermission[],
+    };
+    return mappedUser;
   }
 }

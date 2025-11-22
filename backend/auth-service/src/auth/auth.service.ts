@@ -276,6 +276,11 @@ export class AuthService {
       throw new UnauthorizedException('User not found');
     }
 
+    // Check if user is active
+    if (user.userStatus !== 'ACTIVE') {
+      throw new UnauthorizedException('User account is not active');
+    }
+
     // Generate new tokens
     const accessToken = this.generateAccessToken(user);
     const newRefreshToken = await this.generateRefreshToken(user.id);
@@ -307,11 +312,16 @@ export class AuthService {
         email: true,
         permissions: true,
         roles: true,
+        userStatus: true,
       },
     });
 
     if (!user) {
       throw new UnauthorizedException('User not found');
+    }
+
+    if (user.userStatus !== 'ACTIVE') {
+      throw new UnauthorizedException('User account is not active');
     }
 
     return user;

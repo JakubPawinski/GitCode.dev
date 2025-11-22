@@ -10,11 +10,12 @@ import { Type } from 'class-transformer';
 import { GetProfileDto } from './get-profile.dto';
 import { GetPreferencesDto } from './get-preferences.dto';
 import { AppPermission } from '../../auth/enums/permissions.enum';
+import { UserStatus } from '../../auth/enums/user-status.enum';
 
 export class GetUserDto extends GetProfileDto {
-  @ApiProperty({ description: 'Indicates if the user account is active' })
-  @IsBoolean()
-  isActive: boolean;
+  @ApiProperty({ description: 'Status of the user account', enum: UserStatus })
+  @IsEnum(UserStatus)
+  userStatus: UserStatus;
 
   @ApiProperty({ description: 'Account creation date' })
   @IsDateString()
