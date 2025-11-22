@@ -34,6 +34,9 @@ import { GetPreferencesDto } from './dtos/get-preferences.dto';
 import { PatchPreferencesDto } from './dtos/patch-preferences.dto';
 import { GetPublicProfileDto } from './dtos/get-public-profile.dto';
 import { GetUserDto } from './dtos/get-user.dto';
+import { SearchUsersDto } from './dtos/search-users.dto';
+import { SearchUsersAdminDto } from './dtos/search-users-admin.dto';
+import { PaginatedResult } from '../types/pagination.interface';
 
 @Controller('users')
 @ApiTags('Users management')
@@ -266,7 +269,9 @@ export class UsersController {
   /*
    * Get all users
    */
-  public getAllUsers(@Query() getUsersQueryDto: GetUsersQueryDto) {
+  public getAllUsers(
+    @Query() getUsersQueryDto: GetUsersQueryDto,
+  ): Promise<PaginatedResult<GetUserDto>> {
     return this.usersService.getAllUsers(getUsersQueryDto);
   }
 
@@ -331,6 +336,22 @@ export class UsersController {
     return bannedUser;
   }
 
+  @Get('/search')
+  /*
+   * Search users by username
+   */
+  public async searchUsers(
+    @Query() searchUsersDto: SearchUsersDto,
+  ): Promise<PaginatedResult<GetPublicProfileDto>> {
+    return this.usersService.searchUsers(searchUsersDto);
+  }
+
+  @Get('/search/admin')
+  public searchUsersAdmin(
+    @Query() searchUsersAdminDto: SearchUsersAdminDto,
+  ): Promise<PaginatedResult<GetUserDto>> {
+    return this.usersService.searchUsersAdmin(searchUsersAdminDto);
+  }
   /*
   TODO:
 

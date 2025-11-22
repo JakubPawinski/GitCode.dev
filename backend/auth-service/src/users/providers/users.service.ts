@@ -13,6 +13,11 @@ import { PatchPreferencesDto } from '../dtos/patch-preferences.dto';
 import { GetPublicProfileDto } from '../dtos/get-public-profile.dto';
 import { GetUserDto } from '../dtos/get-user.dto';
 import { AppPermission } from '../../auth/enums/permissions.enum';
+import { SearchUsersDto } from '../dtos/search-users.dto';
+import { contains } from 'class-validator';
+import { Prisma } from '@prisma/client';
+import { PaginatedResult } from '../../types/pagination.interface';
+import { SearchUsersAdminDto } from '../dtos/search-users-admin.dto';
 
 @Injectable()
 export class UsersService {
@@ -232,7 +237,9 @@ export class UsersService {
   /*
    * Get all users
    */
-  public async getAllUsers(query: GetUsersQueryDto) {
+  public async getAllUsers(
+    query: GetUsersQueryDto,
+  ): Promise<PaginatedResult<GetUserDto>> {
     const { page = 1, limit = 10 } = query;
     const skip = (page - 1) * limit;
 
@@ -247,8 +254,33 @@ export class UsersService {
 
     const totalPages = Math.ceil(totalItems / limit);
 
+    const mappedUsers: GetUserDto[] = users.map((user) => ({
+      id: user.id,
+      email: user.email,
+      username: user.username,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      avatarUrl: user.avatarUrl,
+      bio: user.bio,
+      emailVerified: user.emailVerified,
+      roles: user.roles as AppRole[],
+      isActive: user.isActive,
+      createdAt: user.createdAt.toISOString(),
+      updatedAt: user.updatedAt.toISOString(),
+      lastLogin: user.lastLogin ? user.lastLogin.toISOString() : null,
+      preferences: user.preferences
+        ? {
+            theme: user.preferences.theme as themeEnum,
+            language: user.preferences.language,
+            notifications: user.preferences.notifications,
+            privacyLevel: user.preferences.privacyLevel as privacyLevelEnum,
+          }
+        : null,
+      permissions: user.permissions as AppPermission[],
+    }));
+
     return {
-      data: users,
+      data: mappedUsers,
       meta: {
         currentPage: page,
         pageSize: limit,
@@ -273,7 +305,7 @@ export class UsersService {
     }
 
     // TODO: remove from keycloak
-    
+
     const bannedUser = await this.prismaService.user.delete({
       where: { id },
       include: { preferences: true },
@@ -307,5 +339,150 @@ export class UsersService {
       permissions: bannedUser.permissions as AppPermission[],
     };
     return userDto;
+  }
+
+  /*
+   * Search users by username
+   */
+  public async searchUsers(
+    searchUsersDto: SearchUsersDto,
+  ): Promise<PaginatedResult<GetPublicProfileDto>> {
+    const { username } = searchUsersDto;
+    const { limit = 10, page = 1 } = searchUsersDto;
+    const skip = (page - 1) * limit;
+
+    const whereCondition: Prisma.UserWhereInput = {
+      username: {
+        contains: username,
+        mode: 'insensitive',
+      },
+      isActive: true,
+    };
+
+    const [usersFound, totalItems] = await Promise.all([
+      this.prismaService.user.findMany({
+        where: whereCondition,
+        skip,
+        take: limit,
+        orderBy: { username: 'asc' },
+        select: {
+          id: true,
+          username: true,
+          firstName: true,
+          lastName: true,
+          avatarUrl: true,
+          bio: true,
+        },
+      }),
+      this.prismaService.user.count({
+        where: whereCondition,
+      }),
+    ]);
+
+    const totalPages = Math.ceil(totalItems / limit);
+
+    const publicProfiles = usersFound.map((user) => ({
+      id: user.id,
+      username: user.username,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      avatarUrl: user.avatarUrl,
+      bio: user.bio,
+    }));
+    return {
+      data: publicProfiles,
+      meta: {
+        currentPage: page,
+        pageSize: limit,
+        totalItems,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPreviousPage: page > 1,
+      },
+    };
+  }
+
+  /*
+   * Search users by email and username (admin)
+   */
+  public async searchUsersAdmin(
+    searchUsersAdminDto: SearchUsersAdminDto,
+  ): Promise<PaginatedResult<GetUserDto>> {
+    const { username, email } = searchUsersAdminDto;
+    const { limit = 10, page = 1 } = searchUsersAdminDto;
+    const skip = (page - 1) * limit;
+
+    const whereCondition: Prisma.UserWhereInput = {
+      AND: [
+        username
+          ? {
+              username: {
+                contains: username,
+                mode: 'insensitive',
+              },
+            }
+          : {},
+        email
+          ? {
+              email: {
+                contains: email,
+                mode: 'insensitive',
+              },
+            }
+          : {},
+      ],
+    };
+
+    const [usersFound, totalItems] = await Promise.all([
+      this.prismaService.user.findMany({
+        where: whereCondition,
+        skip,
+        take: limit,
+        orderBy: { username: 'asc' },
+        include: { preferences: true },
+      }),
+      this.prismaService.user.count({
+        where: whereCondition,
+      }),
+    ]);
+
+    const totalPages = Math.ceil(totalItems / limit);
+
+    const mappedUsers: GetUserDto[] = usersFound.map((user) => ({
+      id: user.id,
+      email: user.email,
+      username: user.username,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      avatarUrl: user.avatarUrl,
+      bio: user.bio,
+      emailVerified: user.emailVerified,
+      roles: user.roles as AppRole[],
+      isActive: user.isActive,
+      createdAt: user.createdAt.toISOString(),
+      updatedAt: user.updatedAt.toISOString(),
+      lastLogin: user.lastLogin ? user.lastLogin.toISOString() : null,
+      preferences: user.preferences
+        ? {
+            theme: user.preferences.theme as themeEnum,
+            language: user.preferences.language,
+            notifications: user.preferences.notifications,
+            privacyLevel: user.preferences.privacyLevel as privacyLevelEnum,
+          }
+        : null,
+      permissions: user.permissions as AppPermission[],
+    }));
+
+    return {
+      data: mappedUsers,
+      meta: {
+        currentPage: page,
+        pageSize: limit,
+        totalItems,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPreviousPage: page > 1,
+      },
+    };
   }
 }
