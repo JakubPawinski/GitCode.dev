@@ -351,8 +351,6 @@ export class UsersService {
       }),
     ]);
 
-    // TODO Delete tokens from redis authService.revokeAllTokens(id)
-
     // Map to GetUserDto
     const userDto: GetUserDto = {
       id: bannedUser.id,
