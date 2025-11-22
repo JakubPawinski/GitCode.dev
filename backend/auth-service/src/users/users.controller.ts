@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Param,
+  ParseUUIDPipe,
   Patch,
   Query,
   UseGuards,
@@ -28,7 +29,7 @@ import { patch } from 'axios';
 import { GetUsersQueryDto } from './dtos/get-users-query.dto';
 import { GetProfileDto } from './dtos/get-profile.dto';
 import { PatchProfileDto } from './dtos/patch-profile.dto';
-import type { AuthenticatedUser } from '../types';
+import type { AuthenticatedUser, UUID } from '../types';
 import { GetPreferencesDto } from './dtos/get-preferences.dto';
 import { PatchPreferencesDto } from './dtos/patch-preferences.dto';
 import { GetPublicProfileDto } from './dtos/get-public-profile.dto';
@@ -235,7 +236,7 @@ export class UsersController {
    * Get user profile by ID
    */
   public getUserPublicProfile(
-    @Param('id') id: string,
+    @Param('id', new ParseUUIDPipe()) id: UUID,
   ): Promise<GetPublicProfileDto> {
     return this.usersService.getUserPublicProfile(id);
   }
@@ -293,7 +294,9 @@ export class UsersController {
   /*
    * Get user by ID with all details
    */
-  public getUserById(@Param('id') id: string): Promise<GetUserDto> {
+  public getUserById(
+    @Param('id', new ParseUUIDPipe()) id: UUID,
+  ): Promise<GetUserDto> {
     return this.usersService.getUserById(id);
   }
 
@@ -321,7 +324,9 @@ export class UsersController {
   /*
    * Ban user by id
    */
-  public async banUserById(@Param('id') id: string): Promise<GetUserDto> {
+  public async banUserById(
+    @Param('id', new ParseUUIDPipe()) id: UUID,
+  ): Promise<GetUserDto> {
     const bannedUser = await this.usersService.banUserById(id);
     return bannedUser;
   }
