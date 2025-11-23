@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { ApiResponseDto } from '../auth/dto/api-response.dto';
+import { ApiResponseDto } from '../dto/api-response.dto';
 
 @Injectable()
 export class ResponseInterceptor<T>
@@ -25,6 +25,7 @@ export class ResponseInterceptor<T>
         statusCode,
         message: data?.message || 'Operation successful',
         data: data?.data !== undefined ? data.data : data,
+        meta: data?.meta,
         timestamp: new Date().toISOString(),
         path: request.url,
       })),

@@ -14,6 +14,13 @@ http:
         - gateway
       middlewares:
         - strip-api
+    social-route:
+      rule: PathPrefix(`/api/social`)
+      service: auth-service
+      entryPoints:
+        - gateway
+      middlewares:
+        - strip-api
     swagger-router:
       rule: PathPrefix(`/api/docs`)
       service: swagger-service

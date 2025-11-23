@@ -91,13 +91,20 @@ services:
       - ./backend/auth-service:/app
       - /app/node_modules
     depends_on:
-      - auth-db
-      - auth-redis
-      - keycloak
+      auth-db:
+        condition: service_healthy
+      auth-redis:
+        condition: service_healthy
+      keycloak:
+        condition: service_started
     networks:
       - gitcodedev-network
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:${AUTH_SERVICE_PORT}/auth/health || exit 1"]
+      test:
+        [
+          'CMD-SHELL',
+          'wget -qO- http://localhost:${AUTH_SERVICE_PORT}/auth/health || exit 1',
+        ]
       interval: 30s
       timeout: 5s
       retries: 5
