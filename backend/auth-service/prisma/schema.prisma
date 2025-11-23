@@ -23,6 +23,10 @@ model User {
   bio           String?        @db.Text
   userStatus    UserStatus     @default(ACTIVE) @map("user_status")
   lastLogin     DateTime?      @default(now()) @map("last_login")
+
+  sentFriendRequests     FriendRequest[] @relation("FriendRequestRequester")
+  receivedFriendRequests FriendRequest[] @relation("FriendRequestAddressee")
+
   
   oauthTokens   OAuthToken[]
   preferences   UserPreferences?
@@ -67,6 +71,32 @@ model UserPreferences {
 
   @@index([userId])
   @@map("user_preferences")
+}
+
+model FriendRequest {
+  id         String   @id @default(uuid())
+
+  requesterId     String   @map("requester_id")
+  requester      User     @relation("FriendRequestRequester", fields: [requesterId], references: [id], onDelete: Cascade)
+
+  addresseeId   String   @map("addressee_id")
+  addressee      User     @relation("FriendRequestAddressee", fields: [addresseeId], references: [id], onDelete: Cascade)
+
+  status     FriendRequestStatus @default(PENDING)
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@unique([requesterId, addresseeId])
+  @@index([requesterId])
+  @@index([addresseeId])
+  @@map("friend_requests")
+}
+
+enum FriendRequestStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  CANCELED
 }
 
 enum PrivacyLevel {
