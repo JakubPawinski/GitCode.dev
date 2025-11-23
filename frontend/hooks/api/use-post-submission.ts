@@ -1,4 +1,3 @@
-'use client'
 import { api } from '@/api/axios'
 import { useCallback, useState } from 'react'
 export interface PostProps<T> {

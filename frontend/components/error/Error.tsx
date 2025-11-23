@@ -1,7 +1,7 @@
 import { X } from 'lucide-react'
 interface ErrorProps {
   error: any
-  onClose: () => void
+  onClose?: () => void
 }
 export const Error = ({ error, onClose }: ErrorProps) => {
   return (

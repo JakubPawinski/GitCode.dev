@@ -25,7 +25,7 @@ export const Submission = ({ data, loading, error }: SubmissionProps) => {
 
   if (error) {
     return (
-      <div className="m-4 rounded-lg bg-red-100 p-4 text-red-700">
+      <div className="bg-accent/20 m-4 rounded-lg p-4 text-red-400">
         <h2 className="font-bold">Error</h2>
         <p>{error.message || 'An unexpected error occurred.'}</p>
       </div>
@@ -44,8 +44,8 @@ export const Submission = ({ data, loading, error }: SubmissionProps) => {
       <div
         className={`rounded-lg p-4 ${
           allTestsPassed
-            ? 'bg-green-100 text-green-800'
-            : 'bg-red-100 text-red-800'
+            ? 'bg-primary/20 text-green-400'
+            : 'bg-accent/20 text-red-400'
         }`}
       >
         <h1 className="text-2xl font-bold">
@@ -58,8 +58,8 @@ export const Submission = ({ data, loading, error }: SubmissionProps) => {
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <div className="space-y-2">
-          <h2 className="text-lg font-semibold">Input</h2>
-          <div className="rounded-lg bg-gray-100 p-3 font-mono text-sm text-black">
+          <h2 className="text-foreground text-lg font-semibold">Input</h2>
+          <div className="text-foreground/80 bg-background/30 rounded-lg p-3 font-mono text-sm">
             {input.map((arg) => (
               <div key={arg.key}>
                 {arg.key} = {arg.value}
@@ -68,14 +68,14 @@ export const Submission = ({ data, loading, error }: SubmissionProps) => {
           </div>
         </div>
         <div className="space-y-2">
-          <h2 className="text-lg font-semibold">Output</h2>
-          <div className="rounded-lg bg-gray-100 p-3 font-mono text-sm text-black">
+          <h2 className="text-foreground text-lg font-semibold">Output</h2>
+          <div className="text-foreground/80 bg-background/30 rounded-lg p-3 font-mono text-sm">
             {output}
           </div>
         </div>
         <div className="space-y-2">
-          <h2 className="text-lg font-semibold">Expected</h2>
-          <div className="rounded-lg bg-gray-100 p-3 font-mono text-sm text-black">
+          <h2 className="text-foreground text-lg font-semibold">Expected</h2>
+          <div className="text-foreground/80 bg-background/30 rounded-lg p-3 font-mono text-sm">
             {expected}
           </div>
         </div>

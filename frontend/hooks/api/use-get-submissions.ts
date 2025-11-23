@@ -1,7 +1,6 @@
 import { api } from '@/api/axios'
 import { useCallback, useEffect, useState } from 'react'
-
-export const useGetTasks = <T>() => {
+export const useGetSubmissions = <T>({ problem }: { problem: string }) => {
   const [data, setData] = useState<T>()
   const [loading, setLoading] = useState<boolean>(false)
   const [error, setError] = useState<any>()
@@ -11,7 +10,7 @@ export const useGetTasks = <T>() => {
     setLoading(true)
     setError(null)
     api
-      .get('/tasks', { signal: controller.signal })
+      .get(`/problems/${problem}/submissions`, { signal: controller.signal })
       .then((res) => setData(res.data))
       .catch((err) => setError(err))
       .finally(() => setLoading(false))
@@ -21,7 +20,7 @@ export const useGetTasks = <T>() => {
     if (!data) getQuery()
 
     return () => controller.abort()
-  }, [])
+  }, [problem])
 
   return { data, loading, error }
 }

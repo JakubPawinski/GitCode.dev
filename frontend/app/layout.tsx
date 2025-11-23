@@ -7,7 +7,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body className="from-background via-background to-primary/100 text-foreground bg-background h-screen">
+        {children}
+      </body>
     </html>
   )
 }

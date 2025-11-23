@@ -1,7 +1,7 @@
-'use client'
 import { api } from '@/api/axios'
 import { useCallback, useEffect, useState } from 'react'
-export const useGetTask = <T>({ title }: { title: string }) => {
+
+export const useGetProblems = <T>() => {
   const [data, setData] = useState<T>()
   const [loading, setLoading] = useState<boolean>(false)
   const [error, setError] = useState<any>()
@@ -11,7 +11,7 @@ export const useGetTask = <T>({ title }: { title: string }) => {
     setLoading(true)
     setError(null)
     api
-      .get(`/tasks/${title}`, { signal: controller.signal })
+      .get('/problems', { signal: controller.signal })
       .then((res) => setData(res.data))
       .catch((err) => setError(err))
       .finally(() => setLoading(false))
@@ -21,7 +21,7 @@ export const useGetTask = <T>({ title }: { title: string }) => {
     if (!data) getQuery()
 
     return () => controller.abort()
-  }, [title])
+  }, [])
 
   return { data, loading, error }
 }

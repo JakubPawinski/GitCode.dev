@@ -1,11 +1,10 @@
-import { Task, TaskProps } from '../tasks/Task'
+import { ProblemLink, ProblemLinkProps } from '../problem/ProblemLink'
 import { X } from 'lucide-react'
-import Link from 'next/link'
 import { Error } from '../error/Error'
 import { Loader } from '../loading/Loader'
 
 export interface ExpandPanelProps {
-  data?: TaskProps[]
+  data?: ProblemLinkProps[]
   loading: boolean
   error: any
   isOpen: boolean
@@ -19,33 +18,25 @@ export const ExpandPanel = ({
   if (loading) {
     return <Loader />
   }
-  if (error) {
-    return <Error {...error} />
-  }
+  if (!isOpen) return null
+  if (!data) return null
   return (
-    <div
-      className={`transition-transform ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}
-    >
+    <div>
       <nav>
         <h2>Questions</h2>
         <X />
       </nav>
       <main>
-        {data?.map((task) => (
-          <Link
-            href={`/tasks/` + task.taskTitle}
-            key={task.taskNumber}
-            prefetch
-          >
-            <Task
-              taskNumber={task.taskNumber}
-              taskTitle={task.taskTitle}
-              taskDifficulty={task.taskDifficulty}
-              isCompleted={task.isCompleted}
-            />
-          </Link>
+        {data.map((problemLink) => (
+          <ProblemLink
+            problemId={problemLink.problemId}
+            problemSlug={problemLink.problemSlug}
+            title={problemLink.title}
+            difficulty={problemLink.difficulty}
+          />
         ))}
       </main>
+      {error && <Error {...error} />}
     </div>
   )
 }
