@@ -11,7 +11,6 @@ import {
 } from '@nestjs/common';
 import { SubmissionService } from './submission.service';
 import { CreateSubmissionDto } from './dto/create-submission.dto';
-import { UpdateSubmissionDto } from './dto/update-submission.dto';
 import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
 
 @Controller('problems/submission')
@@ -23,5 +22,11 @@ export class SubmissionController {
   create(@Body() createSubmissionDto: CreateSubmissionDto, @Req() req) {
     const userId = req.user.id;
     return this.submissionService.create(createSubmissionDto, userId);
+  }
+
+  @Get('attempts/:attemptId')
+  @UseGuards(JwtAuthGuard)
+  async getAttemptDetails(@Param('attemptId') attemptId: string) {
+    return this.submissionService.getAttemptDetails(attemptId);
   }
 }

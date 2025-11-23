@@ -23,26 +23,26 @@ interface Problem {
   code_snippets: Record<string, string>;
   solution?: string;
   test_input_output?: Array<{
-    input: string;
-    output: string;
+    input: Record<string, any> | any;
+    output: any;
   }>;
   similar_question_ids?: string | string[];
 }
 
-// Helper function to parse example text
+// Helper: Parse example text to extract input/output
 function parseExampleText(text: string): { input: string; output: string } {
-  const parts = text.split('\nOutput:');
-  if (parts.length === 2) {
-    const input = parts[0].replace('Input:', '').trim();
-    const output = parts[1].split('\n')[0].trim();
-    return { input, output };
-  }
-  return { input: text, output: '' };
+  const inputMatch = text.match(/Input:\s*(.+?)(?=\n|Output:|$)/s);
+  const outputMatch = text.match(/Output:\s*(.+?)(?=\n|Explanation:|$)/s);
+
+  const input = inputMatch ? inputMatch[1].trim() : '';
+  const output = outputMatch ? outputMatch[1].trim() : '';
+
+  return { input, output };
 }
 
 async function main() {
   try {
-    console.log('🌱 Starting database seed...');
+    console.log('Starting database seed...');
 
     const filePath = path.join(
       process.cwd(),
@@ -61,7 +61,7 @@ async function main() {
       throw new Error('JSON file must contain an array of problems');
     }
 
-    console.log(`📚 Found ${problems.length} problems to seed`);
+    console.log(`Found ${problems.length} problems to seed`);
 
     let successCount = 0;
     let errorCount = 0;
@@ -77,7 +77,7 @@ async function main() {
           !problem.test_input_output ||
           problem.test_input_output.length === 0
         ) {
-          console.log(`⏭️  Skipping ${problem.title} - no test cases`);
+          console.log(`Skipping ${problem.title} - no test cases`);
           continue;
         }
 
@@ -86,7 +86,7 @@ async function main() {
         });
 
         if (existingProblem) {
-          console.log(`⏭️  Already seeded: ${problem.title}`);
+          console.log(`Already seeded: ${problem.title}`);
           continue;
         }
 
@@ -106,7 +106,7 @@ async function main() {
           });
           createdProblemId = createdProblem.id;
 
-          // Create Topics, Examples, Constraints, Hints, etc.
+          // Create Topics
           if (problem.topics?.length > 0) {
             await tx.problemTopic.createMany({
               data: problem.topics.map((topic) => ({
@@ -116,6 +116,7 @@ async function main() {
             });
           }
 
+          // Create Examples
           if (problem.examples?.length > 0) {
             const examplesData = problem.examples.map((example) => {
               const { input, output } = parseExampleText(example.example_text);
@@ -124,12 +125,12 @@ async function main() {
                 exampleNum: example.example_num,
                 inputText: input,
                 outputText: output,
-                imageUrl: example.images?.[0] || null,
               };
             });
             await tx.example.createMany({ data: examplesData });
           }
 
+          // Create Constraints
           if (problem.constraints?.length > 0) {
             await tx.constraint.createMany({
               data: problem.constraints.map((constraint, index) => ({
@@ -140,6 +141,7 @@ async function main() {
             });
           }
 
+          // Create Hints
           if (problem.hints?.length > 0) {
             await tx.hint.createMany({
               data: problem.hints.map((hint, index) => ({
@@ -150,6 +152,7 @@ async function main() {
             });
           }
 
+          // Create Follow Ups
           if (problem.follow_ups?.length > 0) {
             await tx.followUp.createMany({
               data: problem.follow_ups.map((followUp, index) => ({
@@ -160,21 +163,30 @@ async function main() {
             });
           }
 
+          // Create Test Cases
           if (
             problem.test_input_output &&
             problem.test_input_output.length > 0
           ) {
             await tx.testCase.createMany({
-              data: problem.test_input_output.map((testCase, index) => ({
-                problemId: createdProblem.id,
-                input: testCase.input,
-                expectedOutput: testCase.output,
-                isPublic: index < 2,
-                orderIndex: index,
-              })),
+              data: problem.test_input_output.map((testCase, index) => {
+                const inputJson = JSON.stringify(testCase.input);
+                const outputJson = JSON.stringify(testCase.output);
+
+                return {
+                  problemId: createdProblem.id,
+                  input: inputJson,
+                  expectedOutput: outputJson,
+                  isPublic: index < 5,
+                  orderIndex: index,
+                };
+              }),
             });
+
+            console.log(`Added ${problem.test_input_output.length} test cases`);
           }
 
+          // Create Code Snippets
           if (
             problem.code_snippets &&
             Object.keys(problem.code_snippets).length > 0
@@ -191,7 +203,7 @@ async function main() {
           }
         });
 
-        // ✅ Store similar problems for later processing
+        // Store similar problems for later processing
         if (problem.similar_question_ids) {
           const similarIds =
             typeof problem.similar_question_ids === 'string'
@@ -204,28 +216,28 @@ async function main() {
           });
         }
 
-        console.log(`✅ Seeded: ${problem.title}`);
+        console.log(`Seeded: ${problem.title}`);
         successCount++;
       } catch (error) {
-        console.error(`❌ Error seeding ${problem.title}:`, error);
+        console.error(`Error seeding ${problem.title}:`, error);
         errorCount++;
       }
     }
 
     // Phase 2: Create all similar problem relationships
-    console.log(`\n🔗 Creating similar problem relationships...`);
+    console.log(`\nCreating similar problem relationships...`);
     for (const { problemId, similarIds } of similarProblemsToCreate) {
       const fromProblem = await prisma.problem.findFirst({
         where: { problemId },
       });
 
       if (!fromProblem) {
-        console.log(`❌ Problem not found: ${problemId}`);
+        console.log(`Problem not found: ${problemId}`);
         continue;
       }
 
-      console.log(`\n📍 Problem: ${fromProblem.title} (${problemId})`);
-      console.log(`   Similar IDs: ${similarIds.join(', ')}`);
+      console.log(`\nProblem: ${fromProblem.title} (${problemId})`);
+      console.log(` Similar IDs: ${similarIds.join(', ')}`);
 
       for (const similarProblemId of similarIds) {
         const toProblem = await prisma.problem.findFirst({
@@ -233,7 +245,7 @@ async function main() {
         });
 
         if (!toProblem) {
-          console.log(`   ❌ Similar problem NOT FOUND: ${similarProblemId}`);
+          console.log(`Similar problem NOT FOUND: ${similarProblemId}`);
           continue;
         }
 
@@ -251,17 +263,17 @@ async function main() {
               problemToId: toProblem.id,
             },
           });
-          console.log(`   ✅ Created link to: ${toProblem.title}`);
+          console.log(`Created link to: ${toProblem.title}`);
         } else {
-          console.log(`   ⏭️  Link already exists`);
+          console.log(` Link already exists`);
         }
       }
     }
 
-    console.log(`\n🎉 Database seed completed!`);
+    console.log(`\n Database seed completed!`);
     console.log(`✅ Success: ${successCount} | ❌ Errors: ${errorCount}`);
   } catch (error) {
-    console.error('💥 Fatal error:', error);
+    console.error(' Fatal error:', error);
     process.exit(1);
   } finally {
     await prisma.$disconnect();

@@ -1,18 +1,28 @@
 import {
   BadRequestException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { CreateSubmissionDto } from './dto/create-submission.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { InjectQueue } from '@nestjs/bullmq';
+import type { Queue } from 'bull';
+import { SubmissionGateway } from './submission.gateway';
 
 @Injectable()
 export class SubmissionService {
-  constructor(private prisma: PrismaService) {}
+  private readonly logger = new Logger(SubmissionService.name);
+  constructor(
+    private prisma: PrismaService,
+    @InjectQueue('submissions') private submissionsQueue: Queue,
+    private submissionGateway: SubmissionGateway,
+  ) {}
 
   async create(createSubmissionDto: CreateSubmissionDto, userId: string) {
+    // Find problem from subbmison
     const problem = await this.prisma.problem.findUnique({
-      where: { problemId: createSubmissionDto.problemId },
+      where: { id: createSubmissionDto.problemId },
       include: { testCases: true },
     });
 
@@ -21,10 +31,13 @@ export class SubmissionService {
         `Problem with ID ${createSubmissionDto.problemId} does not exist in database.`,
       );
     }
-    const languages = process.env.LANGUAGES_SUPPORTED?.split(',');
+
+    // Check if language is supported
+    const languages = process.env.LANGUAGES_SUPPORTED?.split(', ');
     if (!languages?.includes(createSubmissionDto.language.toLocaleLowerCase()))
       throw new BadRequestException(`Submission language not supported.`);
 
+    // Create/Update user subbmision object in db
     const userSubmission = await this.prisma.userSubmission.upsert({
       where: {
         userId_problemId: {
@@ -48,6 +61,7 @@ export class SubmissionService {
       },
     });
 
+    // Create new attempt object in db
     const attempt = await this.prisma.solutionAttempt.create({
       data: {
         submissionId: userSubmission.id,
@@ -61,6 +75,113 @@ export class SubmissionService {
         totalTests: problem.testCases.length,
       },
     });
-    return attempt;
+
+    // DEBUG: Log before adding to queue
+    this.logger.log(`📤 Adding job to queue for attempt ${attempt.id}`);
+
+    // Add to queue
+    const job = await this.submissionsQueue.add(
+      'process-submission',
+      {
+        attemptId: attempt.id,
+        code: createSubmissionDto.code,
+        language: createSubmissionDto.language.toLowerCase(),
+        problemId: problem.id,
+        userId,
+      },
+      {
+        removeOnComplete: true,
+        removeOnFail: false,
+      },
+    );
+
+    this.logger.log(`✅ Job added to queue with ID: ${job.id}`);
+
+    const queueStats = await this.getQueueStats();
+
+    // Send notification that the job is waiting in queue with data
+    this.submissionGateway.notifyAttemptUpdate(userId, attempt.id, {
+      status: 'queued',
+      message: `Waiting in queue... (position: ${queueStats.position}/${queueStats.total})`,
+      queuePosition: queueStats.position,
+      queueSize: queueStats.total,
+      estimatedWaitTime: queueStats.estimatedWaitTime,
+    });
+
+    return {
+      ...attempt,
+      queuePosition: queueStats.position,
+      queueSize: queueStats.total,
+      estimatedWaitTime: queueStats.estimatedWaitTime,
+    };
+  }
+
+  async getAttemptDetails(attemptId: string) {
+    const attempt = await this.prisma.solutionAttempt.findUnique({
+      where: { id: attemptId },
+      include: {
+        testResults: {
+          orderBy: { testIndex: 'asc' },
+          select: {
+            id: true,
+            testIndex: true,
+            passed: true,
+            input: true,
+            expectedOutput: true,
+            actualOutput: true,
+            errorMessage: true,
+          },
+        },
+      },
+    });
+
+    if (!attempt) {
+      throw new Error('Attempt not found');
+    }
+    const failedTests = attempt.testResults.filter((tr) => !tr.passed);
+    return {
+      id: attempt.id,
+      status: attempt.status,
+      passedTests: attempt.passedTests,
+      failedTests: attempt.failedTests,
+      totalTests: attempt.totalTests,
+      executionTime: attempt.executionTime,
+      memoryUsed: attempt.memoryUsed,
+      createdAt: attempt.createdAt,
+      completedAt: attempt.completedAt,
+      // Test details
+      testResults: attempt.testResults.map((tr) => ({
+        testIndex: tr.testIndex,
+        passed: tr.passed,
+        input: JSON.parse(tr.input),
+        expectedOutput: JSON.parse(tr.expectedOutput),
+        actualOutput: tr.actualOutput ? JSON.parse(tr.actualOutput) : null,
+        errorMessage: tr.errorMessage,
+      })),
+      // Only failed tests
+      failedTestsDetails: failedTests.map((tr) => ({
+        testIndex: tr.testIndex,
+        input: JSON.parse(tr.input),
+        expectedOutput: JSON.parse(tr.expectedOutput),
+        actualOutput: tr.actualOutput ? JSON.parse(tr.actualOutput) : null,
+        errorMessage: tr.errorMessage,
+      })),
+    };
+  }
+
+  private async getQueueStats() {
+    const activeCount = await this.submissionsQueue.getActiveCount();
+    const waitingCount = await this.submissionsQueue.getWaitingCount();
+    const total = activeCount + waitingCount;
+
+    const estimatedWaitTime = waitingCount * 500; // ms estimation that the avg time of job is 500ms
+
+    return {
+      active: activeCount,
+      waiting: waitingCount,
+      total,
+      position: activeCount,
+      estimatedWaitTime,
+    };
   }
 }

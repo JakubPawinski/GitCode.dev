@@ -5,9 +5,11 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ProblemService } from './problem.service';
 import { ProblemController } from './problem.controller';
 import { PrismaModule } from 'src/prisma/prisma.module';
+import { JwtStrategy } from 'src/strategies/jwt.strategy';
 
 @Module({
   imports: [
+    ConfigModule,
     PrismaModule,
     PassportModule,
     JwtModule.registerAsync({
@@ -22,6 +24,6 @@ import { PrismaModule } from 'src/prisma/prisma.module';
     }),
   ],
   controllers: [ProblemController],
-  providers: [ProblemService],
+  providers: [ProblemService, JwtStrategy],
 })
 export class ProblemModule {}
