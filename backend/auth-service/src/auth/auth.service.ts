@@ -140,7 +140,7 @@ export class AuthService {
   private getRealmRoles(accessToken: string) {
     const [, payloadBase64] = accessToken.split('.');
     if (!payloadBase64) {
-      return { realmRoles: [], clientRoles: [] };
+      return [];
     }
 
     const payloadJson = Buffer.from(payloadBase64, 'base64').toString('utf8');
@@ -375,9 +375,6 @@ export class AuthService {
 
       // If no tokens found, cannot refresh profile
       if (!oauthToken) {
-        console.warn(
-          `No OAuth token found for user ${userId}, cannot refresh profile`,
-        );
         this.logger.warn(
           `No OAuth token found for user ${userId}, cannot refresh profile`,
         );
