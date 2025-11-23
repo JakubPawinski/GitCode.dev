@@ -68,8 +68,6 @@ model Example {
   exampleNum  Int     // Example number (1, 2, 3...)
   inputText   String  @db.Text
   outputText  String  @db.Text
-  explanation String? @db.Text
-  imageUrl    String? @map("image_url")
   @@unique([problemId, exampleNum])
   @@map("examples")
   @@index([problemId])
@@ -101,7 +99,6 @@ model Hint {
   problem    Problem @relation(fields: [problemId], references: [id], onDelete: Cascade)
   hintText   String  @db.Text
   orderIndex Int     @map("order_index") // For progressive hint revealing
-  difficulty String? // Optional: "basic", "intermediate", "advanced"
   @@map("hints")
   @@index([problemId])
 }
