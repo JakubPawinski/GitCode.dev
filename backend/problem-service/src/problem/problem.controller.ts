@@ -1,42 +1,21 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-  Query,
-} from '@nestjs/common';
+import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
 import { ProblemService } from './problem.service';
-import { PaginatedResponseDto, PaginationDto } from './dto/pagination.dto';
+import { PaginationDto } from './dto/pagination.dto';
+import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
 
 @Controller('problems')
 export class ProblemController {
   constructor(private readonly problemService: ProblemService) {}
 
-  @Post()
-  create(@Body() createProblemDto) {
-    return this.problemService;
-  }
-
   @Get()
+  @UseGuards(JwtAuthGuard)
   findAll(@Query() paginationDto: PaginationDto) {
     return this.problemService.getPaginatedProblems(paginationDto);
   }
 
   @Get(':slug')
+  @UseGuards(JwtAuthGuard)
   findOne(@Param('slug') id: string) {
     return this.problemService.findProblemBySlug(id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateProblemDto) {
-    return this.problemService;
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.problemService.remove(+id);
   }
 }

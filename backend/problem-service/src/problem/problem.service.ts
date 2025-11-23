@@ -1,7 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import {
-  PaginatedResponseDto,
   PaginatedResult,
   PaginationDto,
 } from './dto/pagination.dto';
@@ -55,10 +54,6 @@ export class ProblemService {
         hasPreviousPage: page > 1,
       },
     };
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} problem`;
   }
 
   async findProblemBySlug(slug: string) {
@@ -116,7 +111,4 @@ export class ProblemService {
     };
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} problem`;
-  }
 }
