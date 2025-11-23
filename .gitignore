@@ -237,3 +237,6 @@ dist
 # Ignore all local history of files
 .history
 .ionide
+
+### Ignore keycloak config with secrets ###
+keycloak/
