@@ -5,6 +5,8 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum } from 'class-validator';
 
 export class FriendRequestDto {
+  @ApiProperty({ description: 'Unique identifier of the friend request' })
+  id: string;
   @ApiProperty({ type: RequesterDto })
   requester: RequesterDto;
   @ApiProperty({ type: AddresseeDto })

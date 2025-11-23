@@ -24,6 +24,7 @@ const REGULAR_USER_PERMISSIONS: AppPermissions = [
   AppPermission.USER_READ_PUBLIC,
   AppPermission.USER_UPDATE_SELF,
   AppPermission.USER_DELETE_SELF,
+  AppPermission.USER_READ_SELF,
   // User preferences
   AppPermission.USER_PREFERENCE_READ,
   AppPermission.USER_PREFERENCE_UPDATE,

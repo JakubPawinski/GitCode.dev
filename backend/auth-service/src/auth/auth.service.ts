@@ -318,9 +318,11 @@ export class AuthService {
   }
 
   async validateUser(userId: string) {
+    console.log('Validating user (auth service)');
     // Check if user is blacklisted
     const isBlacklisted = await this.redis.exists(`blacklist:user:${userId}`);
     if (isBlacklisted) {
+      console.log(`User ${userId} is blacklisted`);
       throw new UnauthorizedException('User is blacklisted');
     }
 
@@ -337,6 +339,7 @@ export class AuthService {
     });
 
     if (!user) {
+      console.log(`User ${userId} not found`);
       throw new UnauthorizedException('User not found');
     }
 
@@ -344,6 +347,7 @@ export class AuthService {
       throw new UnauthorizedException('User account is not active');
     }
 
+    console.log(`User ${userId} validated successfully (auth service)`);
     return user;
   }
 

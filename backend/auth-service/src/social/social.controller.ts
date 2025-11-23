@@ -5,6 +5,7 @@ import {
   Get,
   Param,
   ParseUUIDPipe,
+  Patch,
   Post,
   UseGuards,
 } from '@nestjs/common';
@@ -79,9 +80,39 @@ export class SocialController {
   }
 
   /*
+   * Get incoming friend requests
+   */
+  @Get('/friends/requests')
+  @RequirePermissions(AppPermission.SOCIAL_FRIEND_LIST)
+  @ApiBearerAuth('Bearer Auth')
+  @ApiOperation({
+    summary: 'Get incoming friend requests for the authenticated user',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Incoming friend requests retrieved successfully',
+    schema: {
+      allOf: [
+        { $ref: getSchemaPath(ApiResponseDto) },
+        {
+          properties: {
+            data: {
+              $ref: getSchemaPath(FriendRequestDto),
+              type: 'array',
+            },
+          },
+        },
+      ],
+    },
+  })
+  public async getFriendRequests(@User() user: AuthenticatedUser) {
+    return this.socialService.getFriendRequests(user.id);
+  }
+
+  /*
    * Send a friend request to a user
    */
-  @Post('/friends/invite/:userId')
+  @Post('/friends/invite')
   @RequirePermissions(AppPermission.SOCIAL_FRIEND_INVITE)
   @ApiBearerAuth('Bearer Auth')
   @ApiOperation({ summary: 'Send a friend request to a user' })
@@ -112,7 +143,7 @@ export class SocialController {
   /*
    * Respond to a friend request
    */
-  @Post('/friends/:requesterId/respond')
+  @Patch('/friends/respond/:requestId')
   @RequirePermissions(AppPermission.SOCIAL_FRIEND_RESPOND)
   @ApiBearerAuth('Bearer Auth')
   @ApiOperation({ summary: 'Respond to a friend request' })
@@ -134,13 +165,11 @@ export class SocialController {
   })
   @ApiBody({ type: RespondFriendRequestDto })
   public async respondToFriendRequest(
-    @User() user: AuthenticatedUser,
-    @Param('requesterId', ParseUUIDPipe) requesterId: UUID,
+    @Param('requestId', ParseUUIDPipe) requestId: UUID,
     @Body() respondFriendRequestDto: RespondFriendRequestDto,
   ) {
     return this.socialService.respondToFriendRequest(
-      user.id,
-      requesterId,
+      requestId,
       respondFriendRequestDto,
     );
   }
@@ -161,35 +190,5 @@ export class SocialController {
     @Param('userId', ParseUUIDPipe) userId: UUID,
   ) {
     return this.socialService.removeFriend(user.id, userId);
-  }
-
-  /*
-   * Get incoming friend requests
-   */
-  @Get('/friends/requests')
-  @RequirePermissions(AppPermission.SOCIAL_FRIEND_LIST)
-  @ApiBearerAuth('Bearer Auth')
-  @ApiOperation({
-    summary: 'Get incoming friend requests for the authenticated user',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Incoming friend requests retrieved successfully',
-    schema: {
-      allOf: [
-        { $ref: getSchemaPath(ApiResponseDto) },
-        {
-          properties: {
-            data: {
-              $ref: getSchemaPath(FriendRequestDto),
-              type: 'array',
-            },
-          },
-        },
-      ],
-    },
-  })
-  public async getFriendRequests(@User() user: AuthenticatedUser) {
-    return this.socialService.getFriendRequests(user.id);
   }
 }

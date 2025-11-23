@@ -217,6 +217,100 @@ export class UsersController {
   }
 
   /*
+   * Get all users
+   */
+  @Get()
+  @UseGuards(JwtAuthGuard, PermissionsGuards)
+  @RequirePermissions(AppPermission.USER_MANAGE) // Require admin-level permission
+  @ApiBearerAuth('Bearer Auth')
+  @ApiOperation({ summary: 'Get all users' })
+  @ApiResponse({
+    status: 200,
+    description: 'Users retrieved successfully',
+    schema: {
+      allOf: [
+        { $ref: getSchemaPath(ApiResponseDto) },
+        {
+          properties: {
+            data: {
+              type: 'array',
+              items: { $ref: getSchemaPath(GetUserDto) },
+            },
+          },
+        },
+      ],
+    },
+  })
+  public getAllUsers(
+    @Query() getUsersQueryDto: GetUsersQueryDto,
+  ): Promise<PaginatedResult<GetUserDto>> {
+    return this.usersService.getAllUsers(getUsersQueryDto);
+  }
+
+  /*
+   * Search users by username
+   */
+  @Get('/search')
+  @UseGuards(JwtAuthGuard, PermissionsGuards)
+  @RequirePermissions(AppPermission.USER_READ_PUBLIC)
+  @ApiBearerAuth('Bearer Auth')
+  @ApiOperation({ summary: 'Search users by username' })
+  @ApiResponse({
+    status: 200,
+    description: 'Users retrieved successfully',
+    schema: {
+      allOf: [
+        { $ref: getSchemaPath(ApiResponseDto) },
+        {
+          properties: {
+            data: {
+              type: 'array',
+              items: { $ref: getSchemaPath(GetPublicProfileDto) },
+            },
+          },
+        },
+      ],
+    },
+  })
+  public async searchUsers(
+    @Query() searchUsersDto: SearchUsersDto,
+  ): Promise<PaginatedResult<GetPublicProfileDto>> {
+    console.log('Searching users with DTO:', searchUsersDto);
+    return this.usersService.searchUsers(searchUsersDto);
+  }
+
+  /*
+   * Admin search users with more detailed info
+   */
+  @Get('/search/admin')
+  @UseGuards(JwtAuthGuard, PermissionsGuards)
+  @RequirePermissions(AppPermission.USER_MANAGE) // Require admin-level permission
+  @ApiBearerAuth('Bearer Auth')
+  @ApiOperation({ summary: 'Admin search users with detailed info' })
+  @ApiResponse({
+    status: 200,
+    description: 'Users retrieved successfully',
+    schema: {
+      allOf: [
+        { $ref: getSchemaPath(ApiResponseDto) },
+        {
+          properties: {
+            data: {
+              type: 'array',
+              items: { $ref: getSchemaPath(GetUserDto) },
+            },
+          },
+        },
+      ],
+    },
+  })
+  public searchUsersAdmin(
+    @Query() searchUsersAdminDto: SearchUsersAdminDto,
+  ): Promise<PaginatedResult<GetUserDto>> {
+    return this.usersService.searchUsersAdmin(searchUsersAdminDto);
+  }
+
+  /*
    * Get user profile by ID
    */
   @Get('/:id/profile')
@@ -251,74 +345,6 @@ export class UsersController {
     @Param('id', new ParseUUIDPipe()) id: UUID,
   ): Promise<GetPublicProfileDto> {
     return this.usersService.getUserPublicProfile(id);
-  }
-
-  /*
-   * Get all users
-   */
-  @Get()
-  @UseGuards(JwtAuthGuard, PermissionsGuards)
-  @RequirePermissions(AppPermission.USER_MANAGE) // Require admin-level permission
-  @ApiBearerAuth('Bearer Auth')
-  @ApiOperation({ summary: 'Get all users' })
-  @ApiResponse({
-    status: 200,
-    description: 'Users retrieved successfully',
-    schema: {
-      allOf: [
-        { $ref: getSchemaPath(ApiResponseDto) },
-        {
-          properties: {
-            data: {
-              type: 'array',
-              items: { $ref: getSchemaPath(GetUserDto) },
-            },
-          },
-        },
-      ],
-    },
-  })
-  public getAllUsers(
-    @Query() getUsersQueryDto: GetUsersQueryDto,
-  ): Promise<PaginatedResult<GetUserDto>> {
-    return this.usersService.getAllUsers(getUsersQueryDto);
-  }
-
-  /*
-   * Get user by ID with all details
-   */
-  @Get(':id')
-  @UseGuards(JwtAuthGuard, PermissionsGuards)
-  @RequirePermissions(AppPermission.USER_READ_PRIVATE)
-  @ApiBearerAuth('Bearer Auth')
-  @ApiOperation({ summary: 'Get user by ID' })
-  @ApiParam({
-    name: 'id',
-    description: 'UUID of the user to retrieve',
-    type: 'string',
-    format: 'uuid',
-    example: '123e4567-e89b-12d3-a456-426614174000',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'User retrieved successfully',
-    schema: {
-      allOf: [
-        { $ref: getSchemaPath(ApiResponseDto) },
-        {
-          properties: {
-            data: {
-              $ref: getSchemaPath(GetUserDto),
-            },
-          },
-        },
-      ],
-    },
-  })
-  public getUserById(
-    @Param('id', new ParseUUIDPipe()) id: UUID,
-  ): Promise<GetUserDto> {
-    return this.usersService.getUserById(id);
   }
 
   /*
@@ -359,68 +385,6 @@ export class UsersController {
   }
 
   /*
-   * Search users by username
-   */
-  @Get('/search')
-  @UseGuards(JwtAuthGuard, PermissionsGuards)
-  @RequirePermissions(AppPermission.USER_READ_PUBLIC)
-  @ApiBearerAuth('Bearer Auth')
-  @ApiOperation({ summary: 'Search users by username' })
-  @ApiResponse({
-    status: 200,
-    description: 'Users retrieved successfully',
-    schema: {
-      allOf: [
-        { $ref: getSchemaPath(ApiResponseDto) },
-        {
-          properties: {
-            data: {
-              type: 'array',
-              items: { $ref: getSchemaPath(GetPublicProfileDto) },
-            },
-          },
-        },
-      ],
-    },
-  })
-  public async searchUsers(
-    @Query() searchUsersDto: SearchUsersDto,
-  ): Promise<PaginatedResult<GetPublicProfileDto>> {
-    return this.usersService.searchUsers(searchUsersDto);
-  }
-
-  /*
-   * Admin search users with more detailed info
-   */
-  @Get('/search/admin')
-  @UseGuards(JwtAuthGuard, PermissionsGuards)
-  @RequirePermissions(AppPermission.USER_MANAGE) // Require admin-level permission
-  @ApiBearerAuth('Bearer Auth')
-  @ApiOperation({ summary: 'Admin search users with detailed info' })
-  @ApiResponse({
-    status: 200,
-    description: 'Users retrieved successfully',
-    schema: {
-      allOf: [
-        { $ref: getSchemaPath(ApiResponseDto) },
-        {
-          properties: {
-            data: {
-              type: 'array',
-              items: { $ref: getSchemaPath(GetUserDto) },
-            },
-          },
-        },
-      ],
-    },
-  })
-  public searchUsersAdmin(
-    @Query() searchUsersAdminDto: SearchUsersAdminDto,
-  ): Promise<PaginatedResult<GetUserDto>> {
-    return this.usersService.searchUsersAdmin(searchUsersAdminDto);
-  }
-
-  /*
    * Restore a soft-deleted user by ID
    */
   @Post('/:id/restore')
@@ -453,5 +417,42 @@ export class UsersController {
   })
   public restoreUser(@Param('id', new ParseUUIDPipe()) id: UUID) {
     return this.usersService.restoreUserById(id);
+  }
+
+  /*
+   * Get user by ID with all details
+   */
+  @Get(':id')
+  @UseGuards(JwtAuthGuard, PermissionsGuards)
+  @RequirePermissions(AppPermission.USER_READ_PRIVATE)
+  @ApiBearerAuth('Bearer Auth')
+  @ApiOperation({ summary: 'Get user by ID' })
+  @ApiParam({
+    name: 'id',
+    description: 'UUID of the user to retrieve',
+    type: 'string',
+    format: 'uuid',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'User retrieved successfully',
+    schema: {
+      allOf: [
+        { $ref: getSchemaPath(ApiResponseDto) },
+        {
+          properties: {
+            data: {
+              $ref: getSchemaPath(GetUserDto),
+            },
+          },
+        },
+      ],
+    },
+  })
+  public getUserById(
+    @Param('id', new ParseUUIDPipe()) id: UUID,
+  ): Promise<GetUserDto> {
+    return this.usersService.getUserById(id);
   }
 }

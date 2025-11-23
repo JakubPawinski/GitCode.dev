@@ -5,6 +5,7 @@ import { GetFriendDto } from '../dtos/get-firend.dto';
 import { InviteFriendDto } from '../dtos/invite-friend.dto';
 import { UUID } from '../../types';
 import { FriendRequestDto } from '../dtos/friend-request.dto';
+import { RespondFriendRequestDto } from '../dtos/respond-friend-request.dto';
 
 @Injectable()
 export class SocialService {
@@ -75,6 +76,7 @@ export class SocialService {
         status: FriendRequestStatus.PENDING,
       },
       select: {
+        id: true,
         requester: {
           select: {
             id: true,
@@ -98,6 +100,7 @@ export class SocialService {
     });
 
     const mappedFriendRequest: FriendRequestDto = {
+      id: friendRequest.id,
       requester: {
         requesterId: friendRequest.requester.id,
         username: friendRequest.requester.username,
@@ -122,23 +125,20 @@ export class SocialService {
    * Respond to a friend request
    */
   public async respondToFriendRequest(
-    userId: UUID,
-    requesterId: UUID,
-    respondFriendRequestDto: { status: FriendRequestStatus },
+    requestId: UUID,
+    respondFriendRequestDto: RespondFriendRequestDto,
   ): Promise<FriendRequestDto> {
     const { status } = respondFriendRequestDto;
 
     const updatedFriendRequest = await this.prismaService.friendRequest.update({
       where: {
-        requesterId_addresseeId: {
-          requesterId,
-          addresseeId: userId,
-        },
+        id: requestId,
       },
       data: {
         status,
       },
       select: {
+        id: true,
         requester: {
           select: {
             id: true,
@@ -162,6 +162,7 @@ export class SocialService {
     });
 
     const mappedFriendRequest: FriendRequestDto = {
+      id: updatedFriendRequest.id,
       requester: {
         requesterId: updatedFriendRequest.requester.id,
         username: updatedFriendRequest.requester.username,
@@ -216,6 +217,7 @@ export class SocialService {
         status: FriendRequestStatus.PENDING || FriendRequestStatus.REJECTED,
       },
       select: {
+        id: true,
         requester: {
           select: {
             id: true,
@@ -239,6 +241,7 @@ export class SocialService {
     });
 
     const mappedRequests: FriendRequestDto[] = foundRequests.map((request) => ({
+      id: request.id,
       requester: {
         requesterId: request.requester.id,
         username: request.requester.username,

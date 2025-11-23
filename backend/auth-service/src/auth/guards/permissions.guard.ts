@@ -18,6 +18,8 @@ export class PermissionsGuards implements CanActivate {
       AppPermissions[]
     >(PERMISSIONS_KEY, [context.getHandler(), context.getClass()]);
 
+    console.log('Validating permissions guard');
+    console.log('Required permissions:', requiredPermissions);
     // If no permissions are required, allow access
     if (!requiredPermissions) {
       return true;
@@ -32,8 +34,10 @@ export class PermissionsGuards implements CanActivate {
     }
 
     // Verify that user has all required permissions
-    return requiredPermissions.every((permission) =>
-      user.permissions.includes(permission),
-    ) || user.permissions.includes(AppPermission.ADMIN_ALL);
+    return (
+      requiredPermissions.every((permission) =>
+        user.permissions.includes(permission),
+      ) || user.permissions.includes(AppPermission.ADMIN_ALL)
+    );
   }
 }
