@@ -1,9 +1,11 @@
-import { IsEnum } from 'class-validator';
+import { IsIn } from 'class-validator';
 import { FriendRequestStatus } from '../enums/friendRequest.enum';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class RespondFriendRequestDto {
-  @IsEnum([FriendRequestStatus.ACCEPTED, FriendRequestStatus.REJECTED])
+  @IsIn([FriendRequestStatus.ACCEPTED, FriendRequestStatus.REJECTED], {
+    message: 'Status must be either ACCEPTED or REJECTED',
+  })
   @ApiProperty({
     enum: [FriendRequestStatus.ACCEPTED, FriendRequestStatus.REJECTED],
     description: 'Status of the friend request',

@@ -8,9 +8,9 @@ import {
   Post,
   Query,
   UseGuards,
+  Get,
 } from '@nestjs/common';
 import { UsersService } from './providers/users.service';
-import { Get } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiOperation,

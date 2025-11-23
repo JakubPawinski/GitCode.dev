@@ -190,28 +190,23 @@ export class SocialService {
     userId: UUID,
     friendId: UUID,
   ): Promise<{ message: string; success: boolean; removedFriendIds: UUID }> {
+    const whereCondition = {
+      status: FriendRequestStatus.ACCEPTED,
+      OR: [
+        { requesterId: userId, addresseeId: friendId },
+        { requesterId: friendId, addresseeId: userId },
+      ],
+    };
     const friendFound = await this.prismaService.friendRequest.findFirst({
-      where: {
-        status: FriendRequestStatus.ACCEPTED,
-        OR: [
-          { requesterId: userId, addresseeId: friendId },
-          { requesterId: friendId, addresseeId: userId },
-        ],
-      },
+      where: whereCondition,
     });
 
     if (!friendFound) {
       throw new NotFoundException('Friend relationship not found');
     }
-    
+
     await this.prismaService.friendRequest.deleteMany({
-      where: {
-        status: FriendRequestStatus.ACCEPTED,
-        OR: [
-          { requesterId: userId, addresseeId: friendId },
-          { requesterId: friendId, addresseeId: userId },
-        ],
-      },
+      where: whereCondition,
     });
 
     return {

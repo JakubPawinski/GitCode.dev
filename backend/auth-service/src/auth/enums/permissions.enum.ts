@@ -31,7 +31,7 @@ export enum AppPermission {
   DISCUSSION_COMMENT_DELETE_ANY = 'discussion:comment:delete:any', // Permission to delete any user's comments in the Discussion Service. Allows moderators or admins to remove comments that violate guidelines.
   DISCUSSION_VOTE = 'discussion:vote', // Permission to vote on comments in the Discussion Service. Allows users to upvote or downvote comments to indicate agreement or quality.
 
-  // --- Payments & subsciriptions ---
+  // --- Payments & subscriptions ---
   PAYMENT_READ_SELF = 'payment:read:self', // Permission to read payment and subscription status from the Payment Service. Allows viewing billing history, active subscriptions, and payment methods.
   PAYMENT_INITIATE = 'payment:initiate', // Permission to initiate payments via the Payment Service. Enables starting new subscriptions, processing one-time payments, or upgrading plans.
   SUBSCRIPTION_MANAGE = 'subscription:manage', // Permission to manage subscriptions via the Payment Service. Allows updating subscription plans, cancelling subscriptions, or modifying billing details.

@@ -1,7 +1,4 @@
-import {
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Injectable, UnauthorizedException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
@@ -15,6 +12,7 @@ import { mapRealmRolesToAppRoles } from './mappers/roles.mapper';
 const USER_BLACKLIST_TTL = 7 * 24 * 60 * 60; // 24 hours in seconds (greater than refresh token TTL)
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
   constructor(
     private prisma: PrismaService,
     private redis: RedisService,
@@ -47,14 +45,16 @@ export class AuthService {
 
     // Get user info from IdP
     const userInfo = await this.getUserInfo(tokens.access_token);
-    console.log('Userinfo :', userInfo);
+    this.logger.log(`Userinfo: ${JSON.stringify(userInfo)}`);
 
     // Extract and map roles
     const realmRoles = this.getRealmRoles(tokens.access_token);
     const appRoles = mapRealmRolesToAppRoles(realmRoles);
     const appPermissions = mapRolesToPermissions(realmRoles);
-    console.log('Mapped app permissions:', appPermissions);
-    console.log('Mapped app roles:', appRoles);
+    this.logger.log(
+      `Mapped app permissions: ${JSON.stringify(appPermissions)}`,
+    );
+    this.logger.log(`Mapped app roles: ${JSON.stringify(appRoles)}`);
 
     // Create or update user in database
     const user = await this.upsertUser(
@@ -103,11 +103,7 @@ export class AuthService {
 
       return response.data;
     } catch (error) {
-      console.error('Token exchange error:', {
-        status: error.response?.status,
-        data: error.response?.data,
-        message: error.message,
-      });
+      this.logger.error('Token exchange error', error);
 
       // Provide specific error messages
       if (error.response?.status === 400) {
@@ -133,12 +129,7 @@ export class AuthService {
 
       return response.data;
     } catch (error) {
-      console.error('UserInfo error:', {
-        status: error.response?.status,
-        statusText: error.response?.statusText,
-        data: error.response?.data,
-        headers: error.response?.headers,
-      });
+      this.logger.error('UserInfo error', error);
       throw new UnauthorizedException('Failed to get user info');
     }
   }
@@ -240,7 +231,9 @@ export class AuthService {
       roles: user.roles,
       permissions: user.permissions,
     };
-    console.log('Generating access token with payload:', payload);
+    this.logger.log(
+      `Generating access token with payload: ${JSON.stringify(payload)}`,
+    );
 
     return this.jwtService.sign(payload, {
       secret: this.configService.get('jwt.secret'),
@@ -271,7 +264,7 @@ export class AuthService {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
     });
-    console.log('User found for refresh token:', user);
+    this.logger.log(`User found for refresh token: ${JSON.stringify(user)}`);
 
     if (!user) {
       throw new UnauthorizedException('User not found');
@@ -317,11 +310,11 @@ export class AuthService {
   }
 
   async validateUser(userId: string) {
-    console.log('Validating user (auth service)');
+    this.logger.log(`Validating user (auth service): ${userId}`);
     // Check if user is blacklisted
     const isBlacklisted = await this.redis.exists(`blacklist:user:${userId}`);
     if (isBlacklisted) {
-      console.log(`User ${userId} is blacklisted`);
+      this.logger.log(`User ${userId} is blacklisted`);
       throw new UnauthorizedException('User is blacklisted');
     }
 
@@ -338,7 +331,8 @@ export class AuthService {
     });
 
     if (!user) {
-      console.log(`User ${userId} not found`);
+      this.logger.log(`User ${userId} not found`);
+
       throw new UnauthorizedException('User not found');
     }
 
@@ -346,7 +340,7 @@ export class AuthService {
       throw new UnauthorizedException('User account is not active');
     }
 
-    console.log(`User ${userId} validated successfully (auth service)`);
+    this.logger.log(`User ${userId} validated successfully (auth service)`);
     return user;
   }
 
@@ -354,7 +348,7 @@ export class AuthService {
    * Initiate account update by redirecting to Keycloak account management
    */
   async initiateAccountUpdate() {
-    console.log('Initiating account update process');
+    this.logger.log('Initiating account update process');
     const keycloakConfig = this.configService.get('keycloak');
 
     // Create account management URL
@@ -384,6 +378,9 @@ export class AuthService {
         console.warn(
           `No OAuth token found for user ${userId}, cannot refresh profile`,
         );
+        this.logger.warn(
+          `No OAuth token found for user ${userId}, cannot refresh profile`,
+        );
         return { message: 'Failed to update profile', success: false };
       }
 
@@ -404,7 +401,7 @@ export class AuthService {
 
       return { message: 'Profile updated successfully', success: true };
     } catch (error) {
-      console.error('Account update callback error:', error);
+      this.logger.error('Account update callback error:', error);
       return { message: 'Failed to update profile', success: false };
     }
   }
