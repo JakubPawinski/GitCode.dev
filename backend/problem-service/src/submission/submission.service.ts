@@ -33,7 +33,8 @@ export class SubmissionService {
     }
 
     // Check if language is supported
-    const languages = process.env.LANGUAGES_SUPPORTED?.split(', ');
+    const languages = process.env.LANGUAGES_SUPPORTED?.split(',');
+    console.log(languages);
     if (!languages?.includes(createSubmissionDto.language.toLocaleLowerCase()))
       throw new BadRequestException(`Submission language not supported.`);
 

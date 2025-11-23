@@ -3,7 +3,7 @@ import Docker from 'dockerode';
 import * as fs from 'fs';
 import * as path from 'path';
 import { DOCKER_EXECUTOR_CONFIG } from '../config/docker-executor.config';
-import { JAVASCRIPT_RUNNER, PYTHON_RUNNER } from './runners';
+// import { JAVASCRIPT_RUNNER, PYTHON_RUNNER } from '../../runners';
 
 interface ExecutionResult {
   passed: boolean;
@@ -28,7 +28,18 @@ export class DockerExecutorService {
   private readonly imageMap = this.config.images;
 
   constructor() {
-    this.docker = new Docker();
+    const dockerHost = process.env.DOCKER_HOST;
+
+    if (dockerHost) {
+      this.docker = new Docker({
+        host: dockerHost.replace('tcp://', '').split(':')[0],
+        port: parseInt(dockerHost.split(':')[2] || '2375'),
+      });
+      this.logger.log(`Connected to Docker at ${dockerHost}`);
+    } else {
+      this.docker = new Docker();
+      this.logger.log('Using local Docker socket');
+    }
   }
 
   async executeCodeBatch(
@@ -69,14 +80,6 @@ export class DockerExecutorService {
     const { cmd, filename } = this.getLanguageConfig(language);
     const functionName = this.extractFunctionName(code, language);
 
-    const codeDir = `/tmp/code-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-
-    if (!fs.existsSync(codeDir)) {
-      fs.mkdirSync(codeDir, { recursive: true, mode: 0o777 });
-    }
-
-    fs.writeFileSync(path.join(codeDir, filename), code, { mode: 0o644 });
-
     const testCasesJson = testCases.map((tc) => ({
       id: tc.id,
       input: typeof tc.input === 'string' ? JSON.parse(tc.input) : tc.input,
@@ -86,22 +89,26 @@ export class DockerExecutorService {
           : tc.expectedOutput,
     }));
 
-    fs.writeFileSync(
-      path.join(codeDir, 'test_cases.json'),
-      JSON.stringify(testCasesJson),
-      { mode: 0o644 },
-    );
+    const runners: Record<string, string> = {
+      python: this.config.runners.python.replace(
+        /\$\{FUNCTION_NAME\}/g,
+        functionName,
+      ),
+      javascript: this.config.runners.javascript.replace(
+        /\$\{FUNCTION_NAME\}/g,
+        functionName,
+      ),
+    };
 
-    this.writeTestRunner(codeDir, language, functionName);
+    const runnerContent = runners[language.toLowerCase()] || runners['python'];
+    const runnerFilename =
+      language.toLowerCase() === 'python' ? 'runner.py' : 'runner.js';
 
     const container = await this.docker.createContainer({
       Image: image,
       Cmd: cmd,
-      Volumes: {
-        '/app': {},
-      },
+      WorkingDir: '/app',
       HostConfig: {
-        Binds: [`${codeDir}:/app:ro`],
         Memory: this.config.resources.memory,
         MemorySwap: this.config.resources.memorySwap,
         CpuPeriod: this.config.cpu.period,
@@ -115,6 +122,18 @@ export class DockerExecutorService {
     });
 
     try {
+      // Get ready archive to put on container
+      const tar = require('tar-stream');
+      const pack = tar.pack();
+
+      pack.entry({ name: filename }, code);
+      pack.entry({ name: runnerFilename }, runnerContent);
+      pack.entry({ name: 'test_cases.json' }, JSON.stringify(testCasesJson));
+
+      pack.finalize();
+
+      await container.putArchive(pack, { path: '/app' });
+
       const startTime = Date.now();
       await container.start();
 
@@ -150,11 +169,6 @@ export class DockerExecutorService {
       } catch (e) {
         // Ignore
       }
-      try {
-        fs.rmSync(codeDir, { recursive: true, force: true });
-      } catch (e) {
-        this.logger.warn(`Failed to cleanup ${codeDir}:`, e);
-      }
     }
   }
 
@@ -186,25 +200,6 @@ export class DockerExecutorService {
     }
 
     return 'solution';
-  }
-
-  private writeTestRunner(
-    codeDir: string,
-    language: string,
-    functionName: string,
-  ): void {
-    const runners: Record<string, string> = {
-      python: PYTHON_RUNNER.replace(/\$\{FUNCTION_NAME\}/g, functionName),
-      javascript: JAVASCRIPT_RUNNER.replace(
-        /\$\{FUNCTION_NAME\}/g,
-        functionName,
-      ),
-    };
-
-    const runnerContent = runners[language.toLowerCase()] || runners['python'];
-    const runnerFilename =
-      language.toLowerCase() === 'python' ? 'runner.py' : 'runner.js';
-    fs.writeFileSync(path.join(codeDir, runnerFilename), runnerContent);
   }
 
   private parseResults(

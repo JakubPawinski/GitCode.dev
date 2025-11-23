@@ -67,6 +67,7 @@ export class ProblemService {
         problemSlug: slug,
       },
       select: {
+        id: true,
         problemId: true,
         title: true,
         difficulty: true,

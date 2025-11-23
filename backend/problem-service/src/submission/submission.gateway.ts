@@ -19,6 +19,12 @@ export class SubmissionGateway
   private userConnections = new Map<string, string[]>();
 
   handleConnection(client: Socket) {
+    this.logger.log(`🔌 New connection attempt - Socket ID: ${client.id}`);
+    this.logger.log(
+      `Handshake query: ${JSON.stringify(client.handshake.query)}`,
+    );
+    this.logger.log(`Handshake auth: ${JSON.stringify(client.handshake.auth)}`);
+    this.logger.log(`All handshake: ${JSON.stringify(client.handshake)}`);
     const userId = client.handshake.query.userId as string;
     if (!userId) {
       this.logger.warn('No userId provided');

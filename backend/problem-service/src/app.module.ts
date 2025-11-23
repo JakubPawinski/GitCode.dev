@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
+import { ConfigService } from '@nestjs/config';
 import { AppService } from './app.service';
 import { PrismaModule } from './prisma/prisma.module';
 import { ProblemModule } from './problem/problem.module';
@@ -18,11 +19,14 @@ import configuration from './config/configuration';
       load: [configuration],
       envFilePath: '.env',
     }),
-    BullModule.forRoot({
-      connection: {
-        host: process.env.REDIS_HOST || 'localhost',
-        port: parseInt(process.env.REDIS_PORT || '6379'),
-      },
+    BullModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        connection: {
+          url:
+            configService.get<string>('redis.url') || 'redis://localhost:6379',
+        },
+      }),
     }),
   ],
   controllers: [AppController],
