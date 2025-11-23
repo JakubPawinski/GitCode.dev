@@ -27,7 +27,6 @@ import { PermissionsGuards } from '../auth/guards/permissions.guard';
 import { RequirePermissions } from '../auth/decorators/permissions.decorator';
 import { User } from '../auth/decorators/current-user.decorator';
 import { ApiResponseDto } from '../dto/api-response.dto';
-import { patch } from 'axios';
 import { GetUsersQueryDto } from './dtos/get-users-query.dto';
 import { GetProfileDto } from './dtos/get-profile.dto';
 import { PatchProfileDto } from './dtos/patch-profile.dto';
@@ -156,7 +155,6 @@ export class UsersController {
    * Get current user's preferences
    */
   @Get('/me/preferences')
-  @UseGuards(JwtAuthGuard, PermissionsGuards)
   @RequirePermissions(AppPermission.USER_PREFERENCE_READ)
   @ApiBearerAuth('Bearer Auth')
   @ApiOperation({ summary: "Get current user's preferences" })
@@ -186,7 +184,6 @@ export class UsersController {
    * Update current user's preferences
    */
   @Patch('/me/preferences')
-  @UseGuards(JwtAuthGuard, PermissionsGuards)
   @RequirePermissions(AppPermission.USER_PREFERENCE_UPDATE)
   @ApiBearerAuth('Bearer Auth')
   @ApiOperation({ summary: "Update current user's preferences" })
@@ -220,7 +217,6 @@ export class UsersController {
    * Get all users
    */
   @Get()
-  @UseGuards(JwtAuthGuard, PermissionsGuards)
   @RequirePermissions(AppPermission.USER_MANAGE) // Require admin-level permission
   @ApiBearerAuth('Bearer Auth')
   @ApiOperation({ summary: 'Get all users' })
@@ -251,7 +247,6 @@ export class UsersController {
    * Search users by username
    */
   @Get('/search')
-  @UseGuards(JwtAuthGuard, PermissionsGuards)
   @RequirePermissions(AppPermission.USER_READ_PUBLIC)
   @ApiBearerAuth('Bearer Auth')
   @ApiOperation({ summary: 'Search users by username' })
@@ -275,7 +270,6 @@ export class UsersController {
   public async searchUsers(
     @Query() searchUsersDto: SearchUsersDto,
   ): Promise<PaginatedResult<GetPublicProfileDto>> {
-    console.log('Searching users with DTO:', searchUsersDto);
     return this.usersService.searchUsers(searchUsersDto);
   }
 
@@ -283,7 +277,6 @@ export class UsersController {
    * Admin search users with more detailed info
    */
   @Get('/search/admin')
-  @UseGuards(JwtAuthGuard, PermissionsGuards)
   @RequirePermissions(AppPermission.USER_MANAGE) // Require admin-level permission
   @ApiBearerAuth('Bearer Auth')
   @ApiOperation({ summary: 'Admin search users with detailed info' })
@@ -314,7 +307,6 @@ export class UsersController {
    * Get user profile by ID
    */
   @Get('/:id/profile')
-  @UseGuards(JwtAuthGuard, PermissionsGuards)
   @RequirePermissions(AppPermission.USER_READ_PUBLIC)
   @ApiBearerAuth('Bearer Auth')
   @ApiOperation({ summary: 'Get user profile by ID' })
@@ -351,7 +343,6 @@ export class UsersController {
    * Ban user by id
    */
   @Post(':id/ban')
-  @UseGuards(JwtAuthGuard, PermissionsGuards)
   @RequirePermissions(AppPermission.USER_MANAGE) // Require admin-level permission
   @ApiBearerAuth('Bearer Auth')
   @ApiOperation({ summary: 'Ban user by ID' })
@@ -388,7 +379,6 @@ export class UsersController {
    * Restore a soft-deleted user by ID
    */
   @Post('/:id/restore')
-  @UseGuards(JwtAuthGuard, PermissionsGuards)
   @RequirePermissions(AppPermission.USER_MANAGE) // Require admin-level permission
   @ApiBearerAuth('Bearer Auth')
   @ApiOperation({ summary: 'Restore a soft-deleted user by ID' })
@@ -423,7 +413,6 @@ export class UsersController {
    * Get user by ID with all details
    */
   @Get(':id')
-  @UseGuards(JwtAuthGuard, PermissionsGuards)
   @RequirePermissions(AppPermission.USER_READ_PRIVATE)
   @ApiBearerAuth('Bearer Auth')
   @ApiOperation({ summary: 'Get user by ID' })

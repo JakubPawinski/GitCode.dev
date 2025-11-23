@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsUrl, IsUUID } from 'class-validator';
+import { IsOptional, IsString, IsUrl, IsUUID } from 'class-validator';
 
 export class AddresseeDto {
   @IsUUID()
@@ -16,6 +16,7 @@ export class AddresseeDto {
   @IsString()
   username: string;
 
+  @IsOptional()
   @ApiProperty({
     description: 'Avatar URL of the addressee user',
     example: 'https://example.com/avatar.jpg',
@@ -23,6 +24,7 @@ export class AddresseeDto {
   @IsUrl()
   avatarUrl: string | null;
 
+  @IsOptional()
   @ApiProperty({
     description: 'First name of the addressee user',
     example: 'Jane',
@@ -30,6 +32,7 @@ export class AddresseeDto {
   @IsString()
   firstName: string | null;
 
+  @IsOptional()
   @ApiProperty({
     description: 'Last name of the addressee user',
     example: 'Doe',

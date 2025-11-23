@@ -12,7 +12,7 @@ import {
 import { SocialService } from './providers/social.service';
 import { User } from '../auth/decorators/current-user.decorator';
 import type { AuthenticatedUser, UUID } from '../types';
-import { GetFriendDto } from './dtos/get-firend.dto';
+import { GetFriendDto } from './dtos/get-friend.dto';
 import { InviteFriendDto } from './dtos/invite-friend.dto';
 import { RespondFriendRequestDto } from './dtos/respond-friend-request.dto';
 import {

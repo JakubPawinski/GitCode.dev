@@ -1,6 +1,5 @@
 import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { Observable } from 'rxjs';
 import { AppPermission, AppPermissions } from '../enums/permissions.enum';
 import { PERMISSIONS_KEY } from '../decorators/permissions.decorator';
 
@@ -18,8 +17,7 @@ export class PermissionsGuards implements CanActivate {
       AppPermissions[]
     >(PERMISSIONS_KEY, [context.getHandler(), context.getClass()]);
 
-    console.log('Validating permissions guard');
-    console.log('Required permissions:', requiredPermissions);
+    console.log('Validating permissions with required permissions:', requiredPermissions);
     // If no permissions are required, allow access
     if (!requiredPermissions) {
       return true;

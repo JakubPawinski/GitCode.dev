@@ -1,5 +1,5 @@
-import { ApiProperty, ApiResponse } from '@nestjs/swagger';
-import { IsObject, IsOptional, IsString, IsUrl, IsUUID } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
+import { IsOptional, IsString, IsUrl, IsUUID } from 'class-validator';
 
 export class RequesterDto {
   @IsUUID()
@@ -16,13 +16,13 @@ export class RequesterDto {
   @IsString()
   username: string;
 
+  @IsOptional()
   @IsUrl()
   @ApiProperty({
     description: 'Avatar URL of the requester',
     example: 'https://example.com/avatar.jpg',
     nullable: true,
   })
-  @IsOptional()
   avatarUrl: string | null;
 
   @ApiProperty({ description: 'First name of the requester', example: 'John' })

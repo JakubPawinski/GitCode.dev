@@ -1,7 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { FriendRequestStatus } from '../enums/friendRequest.enum';
-import { GetFriendDto } from '../dtos/get-firend.dto';
+import { GetFriendDto } from '../dtos/get-friend.dto';
 import { InviteFriendDto } from '../dtos/invite-friend.dto';
 import { UUID } from '../../types';
 import { FriendRequestDto } from '../dtos/friend-request.dto';
@@ -190,7 +190,21 @@ export class SocialService {
     userId: UUID,
     friendId: UUID,
   ): Promise<{ message: string; success: boolean; removedFriendIds: UUID }> {
-    const removedFriend = await this.prismaService.friendRequest.deleteMany({
+    const friendFound = await this.prismaService.friendRequest.findFirst({
+      where: {
+        status: FriendRequestStatus.ACCEPTED,
+        OR: [
+          { requesterId: userId, addresseeId: friendId },
+          { requesterId: friendId, addresseeId: userId },
+        ],
+      },
+    });
+
+    if (!friendFound) {
+      throw new NotFoundException('Friend relationship not found');
+    }
+    
+    await this.prismaService.friendRequest.deleteMany({
       where: {
         status: FriendRequestStatus.ACCEPTED,
         OR: [
@@ -214,7 +228,9 @@ export class SocialService {
     const foundRequests = await this.prismaService.friendRequest.findMany({
       where: {
         addresseeId: userId,
-        status: FriendRequestStatus.PENDING || FriendRequestStatus.REJECTED,
+        status: {
+          in: [FriendRequestStatus.PENDING, FriendRequestStatus.REJECTED],
+        },
       },
       select: {
         id: true,

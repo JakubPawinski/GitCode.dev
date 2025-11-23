@@ -1,6 +1,5 @@
 import {
   Injectable,
-  InternalServerErrorException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -156,8 +155,8 @@ export class AuthService {
     const payloadJson = Buffer.from(payloadBase64, 'base64').toString('utf8');
     const payload = JSON.parse(payloadJson);
 
-    const keycloakConfig = this.configService.get('keycloak');
-    const clientId = keycloakConfig.clientId;
+    // const keycloakConfig = this.configService.get('keycloak');
+    // const clientId = keycloakConfig.clientId;
 
     const realmRoles = payload.realm_access?.roles ?? [];
 

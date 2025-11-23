@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsUrl, IsUUID } from 'class-validator';
+import { IsOptional, IsString, IsUrl, IsUUID } from 'class-validator';
 
 export class GetFriendDto {
   @IsUUID()
@@ -13,6 +13,7 @@ export class GetFriendDto {
   @ApiProperty({ description: 'Username of the friend', example: 'john_doe' })
   username: string;
 
+  @IsOptional()
   @IsUrl()
   @ApiProperty({
     description: 'Avatar URL of the friend',
@@ -20,10 +21,12 @@ export class GetFriendDto {
   })
   avatarUrl: string | null;
 
+  @IsOptional()
   @IsString()
   @ApiProperty({ description: 'First name of the friend', example: 'John' })
   firstName: string | null;
 
+  @IsOptional()
   @IsString()
   @ApiProperty({ description: 'Last name of the friend', example: 'Doe' })
   lastName: string | null;

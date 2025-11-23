@@ -1,5 +1,4 @@
 import {
-  IsArray,
   IsBoolean,
   IsEmail,
   IsString,
@@ -9,7 +8,6 @@ import {
   IsOptional,
 } from 'class-validator';
 import { AppRole } from '../../auth/enums/roles.enum';
-import { AppPermission } from '../../auth/enums/permissions.enum';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class GetProfileDto {
@@ -31,40 +29,40 @@ export class GetProfileDto {
   @ApiProperty({ description: 'Username of the user', example: 'john_doe' })
   username: string;
 
+  @IsOptional()
   @IsString()
   @ApiProperty({
     description: 'First name of the user',
     nullable: true,
     example: 'John',
   })
-  @IsOptional()
   firstName: string | null;
 
+  @IsOptional()
   @IsString()
   @ApiProperty({
     description: 'Last name of the user',
     nullable: true,
     example: 'Doe',
   })
-  @IsOptional()
   lastName: string | null;
 
+  @IsOptional()
   @IsUrl()
   @ApiProperty({
     description: 'Avatar URL of the user',
     nullable: true,
     example: 'https://example.com/avatar.jpg',
   })
-  @IsOptional()
   avatarUrl: string | null;
 
+  @IsOptional()
   @IsString()
   @ApiProperty({
     description: 'Bio of the user',
     nullable: true,
     example: 'Software developer and tech enthusiast.',
   })
-  @IsOptional()
   bio: string | null;
 
   @IsBoolean()

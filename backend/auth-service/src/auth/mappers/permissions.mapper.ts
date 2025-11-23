@@ -8,7 +8,6 @@ const REGULAR_USER_PERMISSIONS: AppPermissions = [
   AppPermission.SOCIAL_FRIEND_LIST,
   AppPermission.SOCIAL_FRIEND_STATS,
   AppPermission.SOCIAL_LEADERBOARD_VIEW,
-  AppPermission.DISCUSSION_READ,
   // Discussion
   AppPermission.DISCUSSION_READ,
   AppPermission.DISCUSSION_COMMENT_CREATE,

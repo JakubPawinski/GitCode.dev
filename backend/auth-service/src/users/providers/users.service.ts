@@ -2,7 +2,6 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { GetUsersQueryDto } from '../dtos/get-users-query.dto';
 import { GetProfileDto } from '../dtos/get-profile.dto';
-import { App } from 'supertest/types';
 import { AppRole } from '../../auth/enums/roles.enum';
 import { UUID } from '../../types';
 import { PatchProfileDto } from '../dtos/patch-profile.dto';
@@ -14,7 +13,6 @@ import { GetPublicProfileDto } from '../dtos/get-public-profile.dto';
 import { GetUserDto } from '../dtos/get-user.dto';
 import { AppPermission } from '../../auth/enums/permissions.enum';
 import { SearchUsersDto } from '../dtos/search-users.dto';
-import { contains } from 'class-validator';
 import { Prisma } from '@prisma/client';
 import { PaginatedResult } from '../../types/pagination.interface';
 import { SearchUsersAdminDto } from '../dtos/search-users-admin.dto';
@@ -31,7 +29,7 @@ export class UsersService {
   /*
    * Get current user's profile
    */
-  public async getUserProfile(id): Promise<GetProfileDto> {
+  public async getUserProfile(id: UUID): Promise<GetProfileDto> {
     // Fetch user from database
     const userProfile = await this.prismaService.user.findUnique({
       where: { id },
