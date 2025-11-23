@@ -109,6 +109,9 @@ export class SocialController {
     return this.socialService.sendFriendRequest(user.id, inviteFriendDto);
   }
 
+  /*
+   * Respond to a friend request
+   */
   @Post('/friends/:requesterId/respond')
   @RequirePermissions(AppPermission.SOCIAL_FRIEND_RESPOND)
   @ApiBearerAuth('Bearer Auth')
@@ -142,6 +145,9 @@ export class SocialController {
     );
   }
 
+  /*
+   * Remove a friend
+   */
   @Delete('/friends/:userId')
   @RequirePermissions(AppPermission.SOCIAL_FRIEND_REMOVE)
   @ApiBearerAuth('Bearer Auth')
@@ -157,6 +163,9 @@ export class SocialController {
     return this.socialService.removeFriend(user.id, userId);
   }
 
+  /*
+   * Get incoming friend requests
+   */
   @Get('/friends/requests')
   @RequirePermissions(AppPermission.SOCIAL_FRIEND_LIST)
   @ApiBearerAuth('Bearer Auth')

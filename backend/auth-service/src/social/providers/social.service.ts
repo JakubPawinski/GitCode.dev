@@ -10,6 +10,9 @@ import { FriendRequestDto } from '../dtos/friend-request.dto';
 export class SocialService {
   constructor(private readonly prismaService: PrismaService) {}
 
+  /*
+   * Get all friends for a user
+   */
   public async getFriends(userId: string): Promise<GetFriendDto[]> {
     const foundFriends = await this.prismaService.friendRequest.findMany({
       where: {
@@ -56,6 +59,9 @@ export class SocialService {
     return mappedFriends;
   }
 
+  /*
+   * Send a friend request
+   */
   public async sendFriendRequest(
     senderId: UUID,
     inviteFriendDto: InviteFriendDto,
@@ -112,6 +118,9 @@ export class SocialService {
     return mappedFriendRequest;
   }
 
+  /*
+   * Respond to a friend request
+   */
   public async respondToFriendRequest(
     userId: UUID,
     requesterId: UUID,
@@ -173,6 +182,9 @@ export class SocialService {
     return mappedFriendRequest;
   }
 
+  /*
+   * Remove a friend
+   */
   public async removeFriend(
     userId: UUID,
     friendId: UUID,
@@ -194,6 +206,9 @@ export class SocialService {
     };
   }
 
+  /*
+   * Get incoming or rejected friend requests
+   */
   public async getFriendRequests(userId: UUID): Promise<FriendRequestDto[]> {
     const foundRequests = await this.prismaService.friendRequest.findMany({
       where: {
