@@ -1,50 +1,31 @@
-//GitCode.dev/frontend/components/ProtectedRoute.tsx
+// GitCode.dev/frontend/components/ProtectedRoute.tsx
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 
-interface ProtectedRouteProps {
-  children: React.ReactNode;
-}
-
-export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
+export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
-  const [shouldRedirect, setShouldRedirect] = useState(false);
+  const pathname = usePathname();
 
   useEffect(() => {
-    // Dajemy chwilę na zainicjalizowanie auth state
-    const timer = setTimeout(() => {
-      if (!isLoading && !isAuthenticated) {
-        setShouldRedirect(true);
-      }
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, [isAuthenticated, isLoading]);
-
-  useEffect(() => {
-    if (shouldRedirect) {
-      console.log('ProtectedRoute: User not authenticated, redirecting to login');
-      router.push('/login');
+    if (!isLoading && !isAuthenticated) {
+      const redirectUrl = encodeURIComponent(pathname);
+      router.push(`/login?redirect=${redirectUrl}`);
     }
-  }, [shouldRedirect, router]);
+  }, [isAuthenticated, isLoading, router, pathname]);
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-lg">Loading...</div>
-      </div>
+        <div>Loading...</div>
     );
   }
 
   if (!isAuthenticated) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-lg">Verifying authentication...</div>
-      </div>
+        <div>Redirecting to login...</div>
     );
   }
 

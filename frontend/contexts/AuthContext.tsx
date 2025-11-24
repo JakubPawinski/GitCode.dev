@@ -1,19 +1,12 @@
-//GitCode.dev/frontend/contexts/AuthContext.tsx
+// GitCode.dev/frontend/contexts/AuthContext.tsx
 'use client';
-
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { User, AuthResponse } from '@/types/auth';
-import { authAPI } from '@/lib/api';
-
-interface AuthContextType {
-  user: User | null;
-  accessToken: string | null;
-  isLoading: boolean;
-  isAuthenticated: boolean;
-  login: (provider?: string) => void;
-  logout: () => Promise<void>;
-  refreshAuth: () => Promise<void>;
-}
+import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
+import { User } from '@/interfaces/user-interface';
+import { useGetProfile } from '@/hooks/api/use-get-profile';
+import { useRefreshToken } from '@/hooks/api/use-refresh-token';
+import { useLogout } from '@/hooks/api/use-logout';
+import { useLogin } from '@/hooks/api/use-login';
+import { AuthContextType } from '@/interfaces/auth-context-type-interface';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -25,105 +18,89 @@ export const useAuth = () => {
   return context;
 };
 
-interface AuthProviderProps {
-  children: ReactNode;
-}
-
-export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [accessToken, setAccessToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [refreshAttempted, setRefreshAttempted] = useState(false);
+  const initializingRef = useRef(false);
+
+  const { data: profileData, loading: profileLoading, error: profileError, refetch: refetchProfile } = useGetProfile();
+  const { refreshMutation: refreshTokenMutation } = useRefreshToken();
+  const { logoutMutation } = useLogout();
+  const { login: loginHook } = useLogin();
 
   useEffect(() => {
-    initializeAuth();
+    if (profileData?.data) {
+      setUser(profileData.data);
+    }
+  }, [profileData]);
+
+  useEffect(() => {
+    if (!initializingRef.current) {
+      initializingRef.current = true;
+      initializeAuth();
+    }
   }, []);
+
+  useEffect(() => {
+    if (profileError?.response?.status === 401 && !refreshAttempted && !profileLoading) {
+      setRefreshAttempted(true);
+      refreshAuth();
+    }
+  }, [profileError?.response?.status, refreshAttempted, profileLoading]);
 
   const initializeAuth = async () => {
     try {
-      // Check if we have a token in localStorage (from previous session)
-      const storedToken = localStorage.getItem('accessToken');
-      const storedUser = localStorage.getItem('user');
-
-      if (storedToken && storedUser) {
-        setAccessToken(storedToken);
-        setUser(JSON.parse(storedUser));
-        
-        // Verify the token is still valid by fetching profile
-        try {
-          await authAPI.getProfile();
-        } catch (error) {
-          console.log('Stored token invalid, trying refresh...');
-          await refreshAuth();
-        }
-      } else {
-        // Try to refresh token using http-only cookie
-        await refreshAuth();
-      }
+      await refreshAuth();
     } catch (error) {
-      console.error('Auth initialization failed:', error);
-      // Clear any invalid stored data
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('user');
+      console.error('Auth initialization error:', error);
+      handleAuthFailure();
     } finally {
       setIsLoading(false);
     }
   };
 
-  const refreshAuth = async () => {
+  const refreshAuth = async (): Promise<boolean> => {
     try {
-      console.log('Refreshing auth token...');
-      const response = await authAPI.refreshToken();
-      const { accessToken: newToken, user: userData } = response.data!;
-
-      setAccessToken(newToken);
-      setUser(userData);
-      
-      localStorage.setItem('accessToken', newToken);
-      localStorage.setItem('user', JSON.stringify(userData));
-      
-      console.log('Auth token refreshed successfully');
-    } catch (error) {
-      console.error('Token refresh failed:', error);
-      // Don't throw error here, just clear state
-      setUser(null);
-      setAccessToken(null);
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('user');
+      const response = await refreshTokenMutation();
+      if (response?.data) {
+        const { user: userData } = response.data;
+        setUser(userData);
+        setRefreshAttempted(false);
+        return true;
+      }
+      return false;
+    } catch (error: any) {
+      if (error?.response?.status !== 401) {
+        console.error('Token refresh failed with unexpected error:', error);
+      }
+      return false;
     }
   };
 
+  const handleAuthFailure = () => {
+    setUser(null);
+    setRefreshAttempted(false);
+  };
+
   const login = (provider: string = 'keycloak') => {
-    authAPI.login(provider);
+    loginHook(provider);
   };
 
   const logout = async () => {
     try {
-      console.log('Initiating logout...');
-      // Wywołaj endpoint logout w backendzie który unieważni refresh token
-      await authAPI.logout();
-      console.log('Backend logout successful');
+      await logoutMutation();
     } catch (error) {
-      console.error('Logout API error:', error);
-      // Kontynuuj nawet jeśli API call się nie udał
+      console.error('Logout API call failed:', error);
     } finally {
-      // Zawsze czyść stan lokalny niezależnie od odpowiedzi backendu
-      console.log('Clearing local auth state...');
-      setUser(null);
-      setAccessToken(null);
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('user');
-      
-      // Przekieruj na stronę logowania
-      console.log('Redirecting to login...');
-      window.location.href = '/login';
+      handleAuthFailure();
     }
   };
 
   const value: AuthContextType = {
     user,
-    accessToken,
-    isLoading,
-    isAuthenticated: !!user && !!accessToken,
+    isLoading: isLoading || profileLoading,
+    isAuthenticated: !!user,
     login,
     logout,
     refreshAuth,
