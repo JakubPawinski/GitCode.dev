@@ -39,6 +39,11 @@ export class ProblemController {
     const userId = req.user.id;
     return this.problemService.getRecommended(userId);
   }
+  @Get('search')
+  @UseGuards(JwtAuthGuard)
+  search(@Query('q') query: string, @Query() paginationDto: PaginationDto) {
+    return this.problemService.searchProblems(query, paginationDto);
+  }
 
   @Get('/trending')
   getTrending() {
