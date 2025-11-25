@@ -183,6 +183,15 @@ export class ProblemService {
       },
     });
 
+    await this.prisma.problemStats.create({
+      data: {
+        problemId: problem.id,
+        totalSubmissions: 0,
+        acceptedSubmissions: 0,
+        acceptanceRate: 0,
+      },
+    });
+
     return problem;
   }
 
@@ -267,5 +276,33 @@ export class ProblemService {
     });
 
     return deletedProblem;
+  }
+
+  async getProblemStats(slug: string) {
+    const problem = await this.prisma.problem.findUnique({
+      where: { problemSlug: slug },
+      select: { id: true },
+    });
+
+    if (!problem) {
+      throw new NotFoundException(`Problem with slug "${slug}" not found`);
+    }
+
+    const stats = await this.prisma.problemStats.findUnique({
+      where: { problemId: problem.id },
+    });
+
+    if (!stats) {
+      throw new NotFoundException(`Stats not found for problem "${slug}"`);
+    }
+
+    return {
+      totalSubmissions: stats.totalSubmissions,
+      acceptedSubmissions: stats.acceptedSubmissions,
+      acceptanceRate: stats.acceptanceRate,
+      avgExecutionTime: stats.avgExecutionTime,
+      avgMemoryUsed: stats.avgMemoryUsed,
+      updatedAt: stats.updatedAt,
+    };
   }
 }

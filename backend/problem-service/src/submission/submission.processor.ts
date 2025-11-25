@@ -104,7 +104,7 @@ export class SubmissionProcessor extends WorkerHost {
           : 0;
 
       const isAllPassed = passedTests === results.length;
-      const status = isAllPassed ? 'succes' : 'failed';
+      const status = isAllPassed ? 'success' : 'failed';
 
       // Update attempt with results
       await this.prisma.solutionAttempt.update({
@@ -118,6 +118,40 @@ export class SubmissionProcessor extends WorkerHost {
           completedAt: new Date(),
         },
       });
+
+      // Get current problem stats
+      const stats = await this.prisma.problemStats.findUnique({
+        where: { problemId },
+      });
+
+      // Update based on results
+      const newTotal = (stats?.totalSubmissions || 0) + 1;
+      const newAccepted =
+        (stats?.acceptedSubmissions || 0) + (isAllPassed ? 1 : 0);
+      const newAcceptanceRate = (newAccepted / newTotal) * 100;
+      const newAvgTime =
+        ((stats?.avgExecutionTime || 0) * (stats?.totalSubmissions || 0) +
+          avgExecutionTime) /
+        newTotal;
+
+      // Upsert in db
+      await this.prisma.problemStats.upsert({
+        where: { problemId },
+        create: {
+          problemId,
+          totalSubmissions: 1,
+          acceptedSubmissions: isAllPassed ? 1 : 0,
+          acceptanceRate: isAllPassed ? 100 : 0,
+          avgExecutionTime: avgExecutionTime,
+        },
+        update: {
+          totalSubmissions: newTotal,
+          acceptedSubmissions: newAccepted,
+          acceptanceRate: newAcceptanceRate,
+          avgExecutionTime: newAvgTime,
+        },
+      });
+
       this.logger.log(`Sending 'completed' event to user ${userId}`);
       // Notify about process end with details
       this.submissionGateway.notifyAttemptUpdate(userId, attemptId, {

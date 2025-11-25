@@ -31,6 +31,13 @@ export class ProblemController {
     return this.problemService.findProblemBySlug(id);
   }
 
+  //STATS ENDPOINT
+  @Get(':slug/stats')
+  @UseGuards(JwtAuthGuard)
+  getStats(@Param('slug') slug: string) {
+    return this.problemService.getProblemStats(slug);
+  }
+
   // ADMIN ENDPOINTS
   @Post()
   @UseGuards(JwtAuthGuard)
