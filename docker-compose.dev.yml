@@ -207,7 +207,7 @@ services:
 
   problem-db:
     image: postgres:18-alpine
-    container_name: problems_postgres
+    container_name: problems-db
     env_file:
       - .env
     environment:

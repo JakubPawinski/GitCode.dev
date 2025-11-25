@@ -15,7 +15,7 @@ RUN npx prisma generate
 
 EXPOSE 4002
 
-CMD ["sh", "-c", "npx prisma migrate deploy && npm run start:dev"]
+CMD ["sh", "-c", "npx prisma migrate deploy && npx prisma db seed && npm run start:dev"]
 
 # Production stage
 FROM node:20-alpine AS production
@@ -34,4 +34,4 @@ RUN npx prisma generate
 
 EXPOSE 4002
 
-CMD ["sh", "-c", "npx prisma migrate deploy && npm run start:prod"]
+CMD ["sh", "-c", "npx prisma migrate deploy && npx prisma db seed && npm run start:prod"]
