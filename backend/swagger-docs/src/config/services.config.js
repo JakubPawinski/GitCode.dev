@@ -1,6 +1,6 @@
 module.exports = {
 	port: process.env.SWAGGER_DOCS_PORT || 4050,
-	buildDelay: 0, 
+	buildDelay: 0,
 
 	apiGatewaySpec: {
 		openapi: '3.0.0',
@@ -18,6 +18,11 @@ module.exports = {
 		{
 			name: 'Auth Service',
 			url: `${process.env.AUTH_SERVICE_URL}/docs-json`,
+			pathPrefix: '/api',
+		},
+		{
+			name: 'Problem Service',
+			url: `${process.env.PROBLEM_SERVICE_URL}/docs-json`,
 			pathPrefix: '/api',
 		},
 	],

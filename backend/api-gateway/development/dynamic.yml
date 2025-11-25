@@ -14,6 +14,16 @@ http:
         - gateway
       middlewares:
         - strip-api
+    problem-route:
+      rule: PathPrefix(`/api/problems`)
+      service: problem-service
+      entryPoints:
+        - gateway
+      middlewares:
+        - strip-api
+    submission-route:
+      rule: PathPrefix(`/api/submission`)
+      service: problem-service
     social-route:
       rule: PathPrefix(`/api/social`)
       service: auth-service
@@ -38,6 +48,10 @@ http:
       loadBalancer:
         servers:
           - url: 'http://swagger-docs-service:4050'
+    problem-service:
+      loadBalancer:
+        servers:
+          - url: 'http://problem-service:4002'
 
   middlewares:
     strip-api:
