@@ -4,12 +4,18 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { CreateSubmissionDto, SubmissionHistoryDto } from './dto';
 import {
-  PaginatedResponseDto,
-  PaginatedResult,
-  PaginationDto,
-} from 'src/problem/dto';
+  CreateSubmissionDto,
+  CreateSubmissionResponseDto,
+  QueueStatsDto,
+  RecentSubmissionDto,
+  SubmissionDetailDto,
+  SubmissionHistoryDto,
+  SubmissionStatsDto,
+  AttemptDetailsDto,
+  DeleteResponseDto,
+} from './dto';
+import { PaginatedResult, PaginationDto } from 'src/problem/dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { InjectQueue } from '@nestjs/bullmq';
 import type { Queue } from 'bull';
@@ -24,7 +30,10 @@ export class SubmissionService {
     private submissionGateway: SubmissionGateway,
   ) {}
 
-  async create(createSubmissionDto: CreateSubmissionDto, userId: string) {
+  async create(
+    createSubmissionDto: CreateSubmissionDto,
+    userId: string,
+  ): Promise<CreateSubmissionResponseDto> {
     // Find problem from subbmison
     const problem = await this.prisma.problem.findUnique({
       where: { id: createSubmissionDto.problemId },
@@ -83,7 +92,7 @@ export class SubmissionService {
     });
 
     // DEBUG: Log before adding to queue
-    this.logger.log(`📤 Adding job to queue for attempt ${attempt.id}`);
+    this.logger.log(`Adding job to queue for attempt ${attempt.id}`);
 
     // Add to queue
     const job = await this.submissionsQueue.add(
@@ -101,7 +110,7 @@ export class SubmissionService {
       },
     );
 
-    this.logger.log(`✅ Job added to queue with ID: ${job.id}`);
+    this.logger.log(`Job added to queue with ID: ${job.id}`);
 
     const queueStats = await this.getQueueStats();
 
@@ -122,7 +131,7 @@ export class SubmissionService {
     };
   }
 
-  async getAttemptDetails(attemptId: string) {
+  async getAttemptDetails(attemptId: string): Promise<AttemptDetailsDto> {
     const attempt = await this.prisma.solutionAttempt.findUnique({
       where: { id: attemptId },
       include: {
@@ -167,6 +176,7 @@ export class SubmissionService {
       // Only failed tests
       failedTestsDetails: failedTests.map((tr) => ({
         testIndex: tr.testIndex,
+        passed: false,
         input: JSON.parse(tr.input),
         expectedOutput: JSON.parse(tr.expectedOutput),
         actualOutput: tr.actualOutput ? JSON.parse(tr.actualOutput) : null,
@@ -255,7 +265,204 @@ export class SubmissionService {
     };
   }
 
-  private async getQueueStats() {
+  async getUserStats(userId: string): Promise<SubmissionStatsDto> {
+    const submissions = await this.prisma.userSubmission.findMany({
+      where: { userId },
+      include: {
+        attempts: {
+          select: {
+            status: true,
+            executionTime: true,
+            memoryUsed: true,
+          },
+        },
+      },
+    });
+
+    const allAttempts = submissions.flatMap((s) => s.attempts);
+    const successfulAttempts = allAttempts.filter(
+      (a) => a.status === 'success',
+    );
+    const problemsSolved = submissions.filter((s) =>
+      s.attempts.some((a) => a.status === 'success'),
+    ).length;
+
+    const executionTimes = allAttempts
+      .map((a) => a.executionTime)
+      .filter((t): t is number => t !== null);
+    const memoryUsages = allAttempts
+      .map((a) => a.memoryUsed)
+      .filter((m): m is number => m !== null);
+
+    return {
+      totalSubmissions: allAttempts.length,
+      successfulSubmissions: successfulAttempts.length,
+      successRate:
+        allAttempts.length > 0
+          ? Math.round(
+              (successfulAttempts.length / allAttempts.length) * 100 * 10,
+            ) / 10
+          : 0,
+      avgExecutionTime:
+        executionTimes.length > 0
+          ? Math.round(
+              (executionTimes.reduce((a, b) => a + b, 0) /
+                executionTimes.length) *
+                10,
+            ) / 10
+          : null,
+      avgMemoryUsed:
+        memoryUsages.length > 0
+          ? Math.round(
+              (memoryUsages.reduce((a, b) => a + b, 0) / memoryUsages.length) *
+                10,
+            ) / 10
+          : null,
+      problemsAttempted: submissions.length,
+      problemsSolved,
+    };
+  }
+
+  async getRecentSubmissions(
+    userId: string,
+    limit: number = 10,
+  ): Promise<RecentSubmissionDto[]> {
+    const attempts = await this.prisma.solutionAttempt.findMany({
+      where: {
+        submission: {
+          userId,
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: Math.min(limit, 50), // Max 50
+      include: {
+        submission: {
+          include: {
+            problem: {
+              select: {
+                id: true,
+                title: true,
+                problemSlug: true,
+                difficulty: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    return attempts.map((attempt) => ({
+      attemptId: attempt.id,
+      problemId: attempt.submission.problem.id,
+      problemTitle: attempt.submission.problem.title,
+      problemSlug: attempt.submission.problem.problemSlug,
+      difficulty: attempt.submission.problem.difficulty,
+      status: attempt.status,
+      language: attempt.language,
+      executionTime: attempt.executionTime,
+      memoryUsed: attempt.memoryUsed,
+      passedTests: attempt.passedTests,
+      totalTests: attempt.totalTests,
+      createdAt: attempt.createdAt,
+    }));
+  }
+
+  async getSubmissionById(
+    submissionId: string,
+    userId: string,
+  ): Promise<SubmissionDetailDto> {
+    const submission = await this.prisma.userSubmission.findFirst({
+      where: {
+        id: submissionId,
+        userId,
+      },
+      include: {
+        problem: {
+          select: {
+            id: true,
+            title: true,
+            problemSlug: true,
+            difficulty: true,
+            description: true,
+          },
+        },
+        attempts: {
+          orderBy: { createdAt: 'desc' },
+          include: {
+            testResults: {
+              orderBy: { testIndex: 'asc' },
+            },
+          },
+        },
+        feedbacks: {
+          orderBy: { createdAt: 'desc' },
+        },
+      },
+    });
+
+    if (!submission) {
+      throw new NotFoundException(`Submission ${submissionId} not found`);
+    }
+
+    return {
+      id: submission.id,
+      problem: submission.problem,
+      status: submission.status,
+      currentCode: submission.currentCode,
+      currentLanguage: submission.currentLanguage,
+      totalTestCases: submission.totalTestCases,
+      githubUrl: submission.githubUrl,
+      commitHash: submission.commitHash,
+      acceptedAt: submission.acceptedAt,
+      createdAt: submission.createdAt,
+      updatedAt: submission.updatedAt,
+      submittedAt: submission.submittedAt,
+      attempts: submission.attempts.map((attempt) => ({
+        id: attempt.id,
+        attemptNumber: attempt.attemptNumber,
+        status: attempt.status,
+        code: attempt.code,
+        language: attempt.language,
+        executionTime: attempt.executionTime,
+        memoryUsed: attempt.memoryUsed,
+        passedTests: attempt.passedTests,
+        failedTests: attempt.failedTests,
+        totalTests: attempt.totalTests,
+        errorMessage: attempt.errorMessage,
+        createdAt: attempt.createdAt,
+        completedAt: attempt.completedAt,
+        testResults: attempt.testResults,
+      })),
+      feedbacks: submission.feedbacks,
+    };
+  }
+
+  async deleteSubmission(
+    submissionId: string,
+    userId: string,
+  ): Promise<DeleteResponseDto> {
+    const submission = await this.prisma.userSubmission.findFirst({
+      where: {
+        id: submissionId,
+        userId,
+      },
+    });
+
+    if (!submission) {
+      throw new NotFoundException(`Submission ${submissionId} not found`);
+    }
+
+    await this.prisma.userSubmission.delete({
+      where: { id: submissionId },
+    });
+
+    return {
+      message: 'Submission deleted successfully',
+      deletedId: submissionId,
+    };
+  }
+
+  private async getQueueStats(): Promise<QueueStatsDto> {
     const activeCount = await this.submissionsQueue.getActiveCount();
     const waitingCount = await this.submissionsQueue.getWaitingCount();
     const total = activeCount + waitingCount;
