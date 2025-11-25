@@ -7,6 +7,7 @@ import {
   Query,
   UseGuards,
   Patch,
+  Delete,
 } from '@nestjs/common';
 import { ProblemService } from './problem.service';
 import { PaginationDto } from './dto/pagination.dto';
@@ -43,5 +44,12 @@ export class ProblemController {
   //TODO Implement role checking if admin
   update(@Param('id') id: string, @Body() updateProblemDto: UpdateProblemDto) {
     return this.problemService.updateProblem(id, updateProblemDto);
+  }
+
+  @Delete(':id')
+  @UseGuards(JwtAuthGuard)
+  //TODO Implement role checking if admin
+  delete(@Param('id') id: string) {
+    return this.problemService.deleteProblem(id, updateProblemDto);
   }
 }

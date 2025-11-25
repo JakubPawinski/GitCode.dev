@@ -252,4 +252,20 @@ export class ProblemService {
 
     return problem;
   }
+
+  async deleteProblem(id: string) {
+    const problem = await this.prisma.problem.findUnique({
+      where: { id },
+    });
+
+    if (!problem) {
+      throw new NotFoundException(`Problem with id "${id}" not found`);
+    }
+
+    const deletedProblem = await this.prisma.problem.delete({
+      where: { id },
+    });
+
+    return deletedProblem;
+  }
 }
