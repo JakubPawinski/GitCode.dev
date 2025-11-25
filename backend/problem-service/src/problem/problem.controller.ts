@@ -59,7 +59,7 @@ export class ProblemController {
     return this.problemService.getPaginatedProblems(paginationDto);
   }
 
-  @Get('/user/progress')
+  @Get('user/progress')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get user progress on problems' })
@@ -108,7 +108,7 @@ export class ProblemController {
     return this.problemService.searchProblems(query, paginationDto);
   }
 
-  @Get('/trending')
+  @Get('trending')
   @ApiOperation({ summary: 'Get trending problems' })
   @ApiResponse({
     status: 200,
