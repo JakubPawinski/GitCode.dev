@@ -1,19 +1,31 @@
 import {
   BadRequestException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { PaginatedResult, PaginationDto } from './dto/pagination.dto';
-import { CreateProblemDto } from './dto/create-problem.dto';
-import { UpdateProblemDto } from './dto/update-problem.dto';
+import {
+  PaginatedResult,
+  PaginationDto,
+  CreateProblemDto,
+  UpdateProblemDto,
+  ProblemResponseDto,
+  ProblemDetailResponseDto,
+  ProblemStatsResponseDto,
+  TrendingResponseDto,
+  UserProgressResponseDto,
+  UserSubmissionDto,
+  RecommendedResponseDto,
+} from './dto';
+
 @Injectable()
 export class ProblemService {
   constructor(private prisma: PrismaService) {}
 
   async getPaginatedProblems(
     paginationDto: PaginationDto,
-  ): Promise<PaginatedResult<any>> {
+  ): Promise<PaginatedResult<ProblemResponseDto>> {
     const page = paginationDto.page || 1;
     const limit = paginationDto.limit || 10;
     const sortBy = paginationDto.sortBy || 'createdAt';
@@ -44,10 +56,45 @@ export class ProblemService {
       skip,
       take: +limit,
       orderBy: { [sortBy]: sortOrder },
+      select: {
+        id: true,
+        problemId: true,
+        title: true,
+        difficulty: true,
+        problemSlug: true,
+        description: true,
+        topics: {
+          select: {
+            topic: true,
+          },
+        },
+        similarProblems: {
+          select: {
+            problemTo: {
+              select: {
+                title: true,
+                problemSlug: true,
+                difficulty: true,
+              },
+            },
+          },
+        },
+      },
     });
 
+    const mappedData: ProblemResponseDto[] = data.map((problem) => ({
+      id: problem.id,
+      problemId: problem.problemId,
+      title: problem.title,
+      difficulty: problem.difficulty,
+      problemSlug: problem.problemSlug,
+      description: problem.description,
+      topics: problem.topics.map((t) => t.topic),
+      similarProblems: problem.similarProblems.map((p) => p.problemTo),
+    }));
+
     return {
-      data,
+      data: mappedData,
       pagination: {
         page,
         limit,
@@ -59,7 +106,7 @@ export class ProblemService {
     };
   }
 
-  async findProblemBySlug(slug: string) {
+  async findProblemBySlug(slug: string): Promise<ProblemDetailResponseDto> {
     const problem = await this.prisma.problem.findUnique({
       where: {
         problemSlug: slug,
@@ -102,22 +149,37 @@ export class ProblemService {
       throw new NotFoundException(`Problem with slug "${slug}" not found`);
     }
 
-    return {
-      ...problem,
+    const mapped: ProblemDetailResponseDto = {
+      id: problem.id,
+      problemId: problem.problemId,
+      title: problem.title,
+      difficulty: problem.difficulty,
+      problemSlug: problem.problemSlug,
+      description: problem.description,
       topics: problem.topics.map((t) => t.topic),
+      examples: problem.examples.map((e) => ({
+        inputText: e.inputText,
+        outputText: e.outputText,
+      })),
       constraints: problem.constraints.map((c) => c.constraint),
       hints: problem.hints.map((h) => ({
         hintText: h.hintText,
         orderIndex: h.orderIndex,
       })),
+      testCases: problem.testCases.map((t) => ({
+        input: t.input,
+        expectedOutput: t.expectedOutput,
+      })),
       similarProblems: problem.similarProblems.map((p) => p.problemTo),
     };
+
+    return mapped;
   }
 
   async searchProblems(
     query: string,
     paginationDto: PaginationDto,
-  ): Promise<PaginatedResult<any>> {
+  ): Promise<PaginatedResult<ProblemResponseDto>> {
     if (!query || query.trim().length === 0) {
       throw new BadRequestException('Search query cannot be empty');
     }
@@ -153,16 +215,39 @@ export class ProblemService {
       orderBy: { [sortBy]: sortOrder },
       select: {
         id: true,
+        problemId: true,
         title: true,
         problemSlug: true,
         difficulty: true,
         description: true,
         topics: { select: { topic: true } },
+        similarProblems: {
+          select: {
+            problemTo: {
+              select: {
+                title: true,
+                problemSlug: true,
+                difficulty: true,
+              },
+            },
+          },
+        },
       },
     });
 
+    const mappedData: ProblemResponseDto[] = data.map((problem) => ({
+      id: problem.id,
+      problemId: problem.problemId,
+      title: problem.title,
+      difficulty: problem.difficulty,
+      problemSlug: problem.problemSlug,
+      description: problem.description,
+      topics: problem.topics.map((t) => t.topic),
+      similarProblems: problem.similarProblems.map((p) => p.problemTo),
+    }));
+
     return {
-      data,
+      data: mappedData,
       pagination: {
         page,
         limit,
@@ -174,7 +259,9 @@ export class ProblemService {
     };
   }
 
-  async createProblem(createProblemDto: CreateProblemDto) {
+  async createProblem(
+    createProblemDto: CreateProblemDto,
+  ): Promise<ProblemDetailResponseDto> {
     const {
       title,
       problemId,
@@ -244,6 +331,18 @@ export class ProblemService {
         constraints: true,
         hints: true,
         testCases: true,
+        similarProblems: {
+          select: {
+            problemTo: {
+              select: {
+                title: true,
+                problemSlug: true,
+                description: true,
+                difficulty: true,
+              },
+            },
+          },
+        },
       },
     });
 
@@ -256,10 +355,37 @@ export class ProblemService {
       },
     });
 
-    return problem;
+    const mapped: ProblemDetailResponseDto = {
+      id: problem.id,
+      problemId: problem.problemId,
+      title: problem.title,
+      difficulty: problem.difficulty,
+      problemSlug: problem.problemSlug,
+      description: problem.description,
+      topics: problem.topics.map((t) => t.topic),
+      examples: problem.examples.map((e) => ({
+        inputText: e.inputText,
+        outputText: e.outputText,
+      })),
+      constraints: problem.constraints.map((c) => c.constraint),
+      hints: problem.hints.map((h) => ({
+        hintText: h.hintText,
+        orderIndex: h.orderIndex,
+      })),
+      testCases: problem.testCases.map((t) => ({
+        input: t.input,
+        expectedOutput: t.expectedOutput,
+      })),
+      similarProblems: problem.similarProblems.map((p) => p.problemTo),
+    };
+
+    return mapped;
   }
 
-  async updateProblem(id: string, updateProblemDto: UpdateProblemDto) {
+  async updateProblem(
+    id: string,
+    updateProblemDto: UpdateProblemDto,
+  ): Promise<ProblemDetailResponseDto> {
     const { topics, examples, constraints, hints, testCases, ...rest } =
       updateProblemDto;
 
@@ -320,10 +446,46 @@ export class ProblemService {
         constraints: true,
         hints: true,
         testCases: true,
+        similarProblems: {
+          select: {
+            problemTo: {
+              select: {
+                title: true,
+                problemSlug: true,
+                description: true,
+                difficulty: true,
+              },
+            },
+          },
+        },
       },
     });
 
-    return problem;
+    const mapped: ProblemDetailResponseDto = {
+      id: problem.id,
+      problemId: problem.problemId,
+      title: problem.title,
+      difficulty: problem.difficulty,
+      problemSlug: problem.problemSlug,
+      description: problem.description,
+      topics: problem.topics.map((t) => t.topic),
+      examples: problem.examples.map((e) => ({
+        inputText: e.inputText,
+        outputText: e.outputText,
+      })),
+      constraints: problem.constraints.map((c) => c.constraint),
+      hints: problem.hints.map((h) => ({
+        hintText: h.hintText,
+        orderIndex: h.orderIndex,
+      })),
+      testCases: problem.testCases.map((t) => ({
+        input: t.input,
+        expectedOutput: t.expectedOutput,
+      })),
+      similarProblems: problem.similarProblems.map((p) => p.problemTo),
+    };
+
+    return mapped;
   }
 
   async deleteProblem(id: string) {
@@ -335,14 +497,17 @@ export class ProblemService {
       throw new NotFoundException(`Problem with id "${id}" not found`);
     }
 
-    const deletedProblem = await this.prisma.problem.delete({
+    await this.prisma.problem.delete({
       where: { id },
     });
 
-    return deletedProblem;
+    return {
+      message: 'Problem deleted successfully',
+      deletedId: id,
+    };
   }
 
-  async getProblemStats(slug: string) {
+  async getProblemStats(slug: string): Promise<ProblemStatsResponseDto> {
     const problem = await this.prisma.problem.findUnique({
       where: { problemSlug: slug },
       select: { id: true },
@@ -370,14 +535,16 @@ export class ProblemService {
     };
   }
 
-  async getTrending() {
+  async getTrending(): Promise<TrendingResponseDto> {
     // Get all problems
     const trendingProblems = await this.prisma.problem.findMany({
       select: {
         id: true,
+        problemId: true,
         title: true,
         problemSlug: true,
         difficulty: true,
+        description: true,
         problemStats: {
           select: {
             totalSubmissions: true,
@@ -388,6 +555,17 @@ export class ProblemService {
         topics: {
           select: {
             topic: true,
+          },
+        },
+        similarProblems: {
+          select: {
+            problemTo: {
+              select: {
+                title: true,
+                problemSlug: true,
+                difficulty: true,
+              },
+            },
           },
         },
       },
@@ -404,17 +582,20 @@ export class ProblemService {
       trendingCount: sorted.slice(0, 10).length,
       trending: sorted.slice(0, 10).map((problem) => ({
         id: problem.id,
+        problemId: problem.problemId,
         title: problem.title,
-        slug: problem.problemSlug,
+        problemSlug: problem.problemSlug,
         difficulty: problem.difficulty,
+        description: problem.description,
+        topics: problem.topics.map((t) => t.topic),
+        similarProblems: problem.similarProblems.map((p) => p.problemTo),
         totalSubmissions: problem.problemStats[0]?.totalSubmissions || 0,
         acceptanceRate: problem.problemStats[0]?.acceptanceRate || 0,
-        topics: problem.topics.map((t) => t.topic),
       })),
     };
   }
   //USER METHODS
-  async getUserProgress(userId: string) {
+  async getUserProgress(userId: string): Promise<UserProgressResponseDto> {
     const userSubmissions = await this.prisma.userSubmission.findMany({
       where: { userId },
       include: {
@@ -464,7 +645,10 @@ export class ProblemService {
     };
   }
 
-  async getUserProblemSubmissions(slug: string, userId: string) {
+  async getUserProblemSubmissions(
+    slug: string,
+    userId: string,
+  ): Promise<UserSubmissionDto> {
     const problem = await this.prisma.problem.findUnique({
       where: { problemSlug: slug },
       select: { id: true },
@@ -508,8 +692,11 @@ export class ProblemService {
         userId,
         problemSlug: slug,
         totalAttempts: 0,
+        status: 'pending',
+        currentLanguage: 'python',
         attempts: [],
         bestAttempt: null,
+        lastSubmittedAt: null,
       };
     }
 
@@ -523,14 +710,31 @@ export class ProblemService {
       totalAttempts: userSubmission.attempts.length,
       status: userSubmission.status,
       currentLanguage: userSubmission.currentLanguage,
-      attempts: userSubmission.attempts,
-      bestAttempt: bestAttempt || null,
+      attempts: userSubmission.attempts.map((a) => ({
+        id: a.id,
+        status: a.status,
+        code: a.code,
+        language: a.language,
+        executionTime: a.executionTime,
+        memoryUsed: a.memoryUsed,
+        submittedAt: a.createdAt,
+      })),
+      bestAttempt: bestAttempt
+        ? {
+            id: bestAttempt.id,
+            status: bestAttempt.status,
+            code: bestAttempt.code,
+            language: bestAttempt.language,
+            executionTime: bestAttempt.executionTime,
+            memoryUsed: bestAttempt.memoryUsed,
+            submittedAt: bestAttempt.createdAt,
+          }
+        : null,
       lastSubmittedAt: userSubmission.submittedAt,
     };
   }
 
-  async getRecommended(userId: string) {
-    // Get problems that user solved
+  async getRecommended(userId: string): Promise<RecommendedResponseDto> {
     const solvedProblems = await this.prisma.userSubmission.findMany({
       where: {
         userId,
@@ -547,7 +751,6 @@ export class ProblemService {
 
     const solvedProblemIds = solvedProblems.map((sub) => sub.problemId);
 
-    // Get topics of solved problems
     const userTopics = await this.prisma.problemTopic.findMany({
       where: {
         problemId: {
@@ -562,7 +765,6 @@ export class ProblemService {
 
     const userTopicList = userTopics.map((t) => t.topic);
 
-    // Recommend not solved problems with similar topics
     const recommendedProblems = await this.prisma.problem.findMany({
       where: {
         id: {
@@ -578,12 +780,25 @@ export class ProblemService {
       },
       select: {
         id: true,
+        problemId: true,
         title: true,
         problemSlug: true,
         difficulty: true,
+        description: true,
         topics: {
           select: {
             topic: true,
+          },
+        },
+        similarProblems: {
+          select: {
+            problemTo: {
+              select: {
+                title: true,
+                problemSlug: true,
+                difficulty: true,
+              },
+            },
           },
         },
       },
@@ -598,10 +813,13 @@ export class ProblemService {
       recommendedCount: recommendedProblems.length,
       recommendations: recommendedProblems.map((problem) => ({
         id: problem.id,
+        problemId: problem.problemId,
         title: problem.title,
-        slug: problem.problemSlug,
+        problemSlug: problem.problemSlug,
         difficulty: problem.difficulty,
+        description: problem.description,
         topics: problem.topics.map((t) => t.topic),
+        similarProblems: problem.similarProblems.map((p) => p.problemTo),
       })),
     };
   }

@@ -7,7 +7,7 @@ import {
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
-enum DifficultyLevel {
+export enum DifficultyLevel {
   EASY = 'EASY',
   MEDIUM = 'MEDIUM',
   HARD = 'HARD',
