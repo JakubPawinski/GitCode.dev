@@ -24,6 +24,9 @@ http:
     submission-route:
       rule: PathPrefix(`/api/submission`)
       service: problem-service
+    social-route:
+      rule: PathPrefix(`/api/social`)
+      service: auth-service
       entryPoints:
         - gateway
       middlewares:

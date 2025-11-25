@@ -18,9 +18,22 @@ model User {
   emailVerified Boolean        @default(false) @map("email_verified")
   createdAt     DateTime       @default(now()) @map("created_at")
   updatedAt     DateTime       @updatedAt @map("updated_at")
+  roles         Json           @default("[]")
+  permissions   Json           @default("[]")
+  bio           String?        @db.Text
+  userStatus    UserStatus     @default(ACTIVE) @map("user_status")
+  lastLogin     DateTime?      @default(now()) @map("last_login")
+
+  sentFriendRequests     FriendRequest[] @relation("FriendRequestRequester")
+  receivedFriendRequests FriendRequest[] @relation("FriendRequestAddressee")
+
   
   oauthTokens   OAuthToken[]
+  preferences   UserPreferences?
 
+  @@index([email])
+  @@index([username])  
+  @@index([userStatus])  
   @@map("users")
 }
 
@@ -38,6 +51,68 @@ model OAuthToken {
   
   user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([userId]) 
+  @@index([provider]) 
   @@unique([userId, provider])
   @@map("oauth_tokens")
+}
+
+model UserPreferences {  
+  id              String   @id @default(uuid())
+  userId          String   @unique @map("user_id")
+  theme           Theme   @default(LIGHT)
+  language        String   @default("en")
+  notifications   Boolean  @default(true)
+  privacyLevel    PrivacyLevel   @default(PUBLIC)
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+  
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("user_preferences")
+}
+
+model FriendRequest {
+  id         String   @id @default(uuid())
+
+  requesterId     String   @map("requester_id")
+  requester      User     @relation("FriendRequestRequester", fields: [requesterId], references: [id], onDelete: Cascade)
+
+  addresseeId   String   @map("addressee_id")
+  addressee      User     @relation("FriendRequestAddressee", fields: [addresseeId], references: [id], onDelete: Cascade)
+
+  status     FriendRequestStatus @default(PENDING)
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@unique([requesterId, addresseeId])
+  @@index([requesterId])
+  @@index([addresseeId])
+  @@map("friend_requests")
+}
+
+enum FriendRequestStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  CANCELED
+}
+
+enum PrivacyLevel {
+  PUBLIC
+  PRIVATE
+  FRIENDS_ONLY
+}
+
+enum Theme {
+  LIGHT
+  DARK
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  BANNED  // Banned users
+  DELETED // Soft-deleted users
 }

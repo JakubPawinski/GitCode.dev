@@ -55,7 +55,16 @@ router.get('/', (req, res, next) => {
         `);
 	}
 
-	swaggerUi.setup(mergedSpec)(req, res, next);
+	swaggerUi.setup(mergedSpec, {
+        // Enable persistence of authorization across page reloads
+		swaggerOptions: {
+			persistAuthorization: true,
+			requestInterceptor: (request) => {
+				request.credentials = 'include';
+				return request;
+			},
+		},
+	})(req, res, next);
 });
 
 module.exports = router;
