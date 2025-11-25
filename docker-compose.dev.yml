@@ -49,6 +49,7 @@ services:
       - PORT=${SWAGGER_DOCS_PORT}
       - API_GATEWAY_URL=http://api-gateway:${API_GATEWAY_PORT}
       - AUTH_SERVICE_URL=http://auth-service:${AUTH_SERVICE_PORT}
+      - PROBLEM_SERVICE_URL=http://problem-service:${PROBLEM_SERVICE_PORT}
     ports:
       - "${SWAGGER_DOCS_PORT}:${SWAGGER_DOCS_PORT}"
     volumes:
@@ -60,6 +61,8 @@ services:
       api-gateway:
         condition: service_started # In future, use healthcheck
       auth-service:
+        condition: service_healthy
+      problem-service:
         condition: service_healthy
     restart: unless-stopped
 
