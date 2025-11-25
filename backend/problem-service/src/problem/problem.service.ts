@@ -143,6 +143,7 @@ export class ProblemService {
         examples: {
           create:
             examples?.map((example) => ({
+              exampleNum: example.example_num,
               inputText: example.example_text,
               outputText: example.example_text,
               orderIndex: example.example_num,
