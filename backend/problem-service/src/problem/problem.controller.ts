@@ -33,6 +33,12 @@ export class ProblemController {
     return this.problemService.getUserProgress(userId);
   }
 
+  @Get('recommendations')
+  @UseGuards(JwtAuthGuard)
+  getRecommendedProblems(@Req() req) {
+    const userId = req.user.id;
+    return this.problemService.getRecommended(userId);
+  }
   @Get(':slug')
   @UseGuards(JwtAuthGuard)
   findOne(@Param('slug') id: string) {

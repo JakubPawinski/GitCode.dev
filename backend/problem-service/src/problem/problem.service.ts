@@ -421,4 +421,81 @@ export class ProblemService {
       lastSubmittedAt: userSubmission.submittedAt,
     };
   }
+
+  async getRecommended(userId: string) {
+    // Get problems that user solved
+    const solvedProblems = await this.prisma.userSubmission.findMany({
+      where: {
+        userId,
+        attempts: {
+          some: {
+            status: 'success',
+          },
+        },
+      },
+      select: {
+        problemId: true,
+      },
+    });
+
+    const solvedProblemIds = solvedProblems.map((sub) => sub.problemId);
+
+    // Get topics of solved problems
+    const userTopics = await this.prisma.problemTopic.findMany({
+      where: {
+        problemId: {
+          in: solvedProblemIds,
+        },
+      },
+      distinct: ['topic'],
+      select: {
+        topic: true,
+      },
+    });
+
+    const userTopicList = userTopics.map((t) => t.topic);
+
+    // Recommend not solved problems with similar topics
+    const recommendedProblems = await this.prisma.problem.findMany({
+      where: {
+        id: {
+          notIn: solvedProblemIds,
+        },
+        topics: {
+          some: {
+            topic: {
+              in: userTopicList,
+            },
+          },
+        },
+      },
+      select: {
+        id: true,
+        title: true,
+        problemSlug: true,
+        difficulty: true,
+        topics: {
+          select: {
+            topic: true,
+          },
+        },
+      },
+      take: 10,
+      orderBy: {
+        difficulty: 'asc',
+      },
+    });
+
+    return {
+      userId,
+      recommendedCount: recommendedProblems.length,
+      recommendations: recommendedProblems.map((problem) => ({
+        id: problem.id,
+        title: problem.title,
+        slug: problem.problemSlug,
+        difficulty: problem.difficulty,
+        topics: problem.topics.map((t) => t.topic),
+      })),
+    };
+  }
 }
