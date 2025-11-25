@@ -4,7 +4,12 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { CreateSubmissionDto } from './dto/create-submission.dto';
+import { CreateSubmissionDto, SubmissionHistoryDto } from './dto';
+import {
+  PaginatedResponseDto,
+  PaginatedResult,
+  PaginationDto,
+} from 'src/problem/dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { InjectQueue } from '@nestjs/bullmq';
 import type { Queue } from 'bull';
@@ -167,6 +172,86 @@ export class SubmissionService {
         actualOutput: tr.actualOutput ? JSON.parse(tr.actualOutput) : null,
         errorMessage: tr.errorMessage,
       })),
+    };
+  }
+
+  async getUserSubmissionHistory(
+    userId: string,
+    paginationDto: PaginationDto,
+  ): Promise<PaginatedResult<SubmissionHistoryDto>> {
+    const page = paginationDto.page || 1;
+    const limit = paginationDto.limit || 10;
+    const sortBy = paginationDto.sortBy || 'createdAt';
+    const sortOrder = paginationDto.sortOrder || 'desc';
+
+    const where = { userId };
+
+    const total = await this.prisma.userSubmission.count({ where });
+    const totalPages = Math.ceil(total / limit);
+    const skip = (page - 1) * limit;
+
+    const submissions = await this.prisma.userSubmission.findMany({
+      where,
+      skip,
+      take: +limit,
+      orderBy: { [sortBy]: sortOrder },
+      include: {
+        problem: {
+          select: {
+            id: true,
+            title: true,
+            problemSlug: true,
+            difficulty: true,
+          },
+        },
+        attempts: {
+          select: {
+            status: true,
+            executionTime: true,
+            memoryUsed: true,
+            passedTests: true,
+            failedTests: true,
+            totalTests: true,
+            errorMessage: true,
+            createdAt: true,
+          },
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+        },
+      },
+    });
+
+    const data: SubmissionHistoryDto[] = submissions.map((sub) => {
+      const lastAttempt = sub.attempts[0];
+      return {
+        id: sub.id,
+        userId: sub.userId,
+        problemId: sub.problem.id,
+        problemTitle: sub.problem.title,
+        problemSlug: sub.problem.problemSlug,
+        problemDifficulty: sub.problem.difficulty,
+        status: sub.status,
+        language: sub.currentLanguage,
+        executionTime: lastAttempt?.executionTime || null,
+        memoryUsed: lastAttempt?.memoryUsed || null,
+        testResults: lastAttempt
+          ? `${lastAttempt.passedTests}/${lastAttempt.totalTests} passed`
+          : null,
+        errorMessage: lastAttempt?.errorMessage || null,
+        submittedAt: lastAttempt?.createdAt || sub.submittedAt || new Date(),
+      };
+    });
+
+    return {
+      data,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPreviousPage: page > 1,
+      },
     };
   }
 
