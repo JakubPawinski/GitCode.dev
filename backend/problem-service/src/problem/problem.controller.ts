@@ -50,6 +50,6 @@ export class ProblemController {
   @UseGuards(JwtAuthGuard)
   //TODO Implement role checking if admin
   delete(@Param('id') id: string) {
-    return this.problemService.deleteProblem(id, updateProblemDto);
+    return this.problemService.deleteProblem(id);
   }
 }
