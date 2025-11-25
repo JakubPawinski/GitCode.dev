@@ -1,9 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import {
-  PaginatedResult,
-  PaginationDto,
-} from './dto/pagination.dto';
+import { PaginatedResult, PaginationDto } from './dto/pagination.dto';
+import { CreateProblemDto } from './dto/create-problem.dto';
 @Injectable()
 export class ProblemService {
   constructor(private prisma: PrismaService) {}
@@ -111,4 +109,78 @@ export class ProblemService {
     };
   }
 
+  async createProblem(createProblemDto: CreateProblemDto) {
+    const {
+      title,
+      problemId,
+      frontendId,
+      difficulty,
+      problemSlug,
+      description,
+      topics,
+      examples,
+      constraints,
+      hints,
+      codeSnippets,
+      testCases,
+      solutions,
+    } = createProblemDto;
+
+    const problem = await this.prisma.problem.create({
+      data: {
+        title,
+        problemId,
+        frontendId,
+        difficulty,
+        problemSlug,
+        description,
+        solutions,
+        topics: {
+          create: topics.map((topic) => ({
+            topic,
+          })),
+        },
+        examples: {
+          create:
+            examples?.map((example) => ({
+              inputText: example.example_text,
+              outputText: example.example_text,
+              orderIndex: example.example_num,
+            })) || [],
+        },
+        constraints: {
+          create:
+            constraints?.map((constraint, index) => ({
+              constraint,
+              orderIndex: index,
+            })) || [],
+        },
+        hints: {
+          create:
+            hints?.map((hint, index) => ({
+              hintText: hint,
+              orderIndex: index,
+            })) || [],
+        },
+        testCases: {
+          create: testCases.map((testCase, index) => ({
+            input: testCase.input,
+            expectedOutput: testCase.output,
+            isPublic: true,
+            orderIndex: index,
+          })),
+        },
+        codeSnippets: codeSnippets || {},
+      },
+      include: {
+        topics: true,
+        examples: true,
+        constraints: true,
+        hints: true,
+        testCases: true,
+      },
+    });
+
+    return problem;
+  }
 }
