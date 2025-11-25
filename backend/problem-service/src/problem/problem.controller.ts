@@ -38,9 +38,9 @@ export class ProblemController {
   constructor(private readonly problemService: ProblemService) {}
 
   @Get('health')
-  @ApiOperation({ summary: 'Get Auth Service status' })
+  @ApiOperation({ summary: 'Get Problem Service status' })
   public getHealth() {
-    return this.appService.getHealth();
+    return this.problemService.getHealth();
   }
 
   @Get()
