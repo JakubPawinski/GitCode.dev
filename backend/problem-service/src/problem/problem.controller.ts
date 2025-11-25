@@ -5,6 +5,7 @@ import {
   Post,
   Param,
   Query,
+  Req,
   UseGuards,
   Patch,
   Delete,
@@ -23,6 +24,13 @@ export class ProblemController {
   @UseGuards(JwtAuthGuard)
   findAll(@Query() paginationDto: PaginationDto) {
     return this.problemService.getPaginatedProblems(paginationDto);
+  }
+
+  @Get('/user/progress')
+  @UseGuards(JwtAuthGuard)
+  getUserProgess(@Req() req) {
+    const userId = req.user.id;
+    return this.problemService.getUserProgress(userId);
   }
 
   @Get(':slug')

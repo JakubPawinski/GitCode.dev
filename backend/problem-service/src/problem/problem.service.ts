@@ -305,4 +305,55 @@ export class ProblemService {
       updatedAt: stats.updatedAt,
     };
   }
+
+  //USER METHODS
+  async getUserProgress(userId: string) {
+    const userSubmissions = await this.prisma.userSubmission.findMany({
+      where: { userId },
+      include: {
+        problem: {
+          select: {
+            id: true,
+            title: true,
+            problemSlug: true,
+            difficulty: true,
+          },
+        },
+        attempts: {
+          select: {
+            status: true,
+            completedAt: true,
+          },
+          orderBy: { completedAt: 'desc' },
+          take: 1,
+        },
+      },
+    });
+
+    const totalProblems = await this.prisma.problem.count({
+      where: { isActive: true },
+    });
+
+    const solvedProblems = userSubmissions.filter(
+      (sub) => sub.attempts[0]?.status === 'success',
+    ).length;
+
+    const attemptedProblems = userSubmissions.length;
+
+    return {
+      userId,
+      totalProblems,
+      solvedProblems,
+      attemptedProblems,
+      progressPercentage: (solvedProblems / totalProblems) * 100,
+      submissions: userSubmissions.map((sub) => ({
+        problemId: sub.problem.id,
+        title: sub.problem.title,
+        slug: sub.problem.problemSlug,
+        difficulty: sub.problem.difficulty,
+        status: sub.attempts[0]?.status || 'attempted',
+        lastAttempt: sub.attempts[0]?.completedAt,
+      })),
+    };
+  }
 }
