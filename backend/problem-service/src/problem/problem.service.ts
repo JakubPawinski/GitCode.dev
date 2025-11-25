@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { PaginatedResult, PaginationDto } from './dto/pagination.dto';
 import { CreateProblemDto } from './dto/create-problem.dto';
+import { UpdateProblemDto } from './dto/update-problem.dto';
 @Injectable()
 export class ProblemService {
   constructor(private prisma: PrismaService) {}
@@ -172,6 +173,73 @@ export class ProblemService {
           })),
         },
         codeSnippets: codeSnippets || {},
+      },
+      include: {
+        topics: true,
+        examples: true,
+        constraints: true,
+        hints: true,
+        testCases: true,
+      },
+    });
+
+    return problem;
+  }
+
+  async updateProblem(id: string, updateProblemDto: UpdateProblemDto) {
+    const { topics, examples, constraints, hints, testCases, ...rest } =
+      updateProblemDto;
+
+    const problem = await this.prisma.problem.update({
+      where: { id },
+      data: {
+        ...rest,
+        ...(topics && {
+          topics: {
+            deleteMany: {},
+            create: topics.map((topic) => ({ topic })),
+          },
+        }),
+        ...(examples && {
+          examples: {
+            deleteMany: {},
+            create: examples.map((example) => ({
+              exampleNum: example.example_num,
+              inputText: example.example_text,
+              outputText: example.example_text,
+              orderIndex: example.example_num,
+            })),
+          },
+        }),
+        ...(constraints && {
+          constraints: {
+            deleteMany: {},
+            create: constraints.map((constraint, index) => ({
+              constraint,
+              orderIndex: index,
+            })),
+          },
+        }),
+        ...(hints && {
+          hints: {
+            deleteMany: {},
+            create: hints.map((hint, index) => ({
+              hintText: hint,
+              orderIndex: index,
+            })),
+          },
+        }),
+        ...(testCases && {
+          testCases: {
+            deleteMany: {},
+            create: testCases.map((testCase, index) => ({
+              input: testCase.input,
+              expectedOutput: testCase.output,
+              isPublic: true,
+              orderIndex: index,
+            })),
+          },
+        }),
       },
       include: {
         topics: true,

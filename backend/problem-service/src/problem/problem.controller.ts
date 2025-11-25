@@ -6,11 +6,13 @@ import {
   Param,
   Query,
   UseGuards,
+  Patch,
 } from '@nestjs/common';
 import { ProblemService } from './problem.service';
 import { PaginationDto } from './dto/pagination.dto';
 import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
 import { CreateProblemDto } from './dto/create-problem.dto';
+import { UpdateProblemDto } from './dto/update-problem.dto';
 
 @Controller('problems')
 export class ProblemController {
@@ -34,5 +36,12 @@ export class ProblemController {
   //TODO Implement role checking if admin
   create(@Body() createProblemDto: CreateProblemDto) {
     return this.problemService.createProblem(createProblemDto);
+  }
+
+  @Patch(':id')
+  @UseGuards(JwtAuthGuard)
+  //TODO Implement role checking if admin
+  update(@Param('id') id: string, @Body() updateProblemDto: UpdateProblemDto) {
+    return this.problemService.updateProblem(id, updateProblemDto);
   }
 }
