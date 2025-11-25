@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ResponseInterceptor } from './interceptors/response.intercepto';
 import { HttpExceptionFilter } from './filters/http-exception.filter';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -14,6 +15,16 @@ async function bootstrap() {
 
   // Global exception filter for error formatting
   app.useGlobalFilters(new HttpExceptionFilter());
+
+  const config = new DocumentBuilder()
+    .setTitle('GitCode.dev problem-service')
+    .setDescription('API documentation for the Problem Service')
+    .addServer(`http://localhost:${process.env.PORT ?? 4002}`, 'Local server')
+    .setVersion('1.0')
+    .addBearerAuth()
+    .build();
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('docs', app, document);
 
   await app.listen(process.env.PORT ?? 3000);
 }
