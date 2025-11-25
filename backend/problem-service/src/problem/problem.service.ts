@@ -356,4 +356,69 @@ export class ProblemService {
       })),
     };
   }
+
+  async getUserProblemSubmissions(slug: string, userId: string) {
+    const problem = await this.prisma.problem.findUnique({
+      where: { problemSlug: slug },
+      select: { id: true },
+    });
+
+    if (!problem) {
+      throw new NotFoundException(`Problem with slug "${slug}" not found`);
+    }
+
+    const userSubmission = await this.prisma.userSubmission.findUnique({
+      where: {
+        userId_problemId: {
+          userId,
+          problemId: problem.id,
+        },
+      },
+      include: {
+        attempts: {
+          select: {
+            id: true,
+            attemptNumber: true,
+            code: true,
+            language: true,
+            status: true,
+            passedTests: true,
+            failedTests: true,
+            totalTests: true,
+            executionTime: true,
+            memoryUsed: true,
+            errorMessage: true,
+            createdAt: true,
+            completedAt: true,
+          },
+          orderBy: { createdAt: 'desc' },
+        },
+      },
+    });
+
+    if (!userSubmission) {
+      return {
+        userId,
+        problemSlug: slug,
+        totalAttempts: 0,
+        attempts: [],
+        bestAttempt: null,
+      };
+    }
+
+    const bestAttempt = userSubmission.attempts.find(
+      (attempt) => attempt.status === 'success',
+    );
+
+    return {
+      userId,
+      problemSlug: slug,
+      totalAttempts: userSubmission.attempts.length,
+      status: userSubmission.status,
+      currentLanguage: userSubmission.currentLanguage,
+      attempts: userSubmission.attempts,
+      bestAttempt: bestAttempt || null,
+      lastSubmittedAt: userSubmission.submittedAt,
+    };
+  }
 }

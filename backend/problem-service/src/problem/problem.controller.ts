@@ -45,6 +45,12 @@ export class ProblemController {
   getStats(@Param('slug') slug: string) {
     return this.problemService.getProblemStats(slug);
   }
+  @Get(':slug/submissions')
+  @UseGuards(JwtAuthGuard)
+  getUserProblemSubmissions(@Param('slug') slug: string, @Req() req) {
+    const userId = req.user.id;
+    return this.problemService.getUserProblemSubmissions(slug, userId);
+  }
 
   // ADMIN ENDPOINTS
   @Post()
