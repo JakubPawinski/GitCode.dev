@@ -39,6 +39,11 @@ export class ProblemController {
     const userId = req.user.id;
     return this.problemService.getRecommended(userId);
   }
+
+  @Get('/trending')
+  getTrending() {
+    return this.problemService.getTrending();
+  }
   @Get(':slug')
   @UseGuards(JwtAuthGuard)
   findOne(@Param('slug') id: string) {

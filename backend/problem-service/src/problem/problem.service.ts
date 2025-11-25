@@ -306,6 +306,49 @@ export class ProblemService {
     };
   }
 
+  async getTrending() {
+    // Get all problems
+    const trendingProblems = await this.prisma.problem.findMany({
+      select: {
+        id: true,
+        title: true,
+        problemSlug: true,
+        difficulty: true,
+        problemStats: {
+          select: {
+            totalSubmissions: true,
+            acceptedSubmissions: true,
+            acceptanceRate: true,
+          },
+        },
+        topics: {
+          select: {
+            topic: true,
+          },
+        },
+      },
+    });
+    // Sort by most submissions
+    const sorted = trendingProblems.sort(
+      (a, b) =>
+        (b.problemStats[0]?.totalSubmissions || 0) -
+        (a.problemStats[0]?.totalSubmissions || 0),
+    );
+
+    return {
+      // Return top 10
+      trendingCount: sorted.slice(0, 10).length,
+      trending: sorted.slice(0, 10).map((problem) => ({
+        id: problem.id,
+        title: problem.title,
+        slug: problem.problemSlug,
+        difficulty: problem.difficulty,
+        totalSubmissions: problem.problemStats[0]?.totalSubmissions || 0,
+        acceptanceRate: problem.problemStats[0]?.acceptanceRate || 0,
+        topics: problem.topics.map((t) => t.topic),
+      })),
+    };
+  }
   //USER METHODS
   async getUserProgress(userId: string) {
     const userSubmissions = await this.prisma.userSubmission.findMany({
