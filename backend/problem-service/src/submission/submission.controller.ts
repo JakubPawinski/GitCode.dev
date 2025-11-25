@@ -3,7 +3,6 @@ import {
   Get,
   Post,
   Body,
-  Patch,
   Param,
   Delete,
   UseGuards,
@@ -17,11 +16,7 @@ import {
 } from './dto/create-submission.dto';
 import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
 import { ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import {
-  PaginatedResponseDto,
-  PaginatedResult,
-  PaginationDto,
-} from 'src/problem/dto';
+import { PaginatedResult, PaginationDto } from 'src/problem/dto';
 import {
   AttemptDetailsDto,
   DeleteResponseDto,

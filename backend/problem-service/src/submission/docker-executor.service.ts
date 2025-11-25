@@ -1,9 +1,6 @@
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import Docker from 'dockerode';
-import * as fs from 'fs';
-import * as path from 'path';
 import { DOCKER_EXECUTOR_CONFIG } from '../config/docker-executor.config';
-// import { JAVASCRIPT_RUNNER, PYTHON_RUNNER } from '../../runners';
 
 interface ExecutionResult {
   passed: boolean;

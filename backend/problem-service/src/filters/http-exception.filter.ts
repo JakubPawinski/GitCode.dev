@@ -56,7 +56,6 @@ export class HttpExceptionFilter implements ExceptionFilter {
       stack: exception instanceof Error ? exception.stack : undefined,
     });
 
-    // ✅ Użyj .status().json() zamiast .statusCode
     response.status(status).json(errorResponse);
   }
 }

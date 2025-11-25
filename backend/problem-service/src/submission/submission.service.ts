@@ -34,7 +34,7 @@ export class SubmissionService {
     createSubmissionDto: CreateSubmissionDto,
     userId: string,
   ): Promise<CreateSubmissionResponseDto> {
-    // Find problem from subbmison
+    // Find problem from submisson
     const problem = await this.prisma.problem.findUnique({
       where: { id: createSubmissionDto.problemId },
       include: { testCases: true },
@@ -48,11 +48,10 @@ export class SubmissionService {
 
     // Check if language is supported
     const languages = process.env.LANGUAGES_SUPPORTED?.split(',');
-    console.log(languages);
     if (!languages?.includes(createSubmissionDto.language.toLocaleLowerCase()))
       throw new BadRequestException(`Submission language not supported.`);
 
-    // Create/Update user subbmision object in db
+    // Create/Update user submission object in db
     const userSubmission = await this.prisma.userSubmission.upsert({
       where: {
         userId_problemId: {
@@ -70,7 +69,7 @@ export class SubmissionService {
         userId,
         problemId: createSubmissionDto.problemId,
         currentCode: createSubmissionDto.code,
-        currentLanguage: createSubmissionDto.language,
+        currentLanguage: createSubmissionDto.language.toLocaleLowerCase(),
         status: 'in_progress',
         totalTestCases: problem.testCases.length,
       },
@@ -473,7 +472,7 @@ export class SubmissionService {
       active: activeCount,
       waiting: waitingCount,
       total,
-      position: activeCount,
+      position: waitingCount + 1,
       estimatedWaitTime,
     };
   }
