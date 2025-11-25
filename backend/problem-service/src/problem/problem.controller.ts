@@ -37,6 +37,12 @@ import {
 export class ProblemController {
   constructor(private readonly problemService: ProblemService) {}
 
+  @Get('health')
+  @ApiOperation({ summary: 'Get Auth Service status' })
+  public getHealth() {
+    return this.appService.getHealth();
+  }
+
   @Get()
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()

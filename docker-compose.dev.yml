@@ -272,6 +272,16 @@ services:
         condition: service_healthy
       problem-redis:
         condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget -qO- http://localhost:${PROBLEM_SERVICE_PORT}/problems/health || exit 1",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     networks:
       - gitcodedev-network
     restart: unless-stopped
@@ -281,7 +291,7 @@ services:
     container_name: docker-daemon-dev
     privileged: true
     environment:
-      - DOCKER_TLS_CERTDIR= # Pusty = wyłącz TLS
+      - DOCKER_TLS_CERTDIR=
     volumes:
       - problem-executions:/tmp/executions
     networks:

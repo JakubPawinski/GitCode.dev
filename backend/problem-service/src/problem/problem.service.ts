@@ -22,7 +22,9 @@ import {
 @Injectable()
 export class ProblemService {
   constructor(private prisma: PrismaService) {}
-
+  getHealth() {
+    return { status: 'Problem Service is healthy' };
+  }
   async getPaginatedProblems(
     paginationDto: PaginationDto,
   ): Promise<PaginatedResult<ProblemResponseDto>> {
