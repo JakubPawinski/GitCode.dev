@@ -1,0 +1,25 @@
+{
+	"compilerOptions": {
+		"rootDir": ".",
+		"sourceMap": true,
+		"declaration": false,
+		"moduleResolution": "node",
+		"emitDecoratorMetadata": true,
+		"experimentalDecorators": true,
+		"importHelpers": true,
+		"target": "es2021",
+		"module": "commonjs",
+		"lib": ["es2020", "dom"],
+		"skipLibCheck": true,
+		"skipDefaultLibCheck": true,
+		"esModuleInterop": true,
+		"allowSyntheticDefaultImports": true,
+		"baseUrl": ".",
+		"paths": {
+			"@gitcode/auth": ["libs/shared/auth/src/index.ts"],
+			"@gitcode/common": ["libs/shared/common/src/index.ts"],
+			"@gitcode/types": ["libs/shared/types/src/index.ts"]
+		}
+	},
+	"exclude": ["node_modules", "tmp"]
+}
