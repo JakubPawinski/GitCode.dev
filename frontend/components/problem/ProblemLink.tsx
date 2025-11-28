@@ -2,14 +2,14 @@ import Link from 'next/link'
 
 export interface ProblemLinkProps {
   problemId: number
-  problemSlug: string
   title: string
+  problemSlug: string
   difficulty: string
 }
 
 export const ProblemLink = ({
-  title,
   problemId,
+  title,
   difficulty,
   problemSlug,
 }: ProblemLinkProps) => {

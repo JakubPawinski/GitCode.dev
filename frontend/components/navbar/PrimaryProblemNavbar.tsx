@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { ExpandPanel } from '../menu/ExpandPanel'
-import { CloudUpload, House } from 'lucide-react'
+import { CloudUpload } from 'lucide-react'
 import { SquareMenu } from 'lucide-react'
 import { useState } from 'react'
 import { useGetProblems } from '@/hooks/api/use-get-problems'
@@ -19,7 +19,6 @@ export const PrimaryProblemNavbar = ({
   submissionError,
 }: NavbarSubmitProps) => {
   const [isOpen, setIsOpen] = useState<boolean>(false)
-  const { data, loading, error } = useGetProblems<ProblemLinkProps[]>()
 
   return (
     <nav className="border-primary/30 flex h-16 items-center justify-between border-b bg-transparent px-6 shadow-lg">
