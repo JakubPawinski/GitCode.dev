@@ -6,11 +6,12 @@
 
 generator client {
   provider = "prisma-client-js"
+  output   = "../../../node_modules/@gitcode/prisma-problem"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url      = env("PROBLEM_DATABASE_URL")
 }
 
 // ============================================ // MAIN ENTITIES // ============================================

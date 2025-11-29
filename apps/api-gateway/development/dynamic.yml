@@ -43,15 +43,15 @@ http:
     auth-service:
       loadBalancer:
         servers:
-          - url: 'http://auth-service:4001'
+          - url: 'http://host.docker.internal:4001'
     swagger-service:
       loadBalancer:
         servers:
-          - url: 'http://swagger-docs-service:4050'
+          - url: 'http://host.docker.internal:4050'
     problem-service:
       loadBalancer:
         servers:
-          - url: 'http://problem-service:4002'
+          - url: 'http://host.docker.internal:4002'
 
   middlewares:
     strip-api:

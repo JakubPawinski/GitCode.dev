@@ -1,42 +1,43 @@
 {
-  "name": "swagger-docs",
-  "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "apps/swagger-docs/src",
-  "projectType": "application",
-  "tags": [],
-  "targets": {
-    "build": {
-      "executor": "@nx/js:tsc",
-      "outputs": ["{options.outputPath}"],
-      "defaultConfiguration": "production",
-      "options": {
-        "outputPath": "dist/apps/swagger-docs",
-        "main": "apps/swagger-docs/src/app.js",
-        "tsConfig": "apps/swagger-docs/tsconfig.app.json",
-        "assets": []
-      },
-      "configurations": {
-        "production": {
-          "optimization": true,
-          "extractLicenses": true,
-          "inspect": false
-        }
-      }
-    },
-    "serve": {
-      "executor": "@nx/js:node",
-      "defaultConfiguration": "development",
-      "options": {
-        "buildTarget": "swagger-docs:build"
-      },
-      "configurations": {
-        "development": {
-          "buildTarget": "swagger-docs:build:development"
-        },
-        "production": {
-          "buildTarget": "swagger-docs:build:production"
-        }
-      }
-    }
-  }
+	"name": "swagger-docs",
+	"$schema": "../../node_modules/nx/schemas/project-schema.json",
+	"sourceRoot": "apps/swagger-docs/src",
+	"projectType": "application",
+	"tags": [],
+	"targets": {
+		"build": {
+			"executor": "@nx/js:tsc",
+			"outputs": ["{options.outputPath}"],
+			"defaultConfiguration": "production",
+			"options": {
+				"outputPath": "dist/apps/swagger-docs",
+				"main": "apps/swagger-docs/src/app.js",
+				"tsConfig": "apps/swagger-docs/tsconfig.app.json",
+				"assets": []
+			},
+			"configurations": {
+				"production": {
+					"optimization": true,
+					"extractLicenses": true,
+					"inspect": false
+				}
+			}
+		},
+		"serve": {
+			"executor": "nx:run-commands",
+			"options": {
+				"commands": [
+					"npx wait-on tcp:4001 tcp:4002",
+					"nx run swagger-docs:start-node"
+				],
+				"parallel": false
+			}
+		},
+		"start-node": {
+			"executor": "@nx/js:node",
+			"options": {
+				"buildTarget": "swagger-docs:build"
+			}
+		}
+	}
 }

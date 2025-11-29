@@ -6,7 +6,6 @@
   "tags": [],
   "targets": {
     "build": {
-
       "executor": "@nx/js:tsc",
       "outputs": ["{options.outputPath}"],
       "defaultConfiguration": "production",
@@ -38,6 +37,18 @@
         },
         "production": {
           "buildTarget": "auth-service:build:production"
+        }
+      },
+      "prisma-generate": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "npx prisma generate --schema=apps/auth-service/prisma/schema.prisma"
+        }
+      },
+      "db-migrate": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "npx prisma migrate deploy --schema=apps/auth-service/prisma/schema.prisma"
         }
       }
     }

@@ -1,10 +1,11 @@
 generator client {
   provider = "prisma-client-js"
+  output   = "../../../node_modules/@gitcode/prisma-auth"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url      = env("AUTH_DATABASE_URL")
 }
 
 model User {

@@ -39,6 +39,18 @@
           "buildTarget": "problem-service:build:production"
         }
       }
+    },
+    "prisma-generate": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx prisma generate --schema=apps/problem-service/prisma/schema.prisma"
+      }
+    },
+    "db-migrate": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx prisma migrate deploy --schema=apps/problem-service/prisma/schema.prisma"
+      }
     }
   }
 }

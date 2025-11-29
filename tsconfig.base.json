@@ -18,7 +18,7 @@
 		"paths": {
 			"@gitcode/auth": ["libs/shared/auth/src/index.ts"],
 			"@gitcode/common": ["libs/shared/common/src/index.ts"],
-			"@gitcode/types": ["libs/shared/types/src/index.ts"]
+			"@gitcode/types": ["libs/shared/types/src/index.ts"],
 		}
 	},
 	"exclude": ["node_modules", "tmp"]
