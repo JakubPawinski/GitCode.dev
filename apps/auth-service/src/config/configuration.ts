@@ -1,10 +1,10 @@
 export default () => ({
-  port: parseInt(process.env.PORT || '4001', 10),
+  port: parseInt(process.env.AUTH_PORT || '4001', 10),
   database: {
-    url: process.env.DATABASE_URL,
+    url: process.env.AUTH_DATABASE_URL,
   },
   redis: {
-    url: process.env.REDIS_URL || 'redis://localhost:6379',
+    url: process.env.AUTH_REDIS_URL || 'redis://localhost:6379',
   },
   keycloak: {
     url: process.env.KEYCLOAK_URL, // External URL (for browser redirects)

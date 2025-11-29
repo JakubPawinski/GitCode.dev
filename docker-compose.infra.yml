@@ -22,11 +22,11 @@ services:
     env_file:
       - .env
     environment:
-      - POSTGRES_USER=${AUTH_SERVICE_DB_USER}
-      - POSTGRES_PASSWORD=${AUTH_SERVICE_DB_PASSWORD}
-      - POSTGRES_DB=${AUTH_SERVICE_DB_NAME}
+      - POSTGRES_USER=${AUTH_DB_USER}
+      - POSTGRES_PASSWORD=${AUTH_DB_PASSWORD}
+      - POSTGRES_DB=${AUTH_DB_NAME}
     ports:
-      - '${AUTH_SERVICE_DB_PORT}:5432'
+      - '${AUTH_DB_PORT}:5432'
     volumes:
       - auth-db-data-dev:/var/lib/postgresql/data
     networks:
@@ -116,15 +116,15 @@ services:
     env_file:
       - .env
     environment:
-      - POSTGRES_USER=${PROBLEM_SERVICE_DB_USER}
-      - POSTGRES_PASSWORD=${PROBLEM_SERVICE_DB_PASSWORD}
-      - POSTGRES_DB=${PROBLEM_SERVICE_DB_NAME}
+      - POSTGRES_USER=${PROBLEM_DB_USER}
+      - POSTGRES_PASSWORD=${PROBLEM_DB_PASSWORD}
+      - POSTGRES_DB=${PROBLEM_DB_NAME}
     ports:
-      - '${PROBLEM_SERVICE_DB_PORT}:5432'
+      - '${PROBLEM_DB_PORT}:5432'
     volumes:
       - problem-db-data-dev:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U ${PROBLEM_SERVICE_DB_USER}']
+      test: ['CMD-SHELL', 'pg_isready -U ${PROBLEM_DB_USER}']
       interval: 10s
       timeout: 5s
       retries: 5
