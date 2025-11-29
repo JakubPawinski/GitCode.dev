@@ -1,0 +1,44 @@
+{
+  "name": "problem-service",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/problem-service/src",
+  "projectType": "application",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "defaultConfiguration": "production",
+      "options": {
+        "target": "node",
+        "compiler": "tsc",
+        "outputPath": "dist/apps/problem-service",
+        "main": "apps/problem-service/src/main.ts",
+        "tsConfig": "apps/problem-service/tsconfig.app.json",
+        "assets": []
+      },
+      "configurations": {
+        "production": {
+          "optimization": true,
+          "extractLicenses": true,
+          "inspect": false
+        }
+      }
+    },
+    "serve": {
+      "executor": "@nx/js:node",
+      "defaultConfiguration": "development",
+      "options": {
+        "buildTarget": "problem-service:build"
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "problem-service:build:development"
+        },
+        "production": {
+          "buildTarget": "problem-service:build:production"
+        }
+      }
+    }
+  }
+}
