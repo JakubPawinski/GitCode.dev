@@ -1,0 +1,17 @@
+entryPoints:
+  gateway:
+    address: ':8080'
+  traefik: # traefik dashboard entry point http://localhost:8081/dashboard/
+    address: ':8081'
+
+providers:
+  file:
+    filename: /etc/traefik/dynamic.yml
+    watch: true # reload dynamic configuration on change
+
+api:
+  dashboard: true
+  insecure: true
+
+log:
+  level: DEBUG
