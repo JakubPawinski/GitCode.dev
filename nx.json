@@ -1,43 +1,48 @@
 {
-	"targetDefaults": {
-		"serve": {
-			"dependsOn": ["prisma-generate"]
-		}
-	},
-	"installation": {
-		"version": "22.1.3",
-		"plugins": {
-			"@nx/eslint": "22.1.3",
-			"@nx/jest": "22.1.3",
-			"@nx/next": "22.1.3",
-			"@nx/docker": "22.1.3"
-		}
-	},
-	"$schema": "./node_modules/nx/schemas/nx-schema.json",
-	"plugins": [
-		{
-			"plugin": "@nx/docker",
-			"options": {
-				"buildTarget": {
-					"name": "docker:build"
-				},
-				"runTarget": {
-					"name": "docker:run"
-				}
-			}
-		},
-		{
-			"plugin": "@nx/jest/plugin",
-			"options": {
-				"targetName": "test"
-			}
-		},
-		{
-			"plugin": "@nx/eslint/plugin",
-			"options": {
-				"targetName": "lint"
-			}
-		}
-	],
-	"nxCloudId": "692a16169aeff9681becbbc1"
+  "targetDefaults": {
+    "serve": {
+      "dependsOn": ["prisma-generate"]
+    },
+    "@nx/js:tsc": {
+      "cache": true,
+      "dependsOn": ["^build"],
+      "inputs": ["default", "^default"]
+    }
+  },
+  "installation": {
+    "version": "22.1.3",
+    "plugins": {
+      "@nx/eslint": "22.1.3",
+      "@nx/jest": "22.1.3",
+      "@nx/next": "22.1.3",
+      "@nx/docker": "22.1.3"
+    }
+  },
+  "$schema": "./node_modules/nx/schemas/nx-schema.json",
+  "plugins": [
+    {
+      "plugin": "@nx/docker",
+      "options": {
+        "buildTarget": {
+          "name": "docker:build"
+        },
+        "runTarget": {
+          "name": "docker:run"
+        }
+      }
+    },
+    {
+      "plugin": "@nx/jest/plugin",
+      "options": {
+        "targetName": "test"
+      }
+    },
+    {
+      "plugin": "@nx/eslint/plugin",
+      "options": {
+        "targetName": "lint"
+      }
+    }
+  ],
+  "nxCloudId": "692a16169aeff9681becbbc1"
 }
