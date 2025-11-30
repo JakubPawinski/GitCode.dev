@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Difficulty } from '@prisma/client';
+import { Difficulty } from '@gitcode/prisma-problem';
 
 export class ProblemResponseDto {
   @ApiProperty({
