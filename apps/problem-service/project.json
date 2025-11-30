@@ -26,6 +26,7 @@
       }
     },
     "serve": {
+      "dependsOn": ["prisma-generate"],
       "executor": "@nx/js:node",
       "defaultConfiguration": "development",
       "options": {
