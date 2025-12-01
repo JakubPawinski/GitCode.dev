@@ -1,8 +1,6 @@
-// GitCode.dev/frontend/contexts/AuthContext.tsx
 'use client';
 import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { User } from '@/interfaces/user-interface';
-import { useGetProfile } from '@/hooks/api/use-get-profile';
 import { useRefreshToken } from '@/hooks/api/use-refresh-token';
 import { useLogout } from '@/hooks/api/use-logout';
 import { useLogin } from '@/hooks/api/use-login';
@@ -24,16 +22,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [refreshAttempted, setRefreshAttempted] = useState(false);
   const initializingRef = useRef(false);
 
-  const { data: profileData, loading: profileLoading, error: profileError, refetch: refetchProfile } = useGetProfile();
-  const { refreshMutation: refreshTokenMutation } = useRefreshToken();
+  const { refreshMutation, loading: refreshLoading, error: refreshError } = useRefreshToken();
   const { logoutMutation } = useLogout();
   const { login: loginHook } = useLogin();
-
-  useEffect(() => {
-    if (profileData?.data) {
-      setUser(profileData.data);
-    }
-  }, [profileData]);
 
   useEffect(() => {
     if (!initializingRef.current) {
@@ -43,11 +34,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   useEffect(() => {
-    if (profileError?.response?.status === 401 && !refreshAttempted && !profileLoading) {
+    if (refreshError?.response?.status === 401 && !refreshAttempted && !refreshLoading) {
       setRefreshAttempted(true);
       refreshAuth();
     }
-  }, [profileError?.response?.status, refreshAttempted, profileLoading]);
+  }, [refreshError?.response?.status, refreshAttempted, refreshLoading]);
 
   const initializeAuth = async () => {
     try {
@@ -62,7 +53,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const refreshAuth = async (): Promise<boolean> => {
     try {
-      const response = await refreshTokenMutation();
+      const response = await refreshMutation();
       if (response?.data) {
         const { user: userData } = response.data;
         setUser(userData);
@@ -99,7 +90,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const value: AuthContextType = {
     user,
-    isLoading: isLoading || profileLoading,
+    isLoading: isLoading || refreshLoading,
     isAuthenticated: !!user,
     login,
     logout,

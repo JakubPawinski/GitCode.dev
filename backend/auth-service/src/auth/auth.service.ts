@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
@@ -6,9 +6,13 @@ import { RedisService } from '../redis/redis.service';
 import axios from 'axios';
 import * as crypto from 'crypto';
 import * as bcrypt from 'bcrypt';
+import { mapRolesToPermissions } from './mappers/permissions.mapper';
+import { mapRealmRolesToAppRoles } from './mappers/roles.mapper';
 
+const USER_BLACKLIST_TTL = 7 * 24 * 60 * 60; // 24 hours in seconds (greater than refresh token TTL)
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
   constructor(
     private prisma: PrismaService,
     private redis: RedisService,
@@ -23,7 +27,7 @@ export class AuthService {
     await this.redis.set(`oauth_state:${state}`, provider, 300); // 5 minutes
 
     const keycloakConfig = this.configService.get('keycloak');
-    const callbackUrl = this.configService.get('api.callbackUrl');
+    const callbackUrl = this.configService.get('api.callbackAuthUrl');
 
     const authUrl = new URL(keycloakConfig.authorizationUrl);
     authUrl.searchParams.append('client_id', keycloakConfig.clientId);
@@ -41,9 +45,22 @@ export class AuthService {
 
     // Get user info from IdP
     const userInfo = await this.getUserInfo(tokens.access_token);
+    this.logger.log(`Userinfo: ${JSON.stringify(userInfo)}`);
+
+    // Extract and map roles
+    const realmRoles = this.getRealmRoles(tokens.access_token);
+    const appRoles = mapRealmRolesToAppRoles(realmRoles);
+    const appPermissions = mapRolesToPermissions(realmRoles);
+    this.logger.log(
+      `Mapped app permissions: ${JSON.stringify(appPermissions)}`,
+    );
+    this.logger.log(`Mapped app roles: ${JSON.stringify(appRoles)}`);
 
     // Create or update user in database
-    const user = await this.upsertUser(userInfo, tokens);
+    const user = await this.upsertUser(
+      { ...userInfo, roles: appRoles, permissions: appPermissions },
+      tokens,
+    );
 
     // Generate our own JWT access token
     const accessToken = this.generateAccessToken(user);
@@ -67,7 +84,7 @@ export class AuthService {
 
   private async exchangeCodeForTokens(code: string) {
     const keycloakConfig = this.configService.get('keycloak');
-    const callbackUrl = this.configService.get('api.callbackUrl');
+    const callbackUrl = this.configService.get('api.callbackAuthUrl');
 
     try {
       const response = await axios.post(
@@ -86,11 +103,7 @@ export class AuthService {
 
       return response.data;
     } catch (error) {
-      console.error('Token exchange error:', {
-        status: error.response?.status,
-        data: error.response?.data,
-        message: error.message,
-      });
+      this.logger.error('Token exchange error', error);
 
       // Provide specific error messages
       if (error.response?.status === 400) {
@@ -116,14 +129,29 @@ export class AuthService {
 
       return response.data;
     } catch (error) {
-      console.error('UserInfo error:', {
-        status: error.response?.status,
-        statusText: error.response?.statusText,
-        data: error.response?.data,
-        headers: error.response?.headers,
-      });
+      this.logger.error('UserInfo error', error);
       throw new UnauthorizedException('Failed to get user info');
     }
+  }
+
+  /*
+   * Extract realm and client roles from access token
+   */
+  private getRealmRoles(accessToken: string) {
+    const [, payloadBase64] = accessToken.split('.');
+    if (!payloadBase64) {
+      return [];
+    }
+
+    const payloadJson = Buffer.from(payloadBase64, 'base64').toString('utf8');
+    const payload = JSON.parse(payloadJson);
+
+    // const keycloakConfig = this.configService.get('keycloak');
+    // const clientId = keycloakConfig.clientId;
+
+    const realmRoles = payload.realm_access?.roles ?? [];
+
+    return realmRoles;
   }
 
   private async upsertUser(userInfo: any, tokens: any) {
@@ -131,11 +159,14 @@ export class AuthService {
       where: { keycloakId: userInfo.sub },
       update: {
         email: userInfo.email,
-        username: userInfo.preferred_username || userInfo.email.split('@')[0],
+        username: userInfo.preferred_username,
         firstName: userInfo.given_name,
         lastName: userInfo.family_name,
         avatarUrl: userInfo.picture,
         emailVerified: userInfo.email_verified || false,
+        roles: userInfo.roles,
+        permissions: userInfo.permissions,
+        bio: userInfo.bio,
       },
       create: {
         keycloakId: userInfo.sub,
@@ -145,6 +176,17 @@ export class AuthService {
         lastName: userInfo.family_name,
         avatarUrl: userInfo.picture,
         emailVerified: userInfo.email_verified || false,
+        roles: userInfo.roles,
+        permissions: userInfo.permissions,
+        bio: userInfo.bio,
+        preferences: {
+          create: {
+            theme: 'LIGHT',
+            language: 'en',
+            notifications: true,
+            privacyLevel: 'PUBLIC',
+          },
+        },
       },
     });
 
@@ -186,7 +228,12 @@ export class AuthService {
       sub: user.id,
       username: user.username,
       email: user.email,
+      roles: user.roles,
+      permissions: user.permissions,
     };
+    this.logger.log(
+      `Generating access token with payload: ${JSON.stringify(payload)}`,
+    );
 
     return this.jwtService.sign(payload, {
       secret: this.configService.get('jwt.secret'),
@@ -217,9 +264,15 @@ export class AuthService {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
     });
+    this.logger.log(`User found for refresh token: ${JSON.stringify(user)}`);
 
     if (!user) {
       throw new UnauthorizedException('User not found');
+    }
+
+    // Check if user is active
+    if (user.userStatus !== 'ACTIVE') {
+      throw new UnauthorizedException('User account is not active');
     }
 
     // Generate new tokens
@@ -233,6 +286,7 @@ export class AuthService {
         id: user.id,
         username: user.username,
         email: user.email,
+        roles: user.roles, //added by me
         firstName: user.firstName,
         lastName: user.lastName,
         avatarUrl: user.avatarUrl,
@@ -240,28 +294,113 @@ export class AuthService {
     };
   }
 
+  /*
+   * Revoke all refresh tokens for a user (e.g ban)
+   */
+  public async revokeAllUserTokens(userId: string) {
+    // Add user to blacklist in Redis
+    await this.redis.set(
+      `blacklist:user:${userId}`,
+      new Date().toISOString(),
+      USER_BLACKLIST_TTL,
+    );
+  }
+
   async logout(refreshToken: string) {
     await this.redis.del(`refresh_token:${refreshToken}`);
   }
 
   async validateUser(userId: string) {
+    this.logger.log(`Validating user (auth service): ${userId}`);
+    // Check if user is blacklisted
+    const isBlacklisted = await this.redis.exists(`blacklist:user:${userId}`);
+    if (isBlacklisted) {
+      this.logger.log(`User ${userId} is blacklisted`);
+      throw new UnauthorizedException('User is blacklisted');
+    }
+
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       select: {
         id: true,
         username: true,
         email: true,
-        firstName: true,
-        lastName: true,
-        avatarUrl: true,
-        emailVerified: true,
+        permissions: true,
+        roles: true,
+        userStatus: true,
       },
     });
 
     if (!user) {
+      this.logger.log(`User ${userId} not found`);
+
       throw new UnauthorizedException('User not found');
     }
 
+    if (user.userStatus !== 'ACTIVE') {
+      throw new UnauthorizedException('User account is not active');
+    }
+
+    this.logger.log(`User ${userId} validated successfully (auth service)`);
     return user;
+  }
+
+  /*
+   * Initiate account update by redirecting to Keycloak account management
+   */
+  async initiateAccountUpdate() {
+    this.logger.log('Initiating account update process');
+    const keycloakConfig = this.configService.get('keycloak');
+
+    // Create account management URL
+    const accountUpdateUrl = new URL(
+      `${keycloakConfig.url}/realms/${keycloakConfig.realm}/account`,
+    );
+
+    const callbackUrl = this.configService.get('api.callbackAccountUrl');
+
+    accountUpdateUrl.searchParams.append('referrer', keycloakConfig.clientId); // Client ID as referrer
+    accountUpdateUrl.searchParams.append('referrer_uri', callbackUrl); // Redirect back after update
+    return { accountUpdateUrl: accountUpdateUrl.toString() };
+  }
+
+  /*
+   * Handle account update callback from Keycloak
+   */
+  async handleAccountUpdateCallback(userId: string) {
+    try {
+      // Retrieve stored OAuth tokens for the user
+      const oauthToken = await this.prisma.oAuthToken.findUnique({
+        where: { userId_provider: { userId, provider: 'keycloak' } },
+      });
+
+      // If no tokens found, cannot refresh profile
+      if (!oauthToken) {
+        this.logger.warn(
+          `No OAuth token found for user ${userId}, cannot refresh profile`,
+        );
+        return { message: 'Failed to update profile', success: false };
+      }
+
+      // Fetch updated user info using the access token
+      const userInfo = await this.getUserInfo(oauthToken.accessToken);
+
+      // Update user profile in the database
+      const tokens = {
+        access_token: oauthToken.accessToken,
+        refresh_token: oauthToken.refreshToken,
+        expires_in: oauthToken.expiresAt
+          ? Math.floor((oauthToken.expiresAt.getTime() - Date.now()) / 1000)
+          : null,
+        scope: oauthToken.scope,
+        token_type: oauthToken.tokenType,
+      };
+      await this.upsertUser(userInfo, tokens);
+
+      return { message: 'Profile updated successfully', success: true };
+    } catch (error) {
+      this.logger.error('Account update callback error:', error);
+      return { message: 'Failed to update profile', success: false };
+    }
   }
 }

@@ -25,6 +25,7 @@ export function DashboardContent() {
     <div>
       <div>Welcome, {user?.firstName} {user?.lastName}</div>
       <div>Email: {user?.email}</div>
+      <div>Roles: {user?.roles?.join(', ') || 'No roles assigned'}</div>
       <button onClick={handleLogout} disabled={isLoggingOut}>
         {isLoggingOut ? 'Logging out...' : 'Logout'}
       </button>
