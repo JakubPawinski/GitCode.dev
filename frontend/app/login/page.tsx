@@ -1,5 +1,6 @@
 // GitCode.dev/frontend/app/login/page.tsx
 'use client';
+
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';

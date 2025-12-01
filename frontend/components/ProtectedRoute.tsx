@@ -1,32 +1,55 @@
 // GitCode.dev/frontend/components/ProtectedRoute.tsx
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, usePathname } from 'next/navigation';
 
-export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { isAuthenticated, isLoading } = useAuth();
+export const ProtectedRoute = ({ 
+  children, 
+  allowedRoles 
+}: {
+  children: React.ReactNode;
+  allowedRoles?: string[];
+}) => {
+  const { isAuthenticated, isLoading, user } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const [shouldRedirect, setShouldRedirect] = useState(false);
+  const [redirectPath, setRedirectPath] = useState('');
+
+  const hasRequiredRole = () => {
+    if (!allowedRoles || allowedRoles.length === 0) return true;
+    if (!user?.roles) return false;
+    
+    return user.roles.some(role => allowedRoles.includes(role));
+  };
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      const redirectUrl = encodeURIComponent(pathname);
-      router.push(`/login?redirect=${redirectUrl}`);
+    if (!isLoading) {
+      if (!isAuthenticated) {
+        const redirectUrl = encodeURIComponent(pathname);
+        setRedirectPath(`/login?redirect=${redirectUrl}`);
+        setShouldRedirect(true);
+      } else if (!hasRequiredRole()) {
+        setRedirectPath('/forbidden');
+        setShouldRedirect(true);
+      }
     }
-  }, [isAuthenticated, isLoading, router, pathname]);
+  }, [isAuthenticated, isLoading, user, allowedRoles, pathname]);
+
+  useEffect(() => {
+    if (shouldRedirect && redirectPath) {
+      router.push(redirectPath);
+    }
+  }, [shouldRedirect, redirectPath, router]);
 
   if (isLoading) {
-    return (
-        <div>Loading...</div>
-    );
+    return <div>Loading...</div>;
   }
 
-  if (!isAuthenticated) {
-    return (
-        <div>Redirecting to login...</div>
-    );
+  if (!isAuthenticated || !hasRequiredRole()) {
+    return <div>Redirecting...</div>;
   }
 
   return <>{children}</>;

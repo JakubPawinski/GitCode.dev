@@ -1,7 +1,7 @@
-// GitCode.dev/frontend/app/dashboard/layout.tsx
+// GitCode.dev/frontend/app/example/all-users/layout.tsx
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 
-export default function DashboardLayout({
+export default function AllUsersLayout({
   children,
 }: {
   children: React.ReactNode;

@@ -1,4 +1,6 @@
+// GitCode.dev/frontend/contexts/AuthContext.tsx
 'use client';
+
 import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { User } from '@/interfaces/user-interface';
 import { useRefreshToken } from '@/hooks/api/use-refresh-token';

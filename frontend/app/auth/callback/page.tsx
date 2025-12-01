@@ -1,5 +1,6 @@
 // GitCode.dev/frontend/app/auth/callback/page.tsx
 'use client';
+
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useSearchParams } from 'next/navigation';
