@@ -1,6 +1,8 @@
+'use client'
 import { Error } from '@/components/error/Error'
 import { Filter } from '@/components/home/Filter'
 import { HomeHeader } from '@/components/home/HomeHeader'
+import { HomeNavbar } from '@/components/home/HomeNavbar'
 import { Loader } from '@/components/loading/Loader'
 import { ProblemLink } from '@/components/problem/ProblemLink'
 import { useGetProblems } from '@/hooks/api/use-get-problems'
@@ -24,34 +26,40 @@ export default function ProblemsPage() {
     topic,
     query,
   })
+
   if (loading) return <Loader />
 
-  if (!data) return null
-
   if (error) return <Error {...error} />
+  if (!data) return null
 
   const onReset = useCallback(() => {
     setDifficulty('')
     setTopic('')
   }, [])
-
   return (
     <div>
-      <HomeHeader />
       <nav>
-        <Filter
-          selectedDifficulty={difficulty}
-          selectedTopic={topic}
-          onDifficultyChange={setDifficulty}
-          onTopicChange={setTopic}
-          onQueryChange={setQuery}
-          onReset={onReset}
-        />
+        <HomeNavbar />
       </nav>
       <main>
-        {data.map((problem) => (
-          <ProblemLink key={problem.problemId} {...problem} />
-        ))}
+        <header>
+          <HomeHeader />
+        </header>
+        <nav>
+          <Filter
+            selectedDifficulty={difficulty}
+            selectedTopic={topic}
+            onDifficultyChange={setDifficulty}
+            onTopicChange={setTopic}
+            onQueryChange={setQuery}
+            onReset={onReset}
+          />
+        </nav>
+        <main>
+          {data.map((problem) => (
+            <ProblemLink key={problem.problemId} {...problem} />
+          ))}
+        </main>
       </main>
     </div>
   )

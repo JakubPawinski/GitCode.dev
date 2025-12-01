@@ -9,7 +9,7 @@ export interface FilterProps {
   onQueryChange: (value: string) => void
   onDifficultyChange: (value: string) => void
   onTopicChange: (value: string) => void
-  onReset: () => void
+  onReset?: () => void
 }
 
 export const Filter = ({
