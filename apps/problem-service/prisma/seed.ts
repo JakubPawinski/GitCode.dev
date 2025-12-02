@@ -1,8 +1,13 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '@gitcode/prisma-problem';
 import * as fs from 'fs';
 import * as path from 'path';
+import { Pool } from 'pg';
+import { PrismaPg } from '@prisma/adapter-pg';
 
-const prisma = new PrismaClient();
+const connectionString = process.env.PROBLEM_DATABASE_URL;
+const pool = new Pool({ connectionString });
+const adapter = new PrismaPg(pool);
+const prisma = new PrismaClient({ adapter });
 
 interface Problem {
   title: string;

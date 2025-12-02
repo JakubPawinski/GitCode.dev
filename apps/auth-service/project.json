@@ -25,6 +25,18 @@
         }
       }
     },
+    "prisma-generate": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx prisma generate --schema=apps/auth-service/prisma/schema.prisma"
+      }
+    },
+    "db-migrate": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx prisma migrate deploy --schema=apps/auth-service/prisma/schema.prisma"
+      }
+    },
     "serve": {
       "dependsOn": ["prisma-generate"],
       "executor": "@nx/js:node",
@@ -38,18 +50,6 @@
         },
         "production": {
           "buildTarget": "auth-service:build:production"
-        }
-      },
-      "prisma-generate": {
-        "executor": "nx:run-commands",
-        "options": {
-          "command": "npx prisma generate --schema=apps/auth-service/prisma/schema.prisma"
-        }
-      },
-      "db-migrate": {
-        "executor": "nx:run-commands",
-        "options": {
-          "command": "npx prisma migrate deploy --schema=apps/auth-service/prisma/schema.prisma"
         }
       }
     }
