@@ -28,17 +28,17 @@
     "prisma-generate": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "npx prisma generate --schema=apps/problem-service/prisma/schema.prisma"
+        "command": "npx prisma generate --config=apps/problem-service/prisma.config.ts"
       }
     },
     "db-migrate": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "npx prisma migrate deploy --schema=apps/problem-service/prisma/schema.prisma"
+        "command": "npx prisma migrate dev --config=apps/problem-service/prisma.config.ts"
       }
     },
     "serve": {
-      "dependsOn": ["prisma-generate"],
+      "dependsOn": ["prisma-generate", "db-migrate"],
       "executor": "@nx/js:node",
       "defaultConfiguration": "development",
       "options": {

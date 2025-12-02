@@ -45,16 +45,16 @@ export class AuthService {
 
     // Get user info from IdP
     const userInfo = await this.getUserInfo(tokens.access_token);
-    this.logger.log(`Userinfo: ${JSON.stringify(userInfo)}`);
+    this.logger.debug(`Userinfo: ${JSON.stringify(userInfo)}`);
 
     // Extract and map roles
     const realmRoles = this.getRealmRoles(tokens.access_token);
     const appRoles = mapRealmRolesToAppRoles(realmRoles);
     const appPermissions = mapRolesToPermissions(realmRoles);
-    this.logger.log(
+    this.logger.debug(
       `Mapped app permissions: ${JSON.stringify(appPermissions)}`,
     );
-    this.logger.log(`Mapped app roles: ${JSON.stringify(appRoles)}`);
+    this.logger.debug(`Mapped app roles: ${JSON.stringify(appRoles)}`);
 
     // Create or update user in database
     const user = await this.upsertUser(
@@ -231,7 +231,7 @@ export class AuthService {
       roles: user.roles,
       permissions: user.permissions,
     };
-    this.logger.log(
+    this.logger.debug(
       `Generating access token with payload: ${JSON.stringify(payload)}`,
     );
 
@@ -264,7 +264,7 @@ export class AuthService {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
     });
-    this.logger.log(`User found for refresh token: ${JSON.stringify(user)}`);
+    this.logger.debug(`User found for refresh token: ${JSON.stringify(user)}`);
 
     if (!user) {
       throw new UnauthorizedException('User not found');
@@ -310,7 +310,7 @@ export class AuthService {
   }
 
   async validateUser(userId: string) {
-    this.logger.log(`Validating user (auth service): ${userId}`);
+    this.logger.debug(`Validating user (auth service): ${userId}`);
     // Check if user is blacklisted
     const isBlacklisted = await this.redis.exists(`blacklist:user:${userId}`);
     if (isBlacklisted) {
@@ -348,7 +348,7 @@ export class AuthService {
    * Initiate account update by redirecting to Keycloak account management
    */
   async initiateAccountUpdate() {
-    this.logger.log('Initiating account update process');
+    this.logger.debug('Initiating account update process');
     const keycloakConfig = this.configService.get('keycloak');
 
     // Create account management URL
