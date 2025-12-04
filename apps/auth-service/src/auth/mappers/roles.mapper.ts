@@ -1,4 +1,4 @@
-import { AppRole, type AppRoles } from '../enums/roles.enum';
+import { AppRole, type AppRoles } from '@gitcode/types';
 
 /*
  * Map Keycloak realm roles to application roles

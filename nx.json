@@ -20,10 +20,7 @@
           "watchDepsName": "watch-deps"
         }
       },
-      "exclude": [
-        "packages/auth/*",
-        "packages/common/*"
-      ]
+      "exclude": ["packages/auth/*", "packages/common/*"]
     },
     {
       "plugin": "@nx/webpack/plugin",

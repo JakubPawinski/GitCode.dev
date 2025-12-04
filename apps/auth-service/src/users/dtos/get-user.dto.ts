@@ -1,15 +1,10 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import {
-  IsArray,
-  IsDateString,
-  IsEnum,
-  IsOptional,
-} from 'class-validator';
+import { IsArray, IsDateString, IsEnum, IsOptional } from 'class-validator';
 import { Type } from 'class-transformer';
 import { GetProfileDto } from './get-profile.dto';
 import { GetPreferencesDto } from './get-preferences.dto';
-import { AppPermission } from '../../auth/enums/permissions.enum';
-import { UserStatus } from '../../auth/enums/user-status.enum';
+import { AppPermission } from '@gitcode/types';
+import { UserStatus } from '@gitcode/types';
 
 export class GetUserDto extends GetProfileDto {
   @ApiProperty({ description: 'Status of the user account', enum: UserStatus })

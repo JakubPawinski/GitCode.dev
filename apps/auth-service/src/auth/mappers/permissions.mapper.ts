@@ -1,4 +1,4 @@
-import { AppPermission, AppPermissions } from '../enums/permissions.enum';
+import { AppPermission, AppPermissions } from '@gitcode/types';
 
 const REGULAR_USER_PERMISSIONS: AppPermissions = [
   // Social

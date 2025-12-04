@@ -5,7 +5,6 @@ import { PrismaService } from '../prisma/prisma.service';
 import { RedisService } from '../redis/redis.service';
 import axios from 'axios';
 import * as crypto from 'crypto';
-import * as bcrypt from 'bcrypt';
 import { mapRolesToPermissions } from './mappers/permissions.mapper';
 import { mapRealmRolesToAppRoles } from './mappers/roles.mapper';
 

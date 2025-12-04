@@ -1,17 +1,12 @@
+import { PaginationMeta } from './pagination.interface.ts';
+
 export interface ApiResponse<T> {
   success: boolean;
   data?: T;
   statusCode: number;
   timestamp: string;
   message?: string;
-  meta?: {
-    currentPage: number;
-    pageSize: number;
-    totalItems: number;
-    totalPages: number;
-    hasNextPage: boolean;
-    hasPreviousPage: boolean;
-  };
+  meta?: PaginationMeta;
   path?: string;
   error?: {
     code: string;

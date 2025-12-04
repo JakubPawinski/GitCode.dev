@@ -7,7 +7,7 @@ import {
   IsEnum,
   IsOptional,
 } from 'class-validator';
-import { AppRole } from '../../auth/enums/roles.enum';
+import { AppRole } from '@gitcode/types';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class GetProfileDto {

@@ -23,11 +23,10 @@ import {
   UserDto,
   LogoutResponseDto,
 } from './dto/auth-response.dto';
-import { ApiResponseDto } from '../dto/api-response.dto';
-import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { ApiResponseDto } from '@gitcode/common';
+import { JwtAuthGuard } from '@gitcode/auth';
 import { RedisService } from '../redis/redis.service';
 import { AppService } from '../app.service';
-
 
 @Controller('auth')
 @ApiTags('Authentication')

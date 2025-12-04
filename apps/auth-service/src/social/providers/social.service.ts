@@ -3,7 +3,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { FriendRequestStatus } from '../enums/friendRequest.enum';
 import { GetFriendDto } from '../dtos/get-friend.dto';
 import { InviteFriendDto } from '../dtos/invite-friend.dto';
-import { UUID } from '../../types';
+import { UUID } from '@gitcode/types';
 import { FriendRequestDto } from '../dtos/friend-request.dto';
 import { RespondFriendRequestDto } from '../dtos/respond-friend-request.dto';
 

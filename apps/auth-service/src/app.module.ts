@@ -6,7 +6,7 @@ import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { SocialModule } from './social/social.module';
 import configuration from './config/configuration';
-// import { CommonModule } from '@gitcode/shared/common';
+import { GitCodeCommonModule } from '@gitcode/common';
 import { PrismaModule } from './prisma/prisma.module';
 import { RedisModule } from './redis/redis.module';
 
@@ -21,7 +21,7 @@ import { RedisModule } from './redis/redis.module';
     RedisModule,
     UsersModule,
     SocialModule,
-    // CommonModule,
+    GitCodeCommonModule,
   ],
   controllers: [AppController],
   providers: [AppService],

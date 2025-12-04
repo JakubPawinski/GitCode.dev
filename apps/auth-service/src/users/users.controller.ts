@@ -21,23 +21,23 @@ import {
   ApiBody,
   ApiParam,
 } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { AppPermission } from '../auth/enums/permissions.enum';
-import { PermissionsGuards } from '../auth/guards/permissions.guard';
-import { RequirePermissions } from '../auth/decorators/permissions.decorator';
-import { User } from '../auth/decorators/current-user.decorator';
-import { ApiResponseDto } from '../dto/api-response.dto';
+import { JwtAuthGuard } from '@gitcode/auth';
+import { AppPermission } from '@gitcode/types';
+import { PermissionsGuards } from '@gitcode/auth';
+import { RequirePermissions } from '@gitcode/auth';
+import { User } from '@gitcode/auth';
+import { ApiResponseDto } from '@gitcode/common';
 import { GetUsersQueryDto } from './dtos/get-users-query.dto';
 import { GetProfileDto } from './dtos/get-profile.dto';
 import { PatchProfileDto } from './dtos/patch-profile.dto';
-import type { AuthenticatedUser, UUID } from '../types';
+import type { AuthenticatedUser, UUID } from '@gitcode/types';
 import { GetPreferencesDto } from './dtos/get-preferences.dto';
 import { PatchPreferencesDto } from './dtos/patch-preferences.dto';
 import { GetPublicProfileDto } from './dtos/get-public-profile.dto';
 import { GetUserDto } from './dtos/get-user.dto';
 import { SearchUsersDto } from './dtos/search-users.dto';
 import { SearchUsersAdminDto } from './dtos/search-users-admin.dto';
-import { PaginatedResult } from '../types/pagination.interface';
+import { PaginatedResult } from '@gitcode/types';
 
 @Controller('users')
 @ApiTags('Users management')

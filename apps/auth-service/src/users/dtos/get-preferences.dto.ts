@@ -1,6 +1,6 @@
 import { IsBoolean, IsEnum, IsString } from 'class-validator';
-import { themeEnum } from '../enums/theme.enum';
-import { privacyLevelEnum } from '../enums/privacyLevel.enum';
+import { themeEnum } from '@gitcode/types';
+import { privacyLevelEnum } from '@gitcode/types';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class GetPreferencesDto {
