@@ -13,7 +13,7 @@ import { GetPublicProfileDto } from '../dtos/get-public-profile.dto';
 import { GetUserDto } from '../dtos/get-user.dto';
 import { AppPermission } from '../../auth/enums/permissions.enum';
 import { SearchUsersDto } from '../dtos/search-users.dto';
-import { Prisma } from '@gitcode/prisma-auth';
+import { Prisma } from '@prisma/client';
 import { PaginatedResult } from '../../types/pagination.interface';
 import { SearchUsersAdminDto } from '../dtos/search-users-admin.dto';
 import { UserStatus } from '../../auth/enums/user-status.enum';

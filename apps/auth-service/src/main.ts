@@ -12,12 +12,6 @@ async function bootstrap() {
   // Cookie parser middleware
   app.use(cookieParser());
 
-  // Global interceptor for response formatting
-  app.useGlobalInterceptors(new ResponseInterceptor());
-
-  // Global exception filter for error formatting
-  app.useGlobalFilters(new HttpExceptionFilter());
-
   // Global validation pipe for request validation
   app.useGlobalPipes(
     new ValidationPipe({

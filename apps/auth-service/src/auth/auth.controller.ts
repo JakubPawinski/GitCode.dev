@@ -28,6 +28,7 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { RedisService } from '../redis/redis.service';
 import { AppService } from '../app.service';
 
+
 @Controller('auth')
 @ApiTags('Authentication')
 export class AuthController {
