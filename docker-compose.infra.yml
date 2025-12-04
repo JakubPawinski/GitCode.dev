@@ -57,7 +57,7 @@ services:
       test:
         [
           'CMD-SHELL',
-          'pg_isready -U ${AUTH_SERVICE_DB_USER} -d ${AUTH_SERVICE_DB_NAME}',
+          'pg_isready -U ${AUTH_DB_USER} -d ${AUTH_DB_NAME}',
         ]
       interval: 10s
       timeout: 5s
