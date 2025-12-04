@@ -1,48 +1,58 @@
 {
-  "targetDefaults": {
-    "serve": {
-      "dependsOn": ["prisma-generate"]
-    },
-    "@nx/js:tsc": {
-      "cache": true,
-      "dependsOn": ["^build"],
-      "inputs": ["default", "^default"]
-    }
-  },
-  "installation": {
-    "version": "22.1.3",
-    "plugins": {
-      "@nx/eslint": "22.1.3",
-      "@nx/jest": "22.1.3",
-      "@nx/next": "22.1.3",
-      "@nx/docker": "22.1.3"
-    }
-  },
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
+  "namedInputs": {
+    "default": ["{projectRoot}/**/*", "sharedGlobals"],
+    "production": ["default"],
+    "sharedGlobals": []
+  },
+  "nxCloudId": "692a16169aeff9681becbbc1",
   "plugins": [
     {
-      "plugin": "@nx/docker",
+      "plugin": "@nx/js/typescript",
       "options": {
-        "buildTarget": {
-          "name": "docker:build"
+        "typecheck": {
+          "targetName": "typecheck"
         },
-        "runTarget": {
-          "name": "docker:run"
+        "build": {
+          "targetName": "build",
+          "configName": "tsconfig.lib.json",
+          "buildDepsName": "build-deps",
+          "watchDepsName": "watch-deps"
+        }
+      },
+      "exclude": [
+        "libs/shared/auth/*",
+        "libs/shared/common/*",
+        "libs/shared/prisma/*",
+        "libs/shared/redis/*",
+        "packages/auth/*"
+      ]
+    },
+    {
+      "plugin": "@nx/webpack/plugin",
+      "options": {
+        "buildTargetName": "build",
+        "serveTargetName": "serve",
+        "previewTargetName": "preview",
+        "buildDepsTargetName": "build-deps",
+        "watchDepsTargetName": "watch-deps",
+        "serveStaticTargetName": "serve-static"
+      }
+    },
+    {
+      "plugin": "@nx/js/typescript",
+      "include": [
+        "libs/shared/auth/*",
+        "libs/shared/common/*",
+        "libs/shared/prisma/*",
+        "libs/shared/redis/*",
+        "packages/auth/*"
+      ],
+      "options": {
+        "typecheck": {
+          "targetName": "typecheck"
         }
       }
-    },
-    {
-      "plugin": "@nx/jest/plugin",
-      "options": {
-        "targetName": "test"
-      }
-    },
-    {
-      "plugin": "@nx/eslint/plugin",
-      "options": {
-        "targetName": "lint"
-      }
     }
-  ],
-  "nxCloudId": "692a16169aeff9681becbbc1"
+  ]
 }
