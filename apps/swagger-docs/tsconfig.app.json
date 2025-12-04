@@ -1,14 +1,13 @@
 {
-	"extends": "../../tsconfig.base.json",
-	"compilerOptions": {
-		"outDir": "../../dist/out-tsc",
-		"declaration": false,
-		"types": ["node"],
-		"module": "commonjs",
-		"allowJs": true,
-		"checkJs": false,
-		"noEmit": false
-	},
-	"include": ["src/**/*.js"],
-	"exclude": ["jest.config.ts", "src/**/*.spec.ts", "test/**/*"]
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "types": ["node", "express"],
+    "rootDir": "src",
+    "tsBuildInfoFile": "dist/tsconfig.app.tsbuildinfo",
+    "allowJs": true,
+    "checkJs": false
+  },
+  "include": ["src/**/*.ts", "src/**/*.js"],
+  "exclude": ["out-tsc", "dist", "src/**/*.spec.js", "src/**/*.test.js"]
 }
