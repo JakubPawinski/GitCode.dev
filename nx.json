@@ -21,11 +21,8 @@
         }
       },
       "exclude": [
-        "libs/shared/auth/*",
-        "libs/shared/common/*",
-        "libs/shared/prisma/*",
-        "libs/shared/redis/*",
-        "packages/auth/*"
+        "packages/auth/*",
+        "packages/common/*"
       ]
     },
     {
@@ -41,13 +38,7 @@
     },
     {
       "plugin": "@nx/js/typescript",
-      "include": [
-        "libs/shared/auth/*",
-        "libs/shared/common/*",
-        "libs/shared/prisma/*",
-        "libs/shared/redis/*",
-        "packages/auth/*"
-      ],
+      "include": ["packages/auth/*", "packages/common/*"],
       "options": {
         "typecheck": {
           "targetName": "typecheck"
