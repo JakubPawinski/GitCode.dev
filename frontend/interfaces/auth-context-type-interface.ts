@@ -1,11 +1,11 @@
 // GitCode.dev/frontend/interfaces/auth-context-type-interface.ts
-import {User} from '@/interfaces/user-interface'
+import { User } from './user-interface';
 
 export interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  login: (provider?: string) => void;
+  login: () => void;
   logout: () => Promise<void>;
   refreshAuth: () => Promise<boolean>;
 }

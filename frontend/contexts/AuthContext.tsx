@@ -1,12 +1,15 @@
 // GitCode.dev/frontend/contexts/AuthContext.tsx
 'use client';
 
-import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { AuthContextType } from '@/interfaces/auth-context-type-interface';
 import { User } from '@/interfaces/user-interface';
 import { useRefreshToken } from '@/hooks/api/use-refresh-token';
-import { useLogout } from '@/hooks/api/use-logout';
+import { useGetProfile } from '@/hooks/api/use-get-profile';
 import { useLogin } from '@/hooks/api/use-login';
-import { AuthContextType } from '@/interfaces/auth-context-type-interface';
+import { useLogout } from '@/hooks/api/use-logout';
+import TokenStore from '@/utils/token-store';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -21,82 +24,98 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [refreshAttempted, setRefreshAttempted] = useState(false);
-  const initializingRef = useRef(false);
+  const router = useRouter();
 
-  const { refreshMutation, loading: refreshLoading, error: refreshError } = useRefreshToken();
+  const { refreshMutation } = useRefreshToken();
+  const { refetch: getProfile } = useGetProfile();
+  const { login } = useLogin();
   const { logoutMutation } = useLogout();
-  const { login: loginHook } = useLogin();
 
-  useEffect(() => {
-    if (!initializingRef.current) {
-      initializingRef.current = true;
-      initializeAuth();
-    }
-  }, []);
-
-  useEffect(() => {
-    if (refreshError?.response?.status === 401 && !refreshAttempted && !refreshLoading) {
-      setRefreshAttempted(true);
-      refreshAuth();
-    }
-  }, [refreshError?.response?.status, refreshAttempted, refreshLoading]);
-
-  const initializeAuth = async () => {
+  const refreshToken = async (): Promise<string | null> => {
     try {
-      await refreshAuth();
-    } catch (error) {
-      console.error('Auth initialization error:', error);
-      handleAuthFailure();
+      const refreshResponse = await refreshMutation();
+      const accessToken = refreshResponse?.data?.accessToken;
+      
+      if (accessToken) {
+        TokenStore.setToken(accessToken);
+        return accessToken;
+      }
+    } catch (error) {}
+    TokenStore.clear();
+    return null;
+  };
+
+  const refreshUser = async (): Promise<User | null> => {
+    try {
+      const profileResponse = await getProfile();
+      const userData = profileResponse?.data;
+      
+      if (userData) {
+        setUser(userData);
+        return userData;
+      }
+    } catch (error) {}
+    setUser(null);
+    return null;
+  };
+
+  const handleLogin = () => {
+    login();
+  };
+
+  const handleLogout = async (): Promise<void> => {
+    try {
+      await logoutMutation();
+    } finally {
+      TokenStore.clear();
+      setUser(null);
+      router.push('/login');
+    }
+  };
+
+  const refreshTokenAndUser = async (): Promise<boolean> => {
+    const token = await refreshToken();
+    if (!token) return false;
+    
+    const user = await refreshUser();
+    return !!user;
+  };
+
+  const initializeAuth = async (): Promise<void> => {
+    setIsLoading(true);
+    try {
+      await refreshTokenAndUser();
     } finally {
       setIsLoading(false);
     }
   };
 
-  const refreshAuth = async (): Promise<boolean> => {
-    try {
-      const response = await refreshMutation();
-      if (response?.data) {
-        const { user: userData } = response.data;
-        setUser(userData);
-        setRefreshAttempted(false);
-        return true;
-      }
-      return false;
-    } catch (error: any) {
-      if (error?.response?.status !== 401) {
-        console.error('Token refresh failed with unexpected error:', error);
-      }
-      return false;
+  useEffect(() => {
+    initializeAuth();
+  }, []);
+
+  useEffect(() => {
+    if (!TokenStore.getToken() && user) {
+      setUser(null);
     }
-  };
-
-  const handleAuthFailure = () => {
-    setUser(null);
-    setRefreshAttempted(false);
-  };
-
-  const login = (provider: string = 'keycloak') => {
-    loginHook(provider);
-  };
-
-  const logout = async () => {
-    try {
-      await logoutMutation();
-    } catch (error) {
-      console.error('Logout API call failed:', error);
-    } finally {
-      handleAuthFailure();
+    if (!TokenStore.getToken() && !isLoading && user) {
+      setUser(null);
     }
-  };
+  }, [user, isLoading]);
+
+  useEffect(() => {
+    if (!TokenStore.getToken() && !user && !isLoading) {
+      router.push('/login');
+    }
+  }, [user, isLoading, router]);
 
   const value: AuthContextType = {
     user,
-    isLoading: isLoading || refreshLoading,
+    isLoading,
     isAuthenticated: !!user,
-    login,
-    logout,
-    refreshAuth,
+    login: handleLogin,
+    logout: handleLogout,
+    refreshAuth: refreshTokenAndUser,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -13,8 +13,11 @@ export const useRefreshToken = () => {
     try {
       const response = await api.post('/api/auth/refresh')
       return response.data
-    } catch (err) {
+    } catch (err: any) {
       setError(err)
+      if (err.response?.status === 401) {
+        return { data: { accessToken: null } }
+      }
       throw err
     } finally {
       setLoading(false)

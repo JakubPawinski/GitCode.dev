@@ -1,8 +1,10 @@
 // GitCode.dev/frontend/interfaces/api-response-interface.ts
-export interface ApiResponse<T = any> {
+import { User } from "./user-interface";
+
+export interface ApiResponse {
   success: boolean;
   statusCode: number;
   message?: string;
-  data?: T;
+  data?: User;
   timestamp: string;
 }

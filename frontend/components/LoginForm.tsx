@@ -10,7 +10,7 @@ export default function LoginForm() {
   const redirect = searchParams.get('redirect') || '/dashboard';
 
   const handleLogin = () => {
-    login('keycloak');
+    login();
   };
 
   return (
