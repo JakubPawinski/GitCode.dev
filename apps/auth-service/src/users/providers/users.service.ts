@@ -2,21 +2,23 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { GetUsersQueryDto } from '../dtos/get-users-query.dto';
 import { GetProfileDto } from '../dtos/get-profile.dto';
-import { AppRole } from '@gitcode/types';
-import { UUID } from '@gitcode/types';
+import {
+  UUID,
+  themeEnum,
+  privacyLevelEnum,
+  AppRole,
+  AppPermission,
+  PaginatedResult,
+  UserStatus,
+} from '@gitcode/types';
 import { PatchProfileDto } from '../dtos/patch-profile.dto';
 import { GetPreferencesDto } from '../dtos/get-preferences.dto';
-import { privacyLevelEnum } from '@gitcode/types';
-import { themeEnum } from '@gitcode/types';
 import { PatchPreferencesDto } from '../dtos/patch-preferences.dto';
 import { GetPublicProfileDto } from '../dtos/get-public-profile.dto';
 import { GetUserDto } from '../dtos/get-user.dto';
-import { AppPermission } from '@gitcode/types';
 import { SearchUsersDto } from '../dtos/search-users.dto';
 import { Prisma } from '@prisma/client';
-import { PaginatedResult } from '@gitcode/types';
 import { SearchUsersAdminDto } from '../dtos/search-users-admin.dto';
-import { UserStatus } from '@gitcode/types';
 import { AuthService } from '../../auth/auth.service';
 
 @Injectable()

@@ -10,8 +10,14 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { SocialService } from './providers/social.service';
-import { User } from '@gitcode/auth';
+import {
+  User,
+  PermissionsGuards,
+  RequirePermissions,
+  JwtAuthGuard,
+} from '@gitcode/auth';
 import type { AuthenticatedUser, UUID } from '@gitcode/types';
+import { AppPermission } from '@gitcode/types';
 import { GetFriendDto } from './dtos/get-friend.dto';
 import { InviteFriendDto } from './dtos/invite-friend.dto';
 import { RespondFriendRequestDto } from './dtos/respond-friend-request.dto';
@@ -24,10 +30,6 @@ import {
   ApiTags,
   getSchemaPath,
 } from '@nestjs/swagger';
-import { JwtAuthGuard } from '@gitcode/auth';
-import { PermissionsGuards } from '@gitcode/auth';
-import { RequirePermissions } from '@gitcode/auth';
-import { AppPermission } from '@gitcode/types';
 import { ApiResponseDto } from '@gitcode/common';
 import { FriendRequestDto } from './dtos/friend-request.dto';
 
