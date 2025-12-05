@@ -1,0 +1,69 @@
+http:
+  routers:
+    auth-router:
+      rule: PathPrefix(`/api/auth`)
+      service: auth-service
+      entryPoints:
+        - gateway
+      middlewares:
+        - strip-api
+    user-route:
+      rule: PathPrefix(`/api/user`)
+      service: auth-service
+      entryPoints:
+        - gateway
+      middlewares:
+        - strip-api
+    problem-route:
+      rule: PathPrefix(`/api/problems`)
+      service: problem-service
+      entryPoints:
+        - gateway
+      middlewares:
+        - strip-api
+    submission-route:
+      rule: PathPrefix(`/api/submission`)
+      service: problem-service
+    social-route:
+      rule: PathPrefix(`/api/social`)
+      service: auth-service
+      entryPoints:
+        - gateway
+      middlewares:
+        - strip-api
+    swagger-router:
+      rule: PathPrefix(`/api/docs`)
+      service: swagger-service
+      entryPoints:
+        - gateway
+      middlewares:
+        - strip-api
+
+  services:
+    auth-service:
+      loadBalancer:
+        servers:
+          - url: 'http://host.docker.internal:4001'
+    swagger-service:
+      loadBalancer:
+        servers:
+          - url: 'http://host.docker.internal:4050'
+    problem-service:
+      loadBalancer:
+        servers:
+          - url: 'http://host.docker.internal:4002'
+
+  middlewares:
+    strip-api:
+      stripPrefix:
+        prefixes:
+          - '/api'
+        forceSlash: false
+
+    auth-middleware:
+      forwardAuth:
+        address: 'http://auth-service:4001/verify-token'
+        trustForwardHeader: true
+        authResponseHeaders:
+          - 'X-User-ID'
+          - 'X-User-Email'

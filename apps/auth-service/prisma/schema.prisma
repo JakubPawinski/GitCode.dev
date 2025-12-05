@@ -1,0 +1,118 @@
+generator client {
+  provider = "prisma-client-js"
+  output = "../../../node_modules/@prisma/client-auth"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id            String         @id @default(uuid())
+  keycloakId    String         @unique @map("keycloak_id")
+  email         String         @unique
+  username      String         @unique
+  firstName     String?        @map("first_name")
+  lastName      String?        @map("last_name")
+  avatarUrl     String?        @map("avatar_url")
+  emailVerified Boolean        @default(false) @map("email_verified")
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+  roles         Json           @default("[]")
+  permissions   Json           @default("[]")
+  bio           String?        @db.Text
+  userStatus    UserStatus     @default(ACTIVE) @map("user_status")
+  lastLogin     DateTime?      @default(now()) @map("last_login")
+
+  sentFriendRequests     FriendRequest[] @relation("FriendRequestRequester")
+  receivedFriendRequests FriendRequest[] @relation("FriendRequestAddressee")
+
+  
+  oauthTokens   OAuthToken[]
+  preferences   UserPreferences?
+
+  @@index([email])
+  @@index([username])  
+  @@index([userStatus])  
+  @@map("users")
+}
+
+model OAuthToken {
+  id            String   @id @default(uuid())
+  userId        String   @map("user_id")
+  provider      String   // 'github', 'keycloak', etc.
+  accessToken   String   @map("access_token") @db.Text
+  refreshToken  String?  @map("refresh_token") @db.Text
+  expiresAt     DateTime? @map("expires_at")
+  scope         String?
+  tokenType     String?  @map("token_type")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId]) 
+  @@index([provider]) 
+  @@unique([userId, provider])
+  @@map("oauth_tokens")
+}
+
+model UserPreferences {  
+  id              String   @id @default(uuid())
+  userId          String   @unique @map("user_id")
+  theme           Theme   @default(LIGHT)
+  language        String   @default("en")
+  notifications   Boolean  @default(true)
+  privacyLevel    PrivacyLevel   @default(PUBLIC)
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+  
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("user_preferences")
+}
+
+model FriendRequest {
+  id         String   @id @default(uuid())
+
+  requesterId     String   @map("requester_id")
+  requester      User     @relation("FriendRequestRequester", fields: [requesterId], references: [id], onDelete: Cascade)
+
+  addresseeId   String   @map("addressee_id")
+  addressee      User     @relation("FriendRequestAddressee", fields: [addresseeId], references: [id], onDelete: Cascade)
+
+  status     FriendRequestStatus @default(PENDING)
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@unique([requesterId, addresseeId])
+  @@index([requesterId])
+  @@index([addresseeId])
+  @@map("friend_requests")
+}
+
+enum FriendRequestStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  CANCELED
+}
+
+enum PrivacyLevel {
+  PUBLIC
+  PRIVATE
+  FRIENDS_ONLY
+}
+
+enum Theme {
+  LIGHT
+  DARK
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  BANNED  // Banned users
+  DELETED // Soft-deleted users
+}

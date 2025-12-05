@@ -1,0 +1,313 @@
+# version: "3.8"
+
+# services:
+#   frontend:
+#     build:
+#       context: ./frontend
+#       dockerfile: Dockerfile
+#       target: development
+#     container_name: gitcode-frontend-dev
+#     env_file:
+#       - .env
+#     environment:
+#       - NODE_ENV=development
+#       - PORT=${FRONTEND_PORT}
+#       - API_GATEWAY_URL=http://api-gateway:${API_GATEWAY_PORT}
+#     ports:
+#       - "${FRONTEND_PORT}:${FRONTEND_PORT}"
+#     volumes:
+#       - ./frontend:/app
+#       - /app/node_modules
+#     networks:
+#       - gitcodedev-network
+#     restart: unless-stopped
+#   api-gateway:
+#     image: traefik:v3.5
+#     container_name: api-gateway-dev
+#     ports:
+#       - "${API_GATEWAY_PORT}:8080"
+#       - "${TRAEFIK_API_PORT}:8081"
+#     volumes:
+#       - ./backend/api-gateway/development/traefik.yml:/etc/traefik/traefik.yml:ro
+#       - ./backend/api-gateway/development/dynamic.yml:/etc/traefik/dynamic.yml:ro
+#     depends_on:
+#       - auth-service
+#     networks:
+#       - gitcodedev-network
+#     restart: unless-stopped
+
+#   swagger-docs-service:
+#     build:
+#       context: ./backend/swagger-docs
+#       dockerfile: Dockerfile
+#       target: development
+#     container_name: swagger-docs-service
+#     env_file:
+#       - .env
+#     environment:
+#       - NODE_ENV=development
+#       - PORT=${SWAGGER_DOCS_PORT}
+#       - API_GATEWAY_URL=http://api-gateway:${API_GATEWAY_PORT}
+#       - AUTH_SERVICE_URL=http://auth-service:${AUTH_SERVICE_PORT}
+#       - PROBLEM_SERVICE_URL=http://problem-service:${PROBLEM_SERVICE_PORT}
+#     ports:
+#       - "${SWAGGER_DOCS_PORT}:${SWAGGER_DOCS_PORT}"
+#     volumes:
+#       - ./backend/swagger-docs:/app
+#       - /app/node_modules
+#     networks:
+#       - gitcodedev-network
+#     depends_on:
+#       api-gateway:
+#         condition: service_started # In future, use healthcheck
+#       auth-service:
+#         condition: service_healthy
+#       problem-service:
+#         condition: service_healthy
+#     restart: unless-stopped
+
+#   auth-service:
+#     build:
+#       context: ./backend/auth-service
+#       dockerfile: Dockerfile
+#       target: development
+#       args:
+#         - NODE_ENV=development
+#     container_name: auth-service-dev
+#     env_file:
+#       - .env
+#     environment:
+#       - NODE_ENV=development
+#       - PORT=${AUTH_SERVICE_PORT}
+#       - DATABASE_URL=postgresql://${AUTH_SERVICE_DB_USER}:${AUTH_SERVICE_DB_PASSWORD}@auth-db:5432/${AUTH_SERVICE_DB_NAME}
+#       - REDIS_URL=redis://auth-redis:6379
+#       - KEYCLOAK_URL=${KEYCLOAK_URL}
+#       - KEYCLOAK_REALM=${KEYCLOAK_REALM}
+#       - KEYCLOAK_CLIENT_ID=${KEYCLOAK_CLIENT_ID}
+#       - KEYCLOAK_CLIENT_SECRET=${KEYCLOAK_CLIENT_SECRET}
+#       - JWT_SECRET=${JWT_SECRET}
+#       - JWT_ACCESS_EXPIRES_IN=${JWT_ACCESS_EXPIRES_IN}
+#       - JWT_REFRESH_EXPIRES_IN=${JWT_REFRESH_EXPIRES_IN}
+#     ports:
+#       - "${AUTH_SERVICE_PORT}:${AUTH_SERVICE_PORT}"
+#     volumes:
+#       - ./backend/auth-service:/app
+#       - /app/node_modules
+#     depends_on:
+#       auth-db:
+#         condition: service_healthy
+#       auth-redis:
+#         condition: service_healthy
+#       keycloak:
+#         condition: service_started
+#     networks:
+#       - gitcodedev-network
+#     healthcheck:
+#       test:
+#         [
+#           'CMD-SHELL',
+#           'wget -qO- http://localhost:${AUTH_SERVICE_PORT}/auth/health || exit 1',
+#         ]
+#       interval: 30s
+#       timeout: 5s
+#       retries: 5
+#       start_period: 30s
+#     restart: unless-stopped
+
+#   auth-db:
+#     image: postgres:18-alpine
+#     container_name: auth-db-dev
+#     env_file:
+#       - .env
+#     environment:
+#       - POSTGRES_USER=${AUTH_SERVICE_DB_USER}
+#       - POSTGRES_PASSWORD=${AUTH_SERVICE_DB_PASSWORD}
+#       - POSTGRES_DB=${AUTH_SERVICE_DB_NAME}
+#     ports:
+#       - "${AUTH_SERVICE_DB_PORT}:5432"
+#     volumes:
+#       - auth-db-data-dev:/var/lib/postgresql/data
+#     networks:
+#       - gitcodedev-network
+#     healthcheck:
+#       test:
+#         [
+#           "CMD-SHELL",
+#           "pg_isready -U ${AUTH_SERVICE_DB_USER} -d ${AUTH_SERVICE_DB_NAME}",
+#         ]
+#       interval: 10s
+#       timeout: 5s
+#       retries: 5
+#     restart: unless-stopped
+
+#   auth-redis:
+#     image: redis:7-alpine
+#     container_name: auth-redis-dev
+#     ports:
+#       - "${AUTH_REDIS_PORT}:6379"
+#     volumes:
+#       - auth-redis-data-dev:/data
+#     networks:
+#       - gitcodedev-network
+#     healthcheck:
+#       test: ["CMD", "redis-cli", "ping"]
+#       interval: 10s
+#       timeout: 5s
+#       retries: 5
+#     restart: unless-stopped
+
+#   keycloak:
+#     image: quay.io/keycloak/keycloak:23.0
+#     container_name: keycloak-dev
+#     environment:
+#       - KEYCLOAK_ADMIN=${KEYCLOAK_ADMIN_USER}
+#       - KEYCLOAK_ADMIN_PASSWORD=${KEYCLOAK_ADMIN_PASSWORD}
+#       - KC_DB=postgres
+#       - KC_DB_URL=jdbc:postgresql://keycloak-db:5432/${KEYCLOAK_DB_NAME}
+#       - KC_DB_USERNAME=${KEYCLOAK_DB_USER}
+#       - KC_DB_PASSWORD=${KEYCLOAK_DB_PASSWORD}
+#       - KC_HOSTNAME=localhost
+#       - KC_HOSTNAME_PORT=8090
+#       - KC_HOSTNAME_STRICT=false
+#       - KC_HOSTNAME_STRICT_BACKCHANNEL=false
+#       - KC_HTTP_ENABLED=true
+#       - KC_HEALTH_ENABLED=true
+#     volumes:
+#       - ./keycloak/realm-export.json:/opt/keycloak/data/import/gitcode-dev-realm.json
+#     command: >
+#       start-dev
+#       --import-realm
+#     ports:
+#       - "${KEYCLOAK_PORT}:8080"
+#     depends_on:
+#       keycloak-db:
+#         condition: service_healthy
+#     networks:
+#       - gitcodedev-network
+#     restart: unless-stopped
+
+#   keycloak-db:
+#     image: postgres:18-alpine
+#     container_name: keycloak-db-dev
+#     environment:
+#       - POSTGRES_DB=${KEYCLOAK_DB_NAME}
+#       - POSTGRES_USER=${KEYCLOAK_DB_USER}
+#       - POSTGRES_PASSWORD=${KEYCLOAK_DB_PASSWORD}
+#     volumes:
+#       - keycloak-db-data-dev:/var/lib/postgresql/data
+#     networks:
+#       - gitcodedev-network
+#     healthcheck:
+#       test:
+#         [
+#           "CMD-SHELL",
+#           "pg_isready -U ${KEYCLOAK_DB_USER} -d ${KEYCLOAK_DB_NAME}",
+#         ]
+#       interval: 10s
+#       timeout: 5s
+#       retries: 5
+#     restart: unless-stopped
+
+#   problem-db:
+#     image: postgres:18-alpine
+#     container_name: problems-db
+#     env_file:
+#       - .env
+#     environment:
+#       - POSTGRES_USER=${PROBLEM_SERVICE_DB_USER}
+#       - POSTGRES_PASSWORD=${PROBLEM_SERVICE_DB_PASSWORD}
+#       - POSTGRES_DB=${PROBLEM_SERVICE_DB_NAME}
+#     ports:
+#       - "${PROBLEM_SERVICE_DB_PORT}:5432"
+#     volumes:
+#       - problem-db-data-dev:/var/lib/postgresql/data
+#     healthcheck:
+#       test: ["CMD-SHELL", "pg_isready -U ${PROBLEM_SERVICE_DB_USER}"]
+#       interval: 10s
+#       timeout: 5s
+#       retries: 5
+#     networks:
+#       - gitcodedev-network
+#     restart: unless-stopped
+
+#   problem-redis:
+#     image: redis:7-alpine
+#     container_name: problem-redis-dev
+#     ports:
+#       - "${PROBLEM_REDIS_PORT}:6379"
+#     volumes:
+#       - problem-redis-data-dev:/data
+#     healthcheck:
+#       test: ["CMD", "redis-cli", "ping"]
+#       interval: 10s
+#       timeout: 5s
+#       retries: 5
+#     networks:
+#       - gitcodedev-network
+#     restart: unless-stopped
+
+#   problem-service:
+#     build:
+#       context: ./backend/problem-service
+#       dockerfile: Dockerfile
+#       target: development
+#     container_name: problem-service-dev
+#     env_file:
+#       - .env
+#     environment:
+#       - NODE_ENV=development
+#       - PORT=${PROBLEM_SERVICE_PORT}
+#       - DATABASE_URL=postgresql://${PROBLEM_SERVICE_DB_USER}:${PROBLEM_SERVICE_DB_PASSWORD}@problem-db:5432/${PROBLEM_SERVICE_DB_NAME}
+#       - REDIS_HOST=problem-redis
+#       - REDIS_PORT=${PROBLEM_REDIS_PORT}
+#       - JWT_SECRET=${JWT_SECRET}
+#       - LANGUAGES_SUPPORTED=python,javascript
+#       - API_GATEWAY_URL=http://api-gateway:${API_GATEWAY_PORT}
+#       - DOCKER_HOST=tcp://docker-daemon:2375
+#     ports:
+#       - "${PROBLEM_SERVICE_PORT}:${PROBLEM_SERVICE_PORT}"
+#     volumes:
+#       - ./backend/problem-service:/app
+#       - /app/node_modules
+#       - problem-executions:/tmp/executions
+#     depends_on:
+#       problem-db:
+#         condition: service_healthy
+#       problem-redis:
+#         condition: service_healthy
+#     healthcheck:
+#       test:
+#         [
+#           "CMD-SHELL",
+#           "wget -qO- http://localhost:${PROBLEM_SERVICE_PORT}/problems/health || exit 1",
+#         ]
+#       interval: 30s
+#       timeout: 5s
+#       retries: 5
+#       start_period: 30s
+#     networks:
+#       - gitcodedev-network
+#     restart: unless-stopped
+
+#   docker-daemon:
+#     image: docker:dind
+#     container_name: docker-daemon-dev
+#     privileged: true
+#     environment:
+#       - DOCKER_TLS_CERTDIR=
+#     volumes:
+#       - problem-executions:/tmp/executions
+#     networks:
+#       - gitcodedev-network
+#     restart: unless-stopped
+# networks:
+#   gitcodedev-network:
+#     driver: bridge
+
+# volumes:
+#   auth-db-data-dev:
+#   auth-redis-data-dev:
+#   keycloak-db-data-dev:
+#   problem-db-data-dev:
+#   problem-redis-data-dev:
+#   problem-executions:

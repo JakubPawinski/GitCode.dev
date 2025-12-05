@@ -1,0 +1,25 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compileOnSave": false,
+  "files": [],
+  "references": [
+    {
+      "path": "./apps/auth-service"
+    },
+    {
+      "path": "./apps/problem-service"
+    },
+    {
+      "path": "./packages/auth"
+    },
+    {
+      "path": "./apps/swagger-docs"
+    },
+    {
+      "path": "./packages/types"
+    },
+    {
+      "path": "./packages/common"
+    }
+  ]
+}
