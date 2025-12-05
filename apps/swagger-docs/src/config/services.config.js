@@ -4,7 +4,7 @@ async function waitForService(url, name, maxRetries = 30) {
   for (let i = 0; i < maxRetries; i++) {
     try {
       console.log(`Checking ${name} at ${url}`);
-      const response = await axios.get(`${url}`, { timeout: 2000 });
+      await axios.get(`${url}`, { timeout: 2000 });
       console.log(`${name} is available`);
       return true;
     } catch (error) {

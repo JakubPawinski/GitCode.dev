@@ -14,7 +14,6 @@ export class PrismaService
     const pool = new Pool({ connectionString });
     const adapter = new PrismaPg(pool);
 
-    // Przekazanie adaptera do konstruktora PrismaClient
     super({ adapter });
   }
   async onModuleInit() {
