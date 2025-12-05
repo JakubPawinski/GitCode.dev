@@ -1,4 +1,4 @@
-import { PrismaClient } from '@gitcode/prisma-problem';
+import { PrismaClient } from '@prisma/client-problem';
 import * as fs from 'fs';
 import * as path from 'path';
 import { Pool } from 'pg';

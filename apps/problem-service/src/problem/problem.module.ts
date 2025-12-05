@@ -5,7 +5,6 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ProblemService } from './problem.service';
 import { ProblemController } from './problem.controller';
 import { PrismaModule } from '../prisma/prisma.module';
-import { JwtStrategy } from '../strategies/jwt.strategy';
 
 @Module({
   imports: [
@@ -24,6 +23,6 @@ import { JwtStrategy } from '../strategies/jwt.strategy';
     }),
   ],
   controllers: [ProblemController],
-  providers: [ProblemService, JwtStrategy],
+  providers: [ProblemService],
 })
 export class ProblemModule {}

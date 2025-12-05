@@ -10,5 +10,13 @@
     "target": "es2021"
   },
   "include": ["src/**/*.ts"],
-  "exclude": []
+  "exclude": [],
+  "references": [
+    {
+      "path": "../../packages/auth/tsconfig.lib.json"
+    },
+    {
+      "path": "../../packages/common/tsconfig.lib.json"
+    }
+  ]
 }

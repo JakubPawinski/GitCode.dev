@@ -17,7 +17,7 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { ProblemService } from './problem.service';
-import { JwtAuthGuard } from '../guards/jwt-auth.guard';
+import { JwtAuthGuard } from '@gitcode/auth';
 import {
   PaginatedResult,
   PaginationDto,

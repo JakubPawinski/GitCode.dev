@@ -14,7 +14,7 @@ import {
   CreateSubmissionDto,
   CreateSubmissionResponseDto,
 } from './dto/create-submission.dto';
-import { JwtAuthGuard } from '../guards/jwt-auth.guard';
+import { JwtAuthGuard } from '@gitcode/auth';
 import { ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { PaginatedResult, PaginationDto } from '../problem/dto';
 import {

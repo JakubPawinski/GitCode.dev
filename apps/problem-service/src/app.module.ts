@@ -8,6 +8,8 @@ import { SubmissionModule } from './submission/submission.module';
 import { BullModule } from '@nestjs/bullmq';
 import { ConfigModule } from '@nestjs/config';
 import configuration from './config/configuration';
+import { GitCodeCommonModule } from '@gitcode/common';
+import { GitCodeAuthModule } from '@gitcode/auth';
 
 @Module({
   imports: [
@@ -28,6 +30,8 @@ import configuration from './config/configuration';
         },
       }),
     }),
+    GitCodeCommonModule,
+    GitCodeAuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -1,7 +1,7 @@
 import { IsOptional, IsPositive, Min, IsIn } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
-import { ApiResponseDto } from './api-response-dto';
+import { ApiResponseDto } from '@gitcode/common';
 
 export class PaginationDto {
   @IsOptional()
