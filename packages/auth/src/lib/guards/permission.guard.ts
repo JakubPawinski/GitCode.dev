@@ -23,7 +23,7 @@ export class PermissionsGuards implements CanActivate {
       AppPermissions[]
     >(PERMISSIONS_KEY, [context.getHandler(), context.getClass()]);
 
-    this.logger.debug(
+    this.logger.log(
       `Validating permissions with required permissions: ${requiredPermissions}`,
     );
     // If no permissions are required, allow access

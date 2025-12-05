@@ -154,6 +154,8 @@ export class AuthService {
   }
 
   private async upsertUser(userInfo: any, tokens: any) {
+    this.logger.debug(`Upserting user: ${JSON.stringify(userInfo)}`);
+
     const user = await this.prisma.user.upsert({
       where: { keycloakId: userInfo.sub },
       update: {

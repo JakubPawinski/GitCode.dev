@@ -9,6 +9,7 @@ import configuration from './config/configuration';
 import { GitCodeCommonModule } from '@gitcode/common';
 import { PrismaModule } from './prisma/prisma.module';
 import { RedisModule } from './redis/redis.module';
+import { GitCodeAuthModule } from '@gitcode/auth';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { RedisModule } from './redis/redis.module';
     UsersModule,
     SocialModule,
     GitCodeCommonModule,
+    GitCodeAuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],
