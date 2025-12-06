@@ -94,20 +94,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     initializeAuth();
   }, []);
 
-  useEffect(() => {
+  /*useEffect(() => {
     if (!TokenStore.getToken() && user) {
       setUser(null);
     }
     if (!TokenStore.getToken() && !isLoading && user) {
       setUser(null);
     }
-  }, [user, isLoading]);
+  }, [user, isLoading]);*/
 
-  useEffect(() => {
+  /*useEffect(() => {
     if (!TokenStore.getToken() && !user && !isLoading) {
       router.push('/login');
     }
-  }, [user, isLoading, router]);
+  }, [user, isLoading, router]);*/
 
   const value: AuthContextType = {
     user,

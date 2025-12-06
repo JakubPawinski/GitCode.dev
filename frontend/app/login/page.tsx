@@ -1,22 +1,13 @@
 // GitCode.dev/frontend/app/login/page.tsx
 'use client';
 
-import { useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useRouter } from 'next/navigation';
 import LoginForm from '@/components/LoginForm';
 
 export default function LoginPage() {
-  const { isAuthenticated, isLoading } = useAuth();
-  const router = useRouter();
+  const { isLoading } = useAuth();
 
-  useEffect(() => {
-    if (!isLoading && isAuthenticated) {
-      router.push('/dashboard');
-    }
-  }, [isAuthenticated, isLoading, router]);
-
-  if (isLoading || isAuthenticated) {
+  if (isLoading) {
     return <div>Loading...</div>;
   }
 
