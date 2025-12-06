@@ -3,7 +3,7 @@ import { Reflector } from '@nestjs/core';
 import { PermissionsGuards } from './permission.guard';
 import { AppPermission } from '@gitcode/types';
 
-describe('PermissionsGuard', () => {
+describe('PermissionsGuards', () => {
   let guard: PermissionsGuards;
   let reflector: Reflector;
 
@@ -27,7 +27,7 @@ describe('PermissionsGuard', () => {
   });
 
   it('should deny access if user has no permissions', () => {
-    jest.spyOn(reflector, 'getAllAndOverride').mockReturnValue(['read']);
+    jest.spyOn(reflector, 'getAllAndOverride').mockReturnValue([AppPermission.PROBLEM_READ]);
     const context = {
       getHandler: jest.fn(),
       getClass: jest.fn(),
@@ -37,19 +37,19 @@ describe('PermissionsGuard', () => {
   });
 
   it('should allow access if user has required permissions', () => {
-    jest.spyOn(reflector, 'getAllAndOverride').mockReturnValue(['read']);
+    jest.spyOn(reflector, 'getAllAndOverride').mockReturnValue([AppPermission.PROBLEM_READ]);
     const context = {
       getHandler: jest.fn(),
       getClass: jest.fn(),
       switchToHttp: () => ({
-        getRequest: () => ({ user: { permissions: ['read'] } }),
+        getRequest: () => ({ user: { permissions: [AppPermission.PROBLEM_READ] } }),
       }),
     };
     expect(guard.canActivate(context as any)).toBe(true);
   });
 
   it('should allow access with ADMIN_ALL', () => {
-    jest.spyOn(reflector, 'getAllAndOverride').mockReturnValue(['write']);
+    jest.spyOn(reflector, 'getAllAndOverride').mockReturnValue([AppPermission.ADMIN_ALL]);
     const context = {
       getHandler: jest.fn(),
       getClass: jest.fn(),

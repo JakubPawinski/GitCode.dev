@@ -3,7 +3,7 @@ import { PassportModule } from '@nestjs/passport';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { JwtStrategy } from '../strategies/jwt.strategy';
 import { ConfigService } from '@nestjs/config';
-import * as jwt from 'jsonwebtoken'; 
+import * as jwt from 'jsonwebtoken';
 
 describe('JwtAuthGuard', () => {
   let guard: JwtAuthGuard;
