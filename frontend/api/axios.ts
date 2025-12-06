@@ -3,7 +3,7 @@ import axios from 'axios';
 import TokenStore from '@/utils/token-store';
 
 export const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_BACKEND_URL,
+  baseURL: process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8080',
   timeout: 10000,
   withCredentials: true,
   headers: {
