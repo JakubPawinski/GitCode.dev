@@ -9,14 +9,21 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import type { Response, Request } from 'express';
-import { ApiOperation, ApiTags, ApiQuery, ApiResponse } from '@nestjs/swagger';
+import {
+  ApiOperation,
+  ApiTags,
+  ApiQuery,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiSecurity,
+} from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import {
   AuthResponseDto,
   UserDto,
   LogoutResponseDto,
 } from './dto/auth-response.dto';
-import { ApiResponseDto } from './dto/api-response.dto';
+import { ApiResponseDto } from '../dto/api-response.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { RedisService } from '../redis/redis.service';
 import { AppService } from '../app.service';
@@ -32,7 +39,7 @@ export class AuthController {
 
   @Get('health')
   @ApiOperation({ summary: 'Get Auth Service status' })
-  getHealth() {
+  public getHealth() {
     return this.appService.getHealth();
   }
 
@@ -124,8 +131,7 @@ export class AuthController {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
-        path: '/api/auth',
-        //path: '/auth',
+        path: '/',
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       });
 
@@ -154,6 +160,7 @@ export class AuthController {
 
   @Post('refresh')
   @ApiOperation({ summary: 'Refresh access token using refresh token cookie' })
+  @ApiSecurity('RefreshTokenCookie')
   @ApiResponse({
     status: 200,
     description: 'Token refreshed successfully',
@@ -195,8 +202,7 @@ export class AuthController {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
-        path: '/api/auth',
-        //path: '/auth',
+        path: '/',
         maxAge: 7 * 24 * 60 * 60 * 1000,
       });
 
@@ -212,7 +218,7 @@ export class AuthController {
         path: req.url,
       });
     } catch (error) {
-      res.clearCookie('gc_refresh', { path: '/auth' });
+      res.clearCookie('gc_refresh', { path: '/' });
       return res.status(HttpStatus.UNAUTHORIZED).json({
         success: false,
         statusCode: HttpStatus.UNAUTHORIZED,
@@ -250,7 +256,7 @@ export class AuthController {
       }
     }
 
-    res.clearCookie('gc_refresh', { path: '/api/auth' });
+    res.clearCookie('gc_refresh', { path: '/' });
 
     return res.json({
       success: true,
@@ -266,6 +272,7 @@ export class AuthController {
 
   @Get('me')
   @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('Bearer Auth')
   @ApiOperation({ summary: 'Get current user profile' })
   @ApiResponse({
     status: 200,
@@ -285,5 +292,34 @@ export class AuthController {
       timestamp: new Date().toISOString(),
       path: req.url,
     };
+  }
+
+  @Get('account')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('Bearer Auth')
+  @ApiOperation({ summary: 'Initiate account update via Keycloak' })
+  public async initiateAccountUpdate(@Res() res: Response) {
+    const { accountUpdateUrl } = await this.authService.initiateAccountUpdate();
+    return res.redirect(accountUpdateUrl);
+  }
+
+  @Get('account/callback')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Handle account update callback from Keycloak' })
+  public async handleAccountUpdateCallback(
+    @Req() req: any,
+    @Res() res: Response,
+  ) {
+    // Process account update
+    const result = await this.authService.handleAccountUpdateCallback(
+      req.user.id,
+    );
+
+    // Redirect to frontend with update result
+    return res.redirect(
+      `${process.env.FRONTEND_URL}/account?update=${
+        result.success ? 'success' : 'failure'
+      }`,
+    );
   }
 }
