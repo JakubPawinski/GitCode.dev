@@ -3,7 +3,7 @@
   "namedInputs": {
     "default": ["{projectRoot}/**/*", "sharedGlobals"],
     "production": ["default"],
-    "sharedGlobals": []
+    "sharedGlobals": ["{workspaceRoot}/.github/workflows/ci.yml"]
   },
   "nxCloudId": "692a16169aeff9681becbbc1",
   "plugins": [
@@ -49,7 +49,6 @@
       }
     }
   ],
-
   "targetDefaults": {
     "test": {
       "dependsOn": ["^build"]
