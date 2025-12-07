@@ -1,6 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { PrismaService } from './prisma.service';
-import { PrismaClient } from '@prisma/client-auth';
 
 jest.mock('@prisma/client-auth', () => {
   return {

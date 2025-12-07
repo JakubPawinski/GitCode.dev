@@ -7,7 +7,6 @@ import { GetFriendDto } from '../dtos/get-friend.dto';
 import { InviteFriendDto } from '../dtos/invite-friend.dto';
 import { FriendRequestDto } from '../dtos/friend-request.dto';
 import { RespondFriendRequestDto } from '../dtos/respond-friend-request.dto';
-import { UUID } from '@gitcode/types';
 
 describe('SocialService', () => {
   let service: SocialService;
