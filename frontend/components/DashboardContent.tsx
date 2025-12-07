@@ -7,10 +7,13 @@ import { UserDashboard } from '@/components/example/dashboards/UserDashboard';
 import { AdminDashboard } from '@/components/example/dashboards/AdminDashboard';
 import { ModeratorDashboard } from '@/components/example/dashboards/ModeratorDashboard';
 import { PremiumDashboard } from '@/components/example/dashboards/PremiumDashboard';
+import TokenStore from '@/utils/token-store';
 
 export function DashboardContent() {
   const { user, logout } = useAuth();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  console.log('DashboardContent Token:', TokenStore.getToken());
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
