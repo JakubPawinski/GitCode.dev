@@ -4,7 +4,7 @@
   "description": "> **\"A platform that turns coding challenges into your real GitHub portfolio.\"**",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "npx nx run-many --target=test --all",
     "start:infra": "docker compose -f docker-compose.infra.yml up -d",
     "stop:infra": "docker compose -f docker-compose.infra.yml down",
     "dev": "npm run start:infra && npx nx run-many -t serve -p auth-service problem-service swagger-docs"
