@@ -17,7 +17,7 @@ import { PatchPreferencesDto } from '../dtos/patch-preferences.dto';
 import { GetPublicProfileDto } from '../dtos/get-public-profile.dto';
 import { GetUserDto } from '../dtos/get-user.dto';
 import { SearchUsersDto } from '../dtos/search-users.dto';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client-auth';
 import { SearchUsersAdminDto } from '../dtos/search-users-admin.dto';
 import { AuthService } from '../../auth/auth.service';
 
