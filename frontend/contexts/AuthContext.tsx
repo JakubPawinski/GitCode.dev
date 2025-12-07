@@ -73,18 +73,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const refreshTokenAndUser = async (): Promise<boolean> => {
-    const token = await refreshToken();
-    if (!token) return false;
-    
-    const user = await refreshUser();
-    return !!user;
-  };
-
-  const initializeAuth = async (): Promise<void> => {
-    setIsLoading(true);
+  const initializeAuth = async (): Promise<boolean> => {
     try {
-      await refreshTokenAndUser();
+      const token = await refreshToken();
+      if (!token) return false;
+      
+      const user = await refreshUser();
+      return !!user;
+    } catch (error) {
+      return false;
     } finally {
       setIsLoading(false);
     }
@@ -100,7 +97,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     isAuthenticated: !!user,
     login: handleLogin,
     logout: handleLogout,
-    refreshAuth: refreshTokenAndUser,
+    refreshAuth: initializeAuth,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

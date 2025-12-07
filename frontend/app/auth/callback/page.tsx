@@ -4,21 +4,27 @@
 import { useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import TokenStore from '@/utils/token-store';
 
 export default function AuthCallbackPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { refreshAuth } = useAuth();
+  const { refreshAuth, isLoading } = useAuth();
   const processedRef = useRef(false);
 
   useEffect(() => {
-    if (processedRef.current) return;
+    if (processedRef.current || isLoading) return;
     processedRef.current = true;
 
     const handleCallback = async () => {
       try {
         const success = searchParams.get('success');
         const error = searchParams.get('error');
+        
+        if (TokenStore.getToken()) {
+          router.push('/dashboard');
+          return;
+        }
 
         if (error || success !== 'true') {
           const errorParam = error || 'authentication_failed';
@@ -26,20 +32,16 @@ export default function AuthCallbackPage() {
           return;
         }
 
-        const isAuthenticated = await refreshAuth();
-
-        if (isAuthenticated) {
-          router.push('/dashboard');
-        } else {
-          router.push('/login?error=session_init_failed');
-        }
+        await refreshAuth();
+        router.push('/dashboard');
       } catch (error) {
+        console.error('Callback error:', error);
         router.push('/login?error=callback_error');
       }
     };
 
     handleCallback();
-  }, [searchParams, router, refreshAuth]);
+  }, [isLoading, searchParams, router, refreshAuth]);
 
   return (
     <div>
