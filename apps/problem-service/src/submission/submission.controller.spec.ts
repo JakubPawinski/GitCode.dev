@@ -283,7 +283,10 @@ describe('SubmissionController', () => {
         },
       } as any);
 
-      const result = await controller.getUserHistory(mockRequest, paginationDto);
+      const result = await controller.getUserHistory(
+        mockRequest,
+        paginationDto,
+      );
 
       expect(result.pagination.page).toBe(2);
       expect(result.pagination.limit).toBe(20);
@@ -311,9 +314,9 @@ describe('SubmissionController', () => {
         new NotFoundException('Attempt not found'),
       );
 
-      await expect(
-        controller.getAttemptDetails('nonexistent'),
-      ).rejects.toThrow(NotFoundException);
+      await expect(controller.getAttemptDetails('nonexistent')).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('should include failed test details', async () => {
@@ -475,7 +478,9 @@ describe('SubmissionController', () => {
         ],
       };
 
-      service.getSubmissionById.mockResolvedValue(submissionWithAttempts as any);
+      service.getSubmissionById.mockResolvedValue(
+        submissionWithAttempts as any,
+      );
 
       const result = await controller.getSubmissionById(
         'submission-1',

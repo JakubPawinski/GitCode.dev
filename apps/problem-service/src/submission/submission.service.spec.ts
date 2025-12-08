@@ -151,11 +151,19 @@ describe('SubmissionService', () => {
 
       process.env.LANGUAGES_SUPPORTED = 'python,javascript,java';
 
-      jest.spyOn(prisma.problem, 'findUnique').mockResolvedValue(mockProblem as any);
-      jest.spyOn(prisma.userSubmission, 'upsert').mockResolvedValue(mockUserSubmission as any);
-      jest.spyOn(prisma.solutionAttempt, 'create').mockResolvedValue(mockSolutionAttempt as any);
+      jest
+        .spyOn(prisma.problem, 'findUnique')
+        .mockResolvedValue(mockProblem as any);
+      jest
+        .spyOn(prisma.userSubmission, 'upsert')
+        .mockResolvedValue(mockUserSubmission as any);
+      jest
+        .spyOn(prisma.solutionAttempt, 'create')
+        .mockResolvedValue(mockSolutionAttempt as any);
       jest.spyOn(prisma.solutionAttempt, 'count').mockResolvedValue(0);
-      jest.spyOn(submissionsQueue, 'add').mockResolvedValue({ id: 'job-1' } as any);
+      jest
+        .spyOn(submissionsQueue, 'add')
+        .mockResolvedValue({ id: 'job-1' } as any);
       jest.spyOn(submissionsQueue, 'getActiveCount').mockResolvedValue(1);
       jest.spyOn(submissionsQueue, 'getWaitingCount').mockResolvedValue(2);
 
@@ -182,9 +190,9 @@ describe('SubmissionService', () => {
 
       jest.spyOn(prisma.problem, 'findUnique').mockResolvedValue(null);
 
-      await expect(service.create(createSubmissionDto, mockUserId)).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(
+        service.create(createSubmissionDto, mockUserId),
+      ).rejects.toThrow(NotFoundException);
     });
 
     it('should throw BadRequestException for unsupported language', async () => {
@@ -196,11 +204,13 @@ describe('SubmissionService', () => {
 
       process.env.LANGUAGES_SUPPORTED = 'python,javascript';
 
-      jest.spyOn(prisma.problem, 'findUnique').mockResolvedValue(mockProblem as any);
+      jest
+        .spyOn(prisma.problem, 'findUnique')
+        .mockResolvedValue(mockProblem as any);
 
-      await expect(service.create(createSubmissionDto, mockUserId)).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(
+        service.create(createSubmissionDto, mockUserId),
+      ).rejects.toThrow(BadRequestException);
     });
   });
 
@@ -240,7 +250,9 @@ describe('SubmissionService', () => {
     it('should throw NotFoundException when attempt not found', async () => {
       jest.spyOn(prisma.solutionAttempt, 'findUnique').mockResolvedValue(null);
 
-      await expect(service.getAttemptDetails('nonexistent')).rejects.toThrow(Error);
+      await expect(service.getAttemptDetails('nonexistent')).rejects.toThrow(
+        Error,
+      );
     });
 
     it('should include failed test details', async () => {
@@ -310,9 +322,14 @@ describe('SubmissionService', () => {
       ];
 
       jest.spyOn(prisma.userSubmission, 'count').mockResolvedValue(1);
-      jest.spyOn(prisma.userSubmission, 'findMany').mockResolvedValue(mockSubmissions as any);
+      jest
+        .spyOn(prisma.userSubmission, 'findMany')
+        .mockResolvedValue(mockSubmissions as any);
 
-      const result = await service.getUserSubmissionHistory(mockUserId, mockPaginationDto);
+      const result = await service.getUserSubmissionHistory(
+        mockUserId,
+        mockPaginationDto,
+      );
 
       expect(result.data).toHaveLength(1);
       expect(result.pagination.page).toBe(1);
@@ -324,7 +341,10 @@ describe('SubmissionService', () => {
       jest.spyOn(prisma.userSubmission, 'count').mockResolvedValue(0);
       jest.spyOn(prisma.userSubmission, 'findMany').mockResolvedValue([]);
 
-      const result = await service.getUserSubmissionHistory(mockUserId, mockPaginationDto);
+      const result = await service.getUserSubmissionHistory(
+        mockUserId,
+        mockPaginationDto,
+      );
 
       expect(result.data).toHaveLength(0);
       expect(result.pagination.total).toBe(0);
@@ -341,7 +361,10 @@ describe('SubmissionService', () => {
       jest.spyOn(prisma.userSubmission, 'count').mockResolvedValue(15);
       jest.spyOn(prisma.userSubmission, 'findMany').mockResolvedValue([]);
 
-      const result = await service.getUserSubmissionHistory(mockUserId, paginationDto);
+      const result = await service.getUserSubmissionHistory(
+        mockUserId,
+        paginationDto,
+      );
 
       expect(result.pagination.page).toBe(2);
       expect(result.pagination.limit).toBe(5);
@@ -381,7 +404,9 @@ describe('SubmissionService', () => {
         },
       ];
 
-      jest.spyOn(prisma.userSubmission, 'findMany').mockResolvedValue(mockSubmissions as any);
+      jest
+        .spyOn(prisma.userSubmission, 'findMany')
+        .mockResolvedValue(mockSubmissions as any);
 
       const result = await service.getUserStats(mockUserId);
 
@@ -429,7 +454,9 @@ describe('SubmissionService', () => {
         },
       ];
 
-      jest.spyOn(prisma.solutionAttempt, 'findMany').mockResolvedValue(mockAttempts as any);
+      jest
+        .spyOn(prisma.solutionAttempt, 'findMany')
+        .mockResolvedValue(mockAttempts as any);
 
       const result = await service.getRecentSubmissions(mockUserId, 10);
 
@@ -492,9 +519,14 @@ describe('SubmissionService', () => {
         feedbacks: [],
       };
 
-      jest.spyOn(prisma.userSubmission, 'findFirst').mockResolvedValue(mockSubmissionDetail as any);
+      jest
+        .spyOn(prisma.userSubmission, 'findFirst')
+        .mockResolvedValue(mockSubmissionDetail as any);
 
-      const result = await service.getSubmissionById(mockSubmissionId, mockUserId);
+      const result = await service.getSubmissionById(
+        mockSubmissionId,
+        mockUserId,
+      );
 
       expect(result).toBeDefined();
       expect(result.id).toBe(mockSubmissionId);
@@ -505,17 +537,17 @@ describe('SubmissionService', () => {
     it('should throw NotFoundException when submission not found', async () => {
       jest.spyOn(prisma.userSubmission, 'findFirst').mockResolvedValue(null);
 
-      await expect(service.getSubmissionById(mockSubmissionId, mockUserId)).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(
+        service.getSubmissionById(mockSubmissionId, mockUserId),
+      ).rejects.toThrow(NotFoundException);
     });
 
     it('should only return submissions for the requesting user', async () => {
       jest.spyOn(prisma.userSubmission, 'findFirst').mockResolvedValue(null);
 
-      await expect(service.getSubmissionById(mockSubmissionId, 'different-user')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(
+        service.getSubmissionById(mockSubmissionId, 'different-user'),
+      ).rejects.toThrow(NotFoundException);
 
       expect(prisma.userSubmission.findFirst).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -529,10 +561,17 @@ describe('SubmissionService', () => {
 
   describe('deleteSubmission', () => {
     it('should delete a submission', async () => {
-      jest.spyOn(prisma.userSubmission, 'findFirst').mockResolvedValue(mockUserSubmission as any);
-      jest.spyOn(prisma.userSubmission, 'delete').mockResolvedValue(mockUserSubmission as any);
+      jest
+        .spyOn(prisma.userSubmission, 'findFirst')
+        .mockResolvedValue(mockUserSubmission as any);
+      jest
+        .spyOn(prisma.userSubmission, 'delete')
+        .mockResolvedValue(mockUserSubmission as any);
 
-      const result = await service.deleteSubmission(mockSubmissionId, mockUserId);
+      const result = await service.deleteSubmission(
+        mockSubmissionId,
+        mockUserId,
+      );
 
       expect(result.message).toBe('Submission deleted successfully');
       expect(result.deletedId).toBe(mockSubmissionId);
@@ -544,17 +583,17 @@ describe('SubmissionService', () => {
     it('should throw NotFoundException when submission not found', async () => {
       jest.spyOn(prisma.userSubmission, 'findFirst').mockResolvedValue(null);
 
-      await expect(service.deleteSubmission(mockSubmissionId, mockUserId)).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(
+        service.deleteSubmission(mockSubmissionId, mockUserId),
+      ).rejects.toThrow(NotFoundException);
     });
 
     it('should only allow users to delete their own submissions', async () => {
       jest.spyOn(prisma.userSubmission, 'findFirst').mockResolvedValue(null);
 
-      await expect(service.deleteSubmission(mockSubmissionId, 'different-user')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(
+        service.deleteSubmission(mockSubmissionId, 'different-user'),
+      ).rejects.toThrow(NotFoundException);
 
       expect(prisma.userSubmission.findFirst).toHaveBeenCalledWith({
         where: {

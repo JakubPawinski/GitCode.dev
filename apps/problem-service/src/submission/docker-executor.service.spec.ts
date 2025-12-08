@@ -26,8 +26,10 @@ jest.mock('../config/docker-executor.config', () => ({
       java: 'openjdk:11',
     },
     runners: {
-      python: 'import json\nwith open("test_cases.json") as f: test_cases = json.load(f)\nresults = []\nfor tc in test_cases:\n    try:\n        result = ${FUNCTION_NAME}(**tc["input"])\n        results.append({"passed": result == tc["expectedOutput"], "output": str(result), "expectedOutput": str(tc["expectedOutput"]), "error": None})\n    except Exception as e:\n        results.append({"passed": False, "output": "", "expectedOutput": str(tc["expectedOutput"]), "error": str(e)})\nprint(json.dumps(results))',
-      javascript: 'const fs = require("fs");\nconst testCases = JSON.parse(fs.readFileSync("test_cases.json", "utf8"));\nconst results = [];\nfor (const tc of testCases) {\n  try {\n    const result = ${FUNCTION_NAME}(...Object.values(tc.input));\n    results.push({ passed: JSON.stringify(result) === JSON.stringify(tc.expectedOutput), output: JSON.stringify(result), expectedOutput: JSON.stringify(tc.expectedOutput), error: null });\n  } catch (e) {\n    results.push({ passed: false, output: "", expectedOutput: JSON.stringify(tc.expectedOutput), error: e.message });\n  }\n}\nconsole.log(JSON.stringify(results));',
+      python:
+        'import json\nwith open("test_cases.json") as f: test_cases = json.load(f)\nresults = []\nfor tc in test_cases:\n    try:\n        result = ${FUNCTION_NAME}(**tc["input"])\n        results.append({"passed": result == tc["expectedOutput"], "output": str(result), "expectedOutput": str(tc["expectedOutput"]), "error": None})\n    except Exception as e:\n        results.append({"passed": False, "output": "", "expectedOutput": str(tc["expectedOutput"]), "error": str(e)})\nprint(json.dumps(results))',
+      javascript:
+        'const fs = require("fs");\nconst testCases = JSON.parse(fs.readFileSync("test_cases.json", "utf8"));\nconst results = [];\nfor (const tc of testCases) {\n  try {\n    const result = ${FUNCTION_NAME}(...Object.values(tc.input));\n    results.push({ passed: JSON.stringify(result) === JSON.stringify(tc.expectedOutput), output: JSON.stringify(result), expectedOutput: JSON.stringify(tc.expectedOutput), error: null });\n  } catch (e) {\n    results.push({ passed: false, output: "", expectedOutput: JSON.stringify(tc.expectedOutput), error: e.message });\n  }\n}\nconsole.log(JSON.stringify(results));',
     },
     resources: {
       memory: 256 * 1024 * 1024,
@@ -92,21 +94,27 @@ describe('DockerExecutorService', () => {
 
     it('should return error results when ensureImage fails', async () => {
       const code = 'def solution(): pass';
-      
+
       jest.spyOn(service['docker'], 'getImage').mockReturnValue({
-        inspect: jest.fn().mockRejectedValue(new Error('Docker connection failed')),
+        inspect: jest
+          .fn()
+          .mockRejectedValue(new Error('Docker connection failed')),
       } as any);
 
-      (jest.spyOn(service['docker'] as any, 'pull') as any).mockImplementationOnce(
-        (imageName: string, callback: Function) => {
-          callback(new Error('Pull failed'));
-        },
+      (
+        jest.spyOn(service['docker'] as any, 'pull') as any
+      ).mockImplementationOnce((imageName: string, callback: Function) => {
+        callback(new Error('Pull failed'));
+      });
+
+      const results = await service.executeCodeBatch(
+        code,
+        'python',
+        mockTestCases,
       );
 
-      const results = await service.executeCodeBatch(code, 'python', mockTestCases);
-
       expect(results).toHaveLength(mockTestCases.length);
-      results.forEach(result => {
+      results.forEach((result) => {
         expect(result.passed).toBe(false);
         expect(result.output).toBe('');
         expect(result.errorMessage).toBeDefined();
@@ -115,19 +123,23 @@ describe('DockerExecutorService', () => {
 
     it('should catch errors during batch execution and return error results', async () => {
       const code = 'def solution(): pass';
-      
+
       jest.spyOn(service['docker'], 'getImage').mockReturnValue({
         inspect: jest.fn().mockResolvedValue({}),
       } as any);
 
-      jest.spyOn(service['docker'], 'createContainer').mockRejectedValue(
-        new Error('Container creation failed'),
+      jest
+        .spyOn(service['docker'], 'createContainer')
+        .mockRejectedValue(new Error('Container creation failed'));
+
+      const results = await service.executeCodeBatch(
+        code,
+        'python',
+        mockTestCases,
       );
 
-      const results = await service.executeCodeBatch(code, 'python', mockTestCases);
-
       expect(results).toHaveLength(mockTestCases.length);
-      results.forEach(result => {
+      results.forEach((result) => {
         expect(result.passed).toBe(false);
         expect(result.errorMessage).toContain('Container creation failed');
       });
@@ -179,26 +191,25 @@ describe('DockerExecutorService', () => {
       expect(name).toBe('solution');
     });
 
-it('should extract Java method name', () => {
-  const code =
-    'public int twoSum(int[] nums, int target) { return 0; }';
-  const name = service['extractFunctionName'](code, 'java');
-  expect(name).toBe('twoSum');
-});
+    it('should extract Java method name', () => {
+      const code = 'public int twoSum(int[] nums, int target) { return 0; }';
+      const name = service['extractFunctionName'](code, 'java');
+      expect(name).toBe('twoSum');
+    });
 
-it('should return default for Java array return types not matching regex', () => {
-  const code =
-    'public int[] twoSum(int[] nums, int target) { return new int[]{0, 1}; }';
-  const name = service['extractFunctionName'](code, 'java');
-  expect(name).toBe('solution');
-});
+    it('should return default for Java array return types not matching regex', () => {
+      const code =
+        'public int[] twoSum(int[] nums, int target) { return new int[]{0, 1}; }';
+      const name = service['extractFunctionName'](code, 'java');
+      expect(name).toBe('solution');
+    });
 
-it('should extract Java method with List return type', () => {
-  const code =
-    'public List twoSum(int[] nums, int target) { return null; }';
-  const name = service['extractFunctionName'](code, 'java');
-  expect(name).toBe('twoSum');
-});
+    it('should extract Java method with List return type', () => {
+      const code =
+        'public List twoSum(int[] nums, int target) { return null; }';
+      const name = service['extractFunctionName'](code, 'java');
+      expect(name).toBe('twoSum');
+    });
 
     it('should handle case-insensitive language names', () => {
       const code = 'def myFunction(x):\n    pass';
@@ -212,8 +223,18 @@ it('should extract Java method with List return type', () => {
   describe('parseResults', () => {
     it('should parse valid JSON results', () => {
       const output = JSON.stringify([
-        { passed: true, output: '[0, 1]', expectedOutput: '[0, 1]', error: null },
-        { passed: true, output: '[1, 2]', expectedOutput: '[1, 2]', error: null },
+        {
+          passed: true,
+          output: '[0, 1]',
+          expectedOutput: '[0, 1]',
+          error: null,
+        },
+        {
+          passed: true,
+          output: '[1, 2]',
+          expectedOutput: '[1, 2]',
+          error: null,
+        },
       ]);
 
       const results = service['parseResults'](output, mockTestCases);
@@ -226,7 +247,12 @@ it('should extract Java method with List return type', () => {
 
     it('should handle output with non-printable characters', () => {
       const jsonOutput = JSON.stringify([
-        { passed: true, output: '[0, 1]', expectedOutput: '[0, 1]', error: null },
+        {
+          passed: true,
+          output: '[0, 1]',
+          expectedOutput: '[0, 1]',
+          error: null,
+        },
       ]);
       const dirtyOutput = '\x00\x01' + jsonOutput + '\x00\x01';
 
@@ -258,7 +284,12 @@ it('should extract Java method with List return type', () => {
 
     it('should extract JSON from middle of output', () => {
       const jsonOutput = JSON.stringify([
-        { passed: true, output: 'result', expectedOutput: 'result', error: null },
+        {
+          passed: true,
+          output: 'result',
+          expectedOutput: 'result',
+          error: null,
+        },
       ]);
       const output = 'Some prefix text\n' + jsonOutput + '\nSome suffix text';
 
@@ -270,15 +301,27 @@ it('should extract Java method with List return type', () => {
 
     it('should handle errors in parsed results', () => {
       const output = JSON.stringify([
-        { passed: false, output: '', expectedOutput: '[0, 1]', error: 'IndexError: list index out of range' },
-        { passed: true, output: '[0, 1]', expectedOutput: '[0, 1]', error: null },
+        {
+          passed: false,
+          output: '',
+          expectedOutput: '[0, 1]',
+          error: 'IndexError: list index out of range',
+        },
+        {
+          passed: true,
+          output: '[0, 1]',
+          expectedOutput: '[0, 1]',
+          error: null,
+        },
       ]);
 
       const results = service['parseResults'](output, mockTestCases);
 
       expect(results).toHaveLength(2);
       expect(results[0].passed).toBe(false);
-      expect(results[0].errorMessage).toBe('IndexError: list index out of range');
+      expect(results[0].errorMessage).toBe(
+        'IndexError: list index out of range',
+      );
       expect(results[1].passed).toBe(true);
     });
   });
@@ -337,15 +380,12 @@ it('should extract Java method with List return type', () => {
       const start = Date.now();
       try {
         await service['timeout'](100);
-      } catch {
-      }
+      } catch {}
       const elapsed = Date.now() - start;
 
       expect(elapsed).toBeGreaterThanOrEqual(100);
     });
   });
-
-
 
   describe('extractFunctionName edge cases', () => {
     it('should handle TypeScript as javascript for extraction', () => {
@@ -397,7 +437,8 @@ it('should extract Java method with List return type', () => {
     });
 
     it('should extract Python static method', () => {
-      const code = 'class Solution:\n    @staticmethod\n    def solve(x):\n        pass';
+      const code =
+        'class Solution:\n    @staticmethod\n    def solve(x):\n        pass';
       const name = service['extractFunctionName'](code, 'python');
       expect(name).toBe('solve');
     });
@@ -457,15 +498,30 @@ it('should extract Java method with List return type', () => {
     it('should handle empty JSON array', () => {
       const output = '[]';
       const results = service['parseResults'](output, mockTestCases);
-      
+
       expect(results).toHaveLength(0);
     });
 
     it('should handle multiple test results with mixed outcomes', () => {
       const output = JSON.stringify([
-        { passed: true, output: 'correct', expectedOutput: 'correct', error: null },
-        { passed: false, output: 'wrong', expectedOutput: 'correct', error: null },
-        { passed: false, output: '', expectedOutput: 'correct', error: 'Timeout' },
+        {
+          passed: true,
+          output: 'correct',
+          expectedOutput: 'correct',
+          error: null,
+        },
+        {
+          passed: false,
+          output: 'wrong',
+          expectedOutput: 'correct',
+          error: null,
+        },
+        {
+          passed: false,
+          output: '',
+          expectedOutput: 'correct',
+          error: 'Timeout',
+        },
       ]);
 
       const results = service['parseResults'](output, mockTestCases);
@@ -478,11 +534,11 @@ it('should extract Java method with List return type', () => {
 
     it('should handle JSON with unicode characters', () => {
       const output = JSON.stringify([
-        { 
-          passed: true, 
-          output: '你好', 
-          expectedOutput: '你好', 
-          error: null 
+        {
+          passed: true,
+          output: '你好',
+          expectedOutput: '你好',
+          error: null,
         },
       ]);
 
@@ -494,7 +550,12 @@ it('should extract Java method with List return type', () => {
 
     it('should handle very long output with JSON embedded', () => {
       const jsonOutput = JSON.stringify([
-        { passed: true, output: 'result', expectedOutput: 'result', error: null },
+        {
+          passed: true,
+          output: 'result',
+          expectedOutput: 'result',
+          error: null,
+        },
       ]);
       const longPrefix = 'x'.repeat(10000);
       const output = longPrefix + jsonOutput;
@@ -506,11 +567,11 @@ it('should extract Java method with List return type', () => {
 
     it('should handle null error field', () => {
       const output = JSON.stringify([
-        { 
-          passed: true, 
-          output: 'result', 
-          expectedOutput: 'result', 
-          error: null 
+        {
+          passed: true,
+          output: 'result',
+          expectedOutput: 'result',
+          error: null,
         },
       ]);
 
@@ -521,11 +582,11 @@ it('should extract Java method with List return type', () => {
 
     it('should preserve error message from result', () => {
       const output = JSON.stringify([
-        { 
-          passed: false, 
-          output: '', 
-          expectedOutput: 'expected', 
-          error: 'Custom error message' 
+        {
+          passed: false,
+          output: '',
+          expectedOutput: 'expected',
+          error: 'Custom error message',
         },
       ]);
 
@@ -537,7 +598,13 @@ it('should extract Java method with List return type', () => {
 
   describe('getLanguageConfig edge cases', () => {
     it('should be case-insensitive for all supported languages', () => {
-      const languages = ['PYTHON', 'PyThOn', 'JAVASCRIPT', 'TypeScript', 'JAVA'];
+      const languages = [
+        'PYTHON',
+        'PyThOn',
+        'JAVASCRIPT',
+        'TypeScript',
+        'JAVA',
+      ];
       const results = languages.map((lang) =>
         service['getLanguageConfig'](lang),
       );

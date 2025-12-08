@@ -1,20 +1,20 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ProblemController } from './problem.controller';
 import { ProblemService } from './problem.service';
-import { 
+import {
   PaginationDto,
   PaginatedResult,
-  ProblemResponseDto, 
+  ProblemResponseDto,
   UserProgressResponseDto,
   SubmissionDto,
-  RecommendedResponseDto, 
+  RecommendedResponseDto,
   TrendingResponseDto,
   TrendingProblemDto,
-  ProblemStatsResponseDto, 
-  UserSubmissionDto, 
+  ProblemStatsResponseDto,
+  UserSubmissionDto,
   AttemptDto,
-  CreateProblemDto, 
-  UpdateProblemDto 
+  CreateProblemDto,
+  UpdateProblemDto,
 } from './dto';
 
 describe('ProblemController', () => {
@@ -63,7 +63,12 @@ describe('ProblemController', () => {
 
   describe('findAll', () => {
     it('returns paginated problems', async () => {
-      const paginationDto: PaginationDto = { page: 2, limit: 5, sortBy: 'createdAt', sortOrder: 'desc' };
+      const paginationDto: PaginationDto = {
+        page: 2,
+        limit: 5,
+        sortBy: 'createdAt',
+        sortOrder: 'desc',
+      };
       const expected: PaginatedResult<ProblemResponseDto> = {
         data: [
           {
@@ -136,7 +141,12 @@ describe('ProblemController', () => {
 
   describe('search', () => {
     it('passes query and pagination to service', async () => {
-      const paginationDto: PaginationDto = { page: 1, limit: 10, sortBy: 'createdAt', sortOrder: 'desc' };
+      const paginationDto: PaginationDto = {
+        page: 1,
+        limit: 10,
+        sortBy: 'createdAt',
+        sortOrder: 'desc',
+      };
       const expected: PaginatedResult<ProblemResponseDto> = {
         data: [],
         pagination: {

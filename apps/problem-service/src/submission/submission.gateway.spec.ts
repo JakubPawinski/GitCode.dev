@@ -38,7 +38,9 @@ describe('SubmissionGateway', () => {
       gateway.handleConnection(mockSocket);
 
       expect(gateway['userConnections'].has('user-123')).toBe(true);
-      expect(gateway['userConnections'].get('user-123')).toContain('socket-123');
+      expect(gateway['userConnections'].get('user-123')).toContain(
+        'socket-123',
+      );
     });
 
     it('should append socket to existing user connections', () => {
