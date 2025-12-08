@@ -20,6 +20,12 @@
     },
     {
       "path": "./packages/common"
+    },
+    {
+      "path": "./apps/notification-service-e2e"
+    },
+    {
+      "path": "./apps/notification-service"
     }
   ]
 }
