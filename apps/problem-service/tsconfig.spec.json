@@ -3,7 +3,7 @@
   "compilerOptions": {
     "outDir": "./out-tsc/jest",
     "types": ["jest", "node"],
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true
   },
@@ -16,7 +16,6 @@
   ],
   "references": [
     {
-      "path": "./tsconfig.lib.json"
       "path": "./tsconfig.app.json"
     }
   ]

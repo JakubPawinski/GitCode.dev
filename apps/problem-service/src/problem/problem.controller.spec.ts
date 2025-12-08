@@ -1,10 +1,22 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ProblemController } from './problem.controller';
 import { ProblemService } from './problem.service';
+import { 
+  PaginationDto,
+  PaginatedResult,
+  ProblemResponseDto, 
+  UserProgressResponseDto,
+  SubmissionDto,
+  RecommendedResponseDto, 
+  TrendingResponseDto,
+  TrendingProblemDto,
+  ProblemStatsResponseDto, 
+  UserSubmissionDto, 
+  AttemptDto,
+  CreateProblemDto, 
+  UpdateProblemDto 
+} from './dto';
 
-jest.mock('../prisma/prisma.service', () => ({
-  PrismaService: jest.fn(),
-}));
 describe('ProblemController', () => {
   let controller: ProblemController;
 
@@ -51,21 +63,32 @@ describe('ProblemController', () => {
 
   describe('findAll', () => {
     it('returns paginated problems', async () => {
-      const paginationDto: Paginaiton = { page: 2, limit: 5 };
-      const expected = {
-        data: [],
+      const paginationDto: PaginationDto = { page: 2, limit: 5, sortBy: 'createdAt', sortOrder: 'desc' };
+      const expected: PaginatedResult<ProblemResponseDto> = {
+        data: [
+          {
+            id: '1',
+            problemId: '1',
+            title: 'Two Sum',
+            difficulty: 'EASY',
+            problemSlug: 'two-sum',
+            description: 'Find two numbers',
+            topics: ['Array'],
+            similarProblems: [],
+          },
+        ],
         pagination: {
           page: 2,
           limit: 5,
-          total: 0,
-          totalPages: 0,
+          total: 10,
+          totalPages: 2,
           hasNextPage: false,
           hasPreviousPage: true,
         },
       };
       mockProblemService.getPaginatedProblems.mockResolvedValue(expected);
 
-      const result = await controller.findAll(paginationDto as any);
+      const result = await controller.findAll(paginationDto);
 
       expect(mockProblemService.getPaginatedProblems).toHaveBeenCalledWith(
         paginationDto,
@@ -77,7 +100,7 @@ describe('ProblemController', () => {
   describe('getUserProgress', () => {
     it('uses user id from request', async () => {
       const req = { user: { id: 'user-1' } };
-      const expected = {
+      const expected: UserProgressResponseDto = {
         userId: 'user-1',
         totalProblems: 10,
         solvedProblems: 5,
@@ -97,7 +120,7 @@ describe('ProblemController', () => {
   describe('getRecommendedProblems', () => {
     it('uses user id to fetch recommendations', async () => {
       const req = { user: { id: 'user-2' } };
-      const expected = {
+      const expected: RecommendedResponseDto = {
         userId: 'user-2',
         recommendedCount: 1,
         recommendations: [],
@@ -113,8 +136,8 @@ describe('ProblemController', () => {
 
   describe('search', () => {
     it('passes query and pagination to service', async () => {
-      const paginationDto = { page: 1, limit: 10 };
-      const expected = {
+      const paginationDto: PaginationDto = { page: 1, limit: 10, sortBy: 'createdAt', sortOrder: 'desc' };
+      const expected: PaginatedResult<ProblemResponseDto> = {
         data: [],
         pagination: {
           page: 1,
@@ -127,7 +150,7 @@ describe('ProblemController', () => {
       };
       mockProblemService.searchProblems.mockResolvedValue(expected);
 
-      const result = await controller.search('graph', paginationDto as any);
+      const result = await controller.search('graph', paginationDto);
 
       expect(mockProblemService.searchProblems).toHaveBeenCalledWith(
         'graph',
@@ -139,7 +162,7 @@ describe('ProblemController', () => {
 
   describe('getTrending', () => {
     it('returns trending problems', async () => {
-      const expected = { trendingCount: 0, trending: [] };
+      const expected: TrendingResponseDto = { trendingCount: 0, trending: [] };
       mockProblemService.getTrending.mockResolvedValue(expected);
 
       const result = await controller.getTrending();
@@ -152,7 +175,16 @@ describe('ProblemController', () => {
   describe('findOne', () => {
     it('fetches details by slug', async () => {
       const slug = 'two-sum';
-      const expected = { id: '1', problemSlug: slug };
+      const expected: ProblemResponseDto = {
+        id: '1',
+        problemId: '1',
+        title: 'Two Sum',
+        difficulty: 'EASY',
+        problemSlug: slug,
+        description: 'Find two numbers',
+        topics: [],
+        similarProblems: [],
+      };
       mockProblemService.findProblemBySlug.mockResolvedValue(expected);
 
       const result = await controller.findOne(slug);
@@ -165,7 +197,7 @@ describe('ProblemController', () => {
   describe('getStats', () => {
     it('fetches stats by slug', async () => {
       const slug = 'two-sum';
-      const expected = {
+      const expected: ProblemStatsResponseDto = {
         totalSubmissions: 10,
         acceptedSubmissions: 5,
         acceptanceRate: 50,
@@ -186,7 +218,7 @@ describe('ProblemController', () => {
     it('uses slug and user id', async () => {
       const slug = 'two-sum';
       const req = { user: { id: 'user-3' } };
-      const expected = {
+      const expected: UserSubmissionDto = {
         userId: 'user-3',
         problemSlug: slug,
         totalAttempts: 0,
