@@ -10,7 +10,7 @@
       "!{projectRoot}/src/test-setup.[jt]s",
       "!{projectRoot}/test-setup.[jt]s"
     ],
-    "sharedGlobals": []
+    "sharedGlobals": ["{workspaceRoot}/.github/workflows/ci.yml"]
   },
   "nxCloudId": "692a16169aeff9681becbbc1",
   "plugins": [
@@ -56,7 +56,6 @@
       }
     }
   ],
-
   "targetDefaults": {
     "test": {
       "dependsOn": ["^build"]
