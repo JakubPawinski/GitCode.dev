@@ -1,10 +1,9 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { ExpandPanel } from '../menu/ExpandPanel'
 import { CloudUpload } from 'lucide-react'
 import { SquareMenu } from 'lucide-react'
 import { useState } from 'react'
-import { useGetProblems } from '@/hooks/api/use-get-problems'
-import { ProblemLinkProps } from '../problem/ProblemLink'
 import { Loader } from '../loading/Loader'
 import { Error } from '../error/Error'
 import { Brain } from 'lucide-react'
@@ -21,40 +20,42 @@ export const PrimaryProblemNavbar = ({
   const [isOpen, setIsOpen] = useState<boolean>(false)
 
   return (
-    <nav className="border-primary/30 flex h-16 items-center justify-between border-b bg-transparent px-6 shadow-lg">
+    <nav className="border-primary/30 grid h-22 grid-cols-3 items-center border-b bg-transparent px-4 shadow-lg">
       <div className="flex items-center gap-6">
         <Link
           href="/"
-          className="text-primary hover:text-accent text-2xl font-bold transition-all duration-300"
+          className="text-primary hover:text-accent flex items-center transition-all duration-300"
         >
-          GitCode.dev
+          <Image
+            alt="logo"
+            src={'/logo.png'}
+            width={48}
+            height={48}
+            className="rounded-md"
+          />
+          <span className="text-xl font-bold">GitCode.dev</span>
         </Link>
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="text-foreground hover:text-accent flex items-center gap-2 transition-colors"
+          className="text-foreground hover:text-accent gap-2 transition-colors"
         >
-          <ExpandPanel
-            isOpen={isOpen}
-            data={data}
-            loading={loading}
-            error={error}
-          />
+          <ExpandPanel isOpen={isOpen} />
           <div className="flex items-center gap-2">
             <SquareMenu />
             <p className="font-semibold tracking-wider">Questions</p>
           </div>
         </button>
       </div>
-      <div className="flex items-center gap-6">
+      <div className="flex justify-center gap-4">
         <button
           onClick={onSubmit}
           disabled={submissionLoading}
-          className="from-primary to-accent text-foreground transform rounded-lg bg-gradient-to-r px-5 py-2 font-bold shadow-md transition-all duration-300 hover:scale-105 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-60"
+          className="from-primary to-accent text-foreground transform rounded-lg bg-gradient-to-r px-2 py-1 font-bold shadow-md transition-all duration-300 hover:scale-105 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-60"
         >
           {!submissionLoading ? (
             <div className="flex cursor-pointer items-center gap-2">
               <CloudUpload size={20} />
-              <span>SUBMIT</span>
+              <span>Submit</span>
             </div>
           ) : (
             <Loader />
@@ -65,7 +66,7 @@ export const PrimaryProblemNavbar = ({
           <div className="font-semibold tracking-wider">AI Tutor</div>
         </div>
       </div>
-      <div>
+      <div className="flex justify-end">
         <Link
           href={'/profile'}
           className="text-foreground hover:text-accent font-semibold tracking-wider transition-colors"

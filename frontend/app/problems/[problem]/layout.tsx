@@ -1,82 +1,66 @@
 'use client'
 import { Editor } from '@/components/editor/Editor'
-import { LeftProblemNavbar } from '@/components/navbar/LeftProblemNavbar'
 import { PrimaryProblemNavbar } from '@/components/navbar/PrimaryProblemNavbar'
 import { usePostSubmission } from '@/hooks/api/use-post-submission'
-import { ReactNode, use, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { editorSchema, EditorType } from '@/config/editor-config'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { availableLanguages, Languages } from '@/consts/editor/languages'
-import {
-  TestCaseScreen,
-  TestCasesProps,
-} from '@/components/tests/TestCaseScreen'
+import { availableLanguages } from '@/consts/editor/languages'
+import { TestCaseScreen } from '@/components/tests/TestCaseScreen'
 import { useGetProblem } from '@/hooks/api/use-get-problem'
-import { ProblemContextProvider } from '@/contexts/ProblemContext'
+import { ProblemProvider } from '@/contexts/problem/ProblemContext'
 import { ExampleProps } from '@/components/problem/Example'
 import { HintProps } from '@/components/problem/Hint'
-import { LanguagesRecord } from '@/consts/editor/languages'
 import { Loader } from '@/components/loading/Loader'
 import { Error } from '@/components/error/Error'
-
-export interface ProblemContextProps {
+import { ProblemLinkProps } from '@/components/problem/ProblemLink'
+import { useAuth } from '@/contexts/auth/AuthContext'
+import { useParams } from 'next/navigation'
+import { TopicProps } from '@/components/problem/Topic'
+export interface ProblemDataProps {
   title: string
-  problemId: number
+  problemId: string
   difficulty: string
   problemSlug: string
-  topics: string[]
+  topics: TopicProps[]
   description: string
   examples: ExampleProps[]
+  constraints: string[]
   hints: HintProps[]
-  codeSnippets: LanguagesRecord
-  testInputOutput: {
+  codeSnippets: any
+  testCases: {
     input: string
-    output: string
+    expectedOutput: string
   }[]
+  similarProblems: ProblemLinkProps[]
 }
 
 export default function ProblemLayout({
   children,
-  params,
 }: {
-  children: ReactNode
-  params: Promise<{ problem: string }>
+  children: React.ReactNode
 }) {
-  const { postMutation, data, loading, error } = usePostSubmission()
+  const { data: authData } = useAuth()
 
-  const { problem } = use(params)
+  const { problem } = useParams()
 
   const {
     data: problemData,
     loading: problemLoading,
     error: problemError,
-  } = useGetProblem<ProblemContextProps>({ problem })
+  } = useGetProblem<ProblemDataProps>(problem as string)
 
-  if (!problemData) return null
-  const { codeSnippets, testInputOutput } = problemData
+  const { postMutation, data, loading, error } = usePostSubmission()
 
-  if (problemLoading) {
-    return <Loader />
-  }
-  if (problemError) {
-    return <Error {...problemError} />
-  }
   const defaultLanguage = availableLanguages[0]
 
-  const {
-    control,
-    handleSubmit,
-    watch,
-    setValue,
-    formState: { dirtyFields },
-  } = useForm<EditorType>({
+  const { control, handleSubmit, watch } = useForm<EditorType>({
     resolver: zodResolver(editorSchema),
 
     defaultValues: {
       language: defaultLanguage,
-      blueprint: codeSnippets[defaultLanguage] || '',
-      code: codeSnippets[defaultLanguage] || '',
+      blueprint: '',
+      code: '',
     },
     resetOptions: {
       keepDirtyValues: true,
@@ -85,19 +69,26 @@ export default function ProblemLayout({
 
   const selectedLanguage = watch('language')
 
-  useEffect(() => {
-    if (selectedLanguage && codeSnippets[selectedLanguage as Languages]) {
-      const isCodeDirty = dirtyFields.code
-      if (!isCodeDirty) {
-        setValue('code', codeSnippets[selectedLanguage as Languages])
-      }
-      setValue('blueprint', codeSnippets[selectedLanguage as Languages])
-    }
-  }, [selectedLanguage, codeSnippets, setValue, dirtyFields.code])
+  if (!authData?.accessToken) return null
+
+  if (problemLoading) {
+    return <Loader />
+  }
+  if (problemError) {
+    return <Error {...problemError} />
+  }
+  if (!problemData) return null
+
+  const { problemId, testCases } = problemData
+
+  if (problemLoading) return <Loader />
+  if (problemError) return <Error {...problemError} />
+  if (!problemData) return null
 
   const onSubmit = (data: EditorType) => {
     postMutation({
       payload: {
+        problemId: problemId,
         code: data.code,
         language: data.language,
       },
@@ -105,9 +96,7 @@ export default function ProblemLayout({
   }
 
   return (
-    <ProblemContextProvider
-      problem={{ problemData, problemLoading, problemError }}
-    >
+    <ProblemProvider problemData={problemData}>
       <form className="text-foreground flex h-screen flex-col">
         <PrimaryProblemNavbar
           onSubmit={handleSubmit(onSubmit)}
@@ -126,11 +115,11 @@ export default function ProblemLayout({
               <Editor control={control} selectedLanguage={selectedLanguage} />
             </div>
             <div className="border-primary/20 h-2/5 rounded-lg border bg-transparent">
-              <TestCaseScreen testInputOutput={testInputOutput} />/
+              <TestCaseScreen testCases={testCases} />
             </div>
           </div>
         </section>
       </form>
-    </ProblemContextProvider>
+    </ProblemProvider>
   )
 }
