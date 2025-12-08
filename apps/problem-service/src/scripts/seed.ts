@@ -96,7 +96,7 @@ async function main() {
         }
 
         // Use transaction for data consistency
-        let createdProblemId: string = '';
+        // let createdProblemId: string = '';
         await prisma.$transaction(async (tx) => {
           const createdProblem = await tx.problem.create({
             data: {
@@ -109,7 +109,7 @@ async function main() {
               solutions: problem.solution,
             },
           });
-          createdProblemId = createdProblem.id;
+          // createdProblemId = createdProblem.id;
 
           // Create Topics
           if (problem.topics?.length > 0) {

@@ -1,5 +1,5 @@
 import { IsUUID } from 'class-validator';
-import type { UUID } from '../../types';
+import type { UUID } from '@gitcode/types';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class InviteFriendDto {
