@@ -3,24 +3,22 @@ import { ProblemService } from './problem.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 import { DifficultyLevel } from './dto/create-problem.dto';
+import { ProblemResponseDto, ProblemDetailResponseDto } from './dto/problem.dto';
+import { UserSubmissionDto, AttemptDto } from './dto/user-submission.dto';
 
 describe('ProblemService', () => {
   let service: ProblemService;
   let prisma: PrismaService;
 
-  const mockProblem = {
+  const mockProblem: ProblemResponseDto = {
     id: '1',
     problemId: '1',
-    frontendId: '1',
     title: 'Two Sum',
     difficulty: 'EASY',
     problemSlug: 'two-sum',
     description: 'Find two numbers that add up to target',
-    solutions: null,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    isActive: true,
-    codeSnippets: {},
+    topics: [],
+    similarProblems: [],
   };
 
   const mockPaginationDto = {
@@ -80,14 +78,13 @@ describe('ProblemService', () => {
 
   describe('getPaginatedProblems', () => {
     it('should return paginated problems', async () => {
-      const mockProblems = [mockProblem];
       jest.spyOn(prisma.problem, 'count').mockResolvedValue(1);
       jest.spyOn(prisma.problem, 'findMany').mockResolvedValue([
         {
           ...mockProblem,
-          topics: [{ topic: 'Array' }],
+          topics: ['Array'],
           similarProblems: [],
-        },
+        } as any,
       ]);
 
       const result = await service.getPaginatedProblems(mockPaginationDto);
@@ -99,14 +96,14 @@ describe('ProblemService', () => {
     });
 
     it('should filter by difficulty', async () => {
-      const paginationDto = { ...mockPaginationDto, difficulty: 'EASY' };
+      const paginationDto = { ...mockPaginationDto, difficulty: 'easy' as const };
       jest.spyOn(prisma.problem, 'count').mockResolvedValue(1);
       jest.spyOn(prisma.problem, 'findMany').mockResolvedValue([
         {
           ...mockProblem,
           topics: [],
           similarProblems: [],
-        },
+        } as any,
       ]);
 
       await service.getPaginatedProblems(paginationDto);
@@ -126,9 +123,9 @@ describe('ProblemService', () => {
       jest.spyOn(prisma.problem, 'findMany').mockResolvedValue([
         {
           ...mockProblem,
-          topics: [{ topic: 'Array' }],
+          topics: ['Array'],
           similarProblems: [],
-        },
+        } as any,
       ]);
 
       await service.getPaginatedProblems(paginationDto);
@@ -145,15 +142,18 @@ describe('ProblemService', () => {
 
   describe('findProblemBySlug', () => {
     it('should return problem by slug', async () => {
-      jest.spyOn(prisma.problem, 'findUnique').mockResolvedValue({
+      const problemWithDetails: ProblemDetailResponseDto = {
         ...mockProblem,
-        topics: [{ topic: 'Array' }],
         examples: [{ inputText: 'Input', outputText: 'Output' }],
-        constraints: [{ constraint: 'Constraint 1' }],
+        constraints: ['Constraint 1'],
         hints: [{ hintText: 'Hint 1', orderIndex: 0 }],
         testCases: [{ input: '[]', expectedOutput: '[]' }],
-        similarProblems: [],
-      });
+        similarProblems: [
+          { title: 'Three Sum', problemSlug: 'three-sum', difficulty: 'MEDIUM', description: 'desc' },
+        ],
+      };
+
+      jest.spyOn(prisma.problem, 'findUnique').mockResolvedValue(problemWithDetails as any);
 
       const result = await service.findProblemBySlug('two-sum');
 
@@ -182,7 +182,7 @@ describe('ProblemService', () => {
           ...mockProblem,
           topics: [],
           similarProblems: [],
-        },
+        } as any,
       ]);
 
       const result = await service.searchProblems('Two', mockPaginationDto);
@@ -225,13 +225,9 @@ describe('ProblemService', () => {
 
       jest.spyOn(prisma.problem, 'create').mockResolvedValue({
         ...mockProblem,
-        topics: [{ topic: 'Array' }],
-        examples: [],
-        constraints: [],
-        hints: [],
-        testCases: [{ input: '{}', expectedOutput: 'null' }],
+        topics: ['Array'],
         similarProblems: [],
-      });
+      } as any);
 
       jest.spyOn(prisma.problemStats, 'create').mockResolvedValue({
         id: '1',
@@ -263,12 +259,8 @@ describe('ProblemService', () => {
         ...mockProblem,
         title: 'Two Sum Updated',
         topics: [],
-        examples: [],
-        constraints: [],
-        hints: [],
-        testCases: [],
         similarProblems: [],
-      });
+      } as any);
 
       const result = await service.updateProblem('1', updateDto);
 
@@ -283,8 +275,8 @@ describe('ProblemService', () => {
 
   describe('deleteProblem', () => {
     it('should delete a problem', async () => {
-      jest.spyOn(prisma.problem, 'findUnique').mockResolvedValue(mockProblem);
-      jest.spyOn(prisma.problem, 'delete').mockResolvedValue(mockProblem);
+      jest.spyOn(prisma.problem, 'findUnique').mockResolvedValue(mockProblem as any);
+      jest.spyOn(prisma.problem, 'delete').mockResolvedValue(mockProblem as any);
 
       const result = await service.deleteProblem('1');
 
@@ -309,7 +301,7 @@ describe('ProblemService', () => {
       jest.spyOn(prisma.problem, 'findUnique').mockResolvedValue({
         ...mockProblem,
         id: '1',
-      });
+      } as any);
 
       jest.spyOn(prisma.problemStats, 'findUnique').mockResolvedValue({
         id: '1',
@@ -344,7 +336,6 @@ describe('ProblemService', () => {
           userId: 'user1',
           problemId: '1',
           status: 'success',
-          attempts: [{ status: 'success', completedAt: new Date() }],
           problem: {
             id: '1',
             title: 'Two Sum',
@@ -352,7 +343,7 @@ describe('ProblemService', () => {
             difficulty: 'EASY',
           },
         },
-      ]);
+      ] as any);
 
       jest.spyOn(prisma.problem, 'count').mockResolvedValue(10);
 
@@ -369,10 +360,9 @@ describe('ProblemService', () => {
       jest.spyOn(prisma.problem, 'findMany').mockResolvedValue([
         {
           ...mockProblem,
-          problemStats: [{ totalSubmissions: 1000, acceptanceRate: 45 }],
           topics: [],
           similarProblems: [],
-        },
+        } as any,
       ]);
 
       const result = await service.getTrending();
@@ -387,26 +377,20 @@ describe('ProblemService', () => {
       jest.spyOn(prisma.problem, 'findUnique').mockResolvedValue({
         ...mockProblem,
         id: '1',
-      });
+      } as any);
 
-      jest.spyOn(prisma.userSubmission, 'findUnique').mockResolvedValue({
+      const userSubmission: UserSubmissionDto = {
         userId: 'user1',
-        problemId: '1',
+        problemSlug: 'two-sum',
+        totalAttempts: 1,
         status: 'success',
         currentLanguage: 'python',
-        submittedAt: new Date(),
-        attempts: [
-          {
-            id: 'attempt1',
-            status: 'success',
-            code: 'code',
-            language: 'python',
-            executionTime: 100,
-            memoryUsed: 50,
-            createdAt: new Date(),
-          },
-        ],
-      });
+        attempts: [],
+        bestAttempt: null,
+        lastSubmittedAt: new Date(),
+      };
+
+      jest.spyOn(prisma.userSubmission, 'findUnique').mockResolvedValue(userSubmission as any);
 
       const result = await service.getUserProblemSubmissions('two-sum', 'user1');
 
@@ -419,7 +403,7 @@ describe('ProblemService', () => {
       jest.spyOn(prisma.problem, 'findUnique').mockResolvedValue({
         ...mockProblem,
         id: '1',
-      });
+      } as any);
 
       jest.spyOn(prisma.userSubmission, 'findUnique').mockResolvedValue(null);
 
@@ -436,22 +420,21 @@ describe('ProblemService', () => {
       jest.spyOn(prisma.userSubmission, 'findMany').mockResolvedValue([
         {
           problemId: '1',
-          attempts: [{ status: 'success' }],
         },
-      ]);
+      ] as any);
 
       jest.spyOn(prisma.problemTopic, 'findMany').mockResolvedValue([
-        { topic: 'Array' },
-      ]);
+        { topic: 'Array', id: '1', problemId: '1' },
+      ] as any);
 
       jest.spyOn(prisma.problem, 'findMany').mockResolvedValue([
         {
           ...mockProblem,
           problemId: '2',
-          topics: [{ topic: 'Array' }],
+          topics: ['Array'],
           similarProblems: [],
         },
-      ]);
+      ] as any);
 
       const result = await service.getRecommended('user1');
 
