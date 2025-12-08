@@ -2,6 +2,7 @@ const express = require('express');
 const swaggerUi = require('swagger-ui-express');
 const { getMergedSpec } = require('../services/swagger-builder.service');
 
+/** @type {import('express').Router} */
 const router = express.Router();
 
 /*
@@ -13,10 +14,10 @@ router.use('/', swaggerUi.serve);
  * Swagger UI documentation endpoint
  */
 router.get('/', (req, res, next) => {
-	const mergedSpec = getMergedSpec();
+  const mergedSpec = getMergedSpec();
 
-	if (!mergedSpec) {
-		return res.status(503).send(`
+  if (!mergedSpec) {
+    return res.status(503).send(`
             <!DOCTYPE html>
             <html>
             <head>
@@ -53,18 +54,18 @@ router.get('/', (req, res, next) => {
             </body>
             </html>
         `);
-	}
+  }
 
-	swaggerUi.setup(mergedSpec, {
-        // Enable persistence of authorization across page reloads
-		swaggerOptions: {
-			persistAuthorization: true,
-			requestInterceptor: (request) => {
-				request.credentials = 'include';
-				return request;
-			},
-		},
-	})(req, res, next);
+  swaggerUi.setup(mergedSpec, {
+    // Enable persistence of authorization across page reloads
+    swaggerOptions: {
+      persistAuthorization: true,
+      requestInterceptor: (request) => {
+        request.credentials = 'include';
+        return request;
+      },
+    },
+  })(req, res, next);
 });
 
 module.exports = router;

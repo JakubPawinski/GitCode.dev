@@ -1,6 +1,6 @@
 import { Controller, Get } from '@nestjs/common';
 import { AppService } from './app.service';
-import { ApiOperation, ApiTags, ApiExcludeEndpoint } from '@nestjs/swagger';
+import { ApiTags, ApiExcludeEndpoint } from '@nestjs/swagger';
 
 @Controller()
 @ApiTags('Auth Service')

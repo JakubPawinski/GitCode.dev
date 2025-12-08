@@ -22,8 +22,12 @@ http:
       middlewares:
         - strip-api
     submission-route:
-      rule: PathPrefix(`/api/submission`)
+      rule: PathPrefix(`/api/submissions`)
       service: problem-service
+      entryPoints:
+        - gateway
+      middlewares:
+        - strip-api
     social-route:
       rule: PathPrefix(`/api/social`)
       service: auth-service

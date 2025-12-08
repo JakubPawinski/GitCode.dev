@@ -4,8 +4,6 @@
     "outDir": "./out-tsc/jest",
     "types": ["jest", "node"],
     "forceConsistentCasingInFileNames": true
-    "experimentalDecorators": true,
-    "emitDecoratorMetadata": true
   },
   "include": [
     "jest.config.ts",
@@ -17,7 +15,6 @@
   "references": [
     {
       "path": "./tsconfig.lib.json"
-      "path": "./tsconfig.app.json"
     }
   ]
 }
