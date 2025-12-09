@@ -1,0 +1,195 @@
+version: '3.8'
+
+services:
+
+   # Remove after frontend migration to Nx 
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: development
+    container_name: gitcode-frontend-dev
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=development
+      - PORT=${FRONTEND_PORT}
+      - API_GATEWAY_URL=http://api-gateway:${API_GATEWAY_PORT}
+    ports:
+      - '${FRONTEND_PORT}:${FRONTEND_PORT}'
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    networks:
+      - gitcodedev-network
+    restart: unless-stopped
+  api-gateway:
+    image: traefik:v3.5
+    container_name: api-gateway-dev
+    ports:
+      - '${API_GATEWAY_PORT}:8080'
+      - '${TRAEFIK_API_PORT}:8081'
+    volumes:
+      - ./apps/api-gateway/development/traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./apps/api-gateway/development/dynamic.yml:/etc/traefik/dynamic.yml:ro
+    networks:
+      - gitcodedev-network
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    restart: unless-stopped
+
+  auth-db:
+    image: postgres:18-alpine
+    container_name: auth-db-dev
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_USER=${AUTH_DB_USER}
+      - POSTGRES_PASSWORD=${AUTH_DB_PASSWORD}
+      - POSTGRES_DB=${AUTH_DB_NAME}
+    ports:
+      - '${AUTH_DB_PORT}:5432'
+    volumes:
+      - auth-db-data-dev:/var/lib/postgresql/data
+    networks:
+      - gitcodedev-network
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'pg_isready -U ${AUTH_DB_USER} -d ${AUTH_DB_NAME}',
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  auth-redis:
+    image: redis:7-alpine
+    container_name: auth-redis-dev
+    ports:
+      - '${AUTH_REDIS_PORT}:6379'
+    volumes:
+      - auth-redis-data-dev:/data
+    networks:
+      - gitcodedev-network
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:23.0
+    container_name: keycloak-dev
+    environment:
+      - KEYCLOAK_ADMIN=${KEYCLOAK_ADMIN_USER}
+      - KEYCLOAK_ADMIN_PASSWORD=${KEYCLOAK_ADMIN_PASSWORD}
+      - KC_DB=postgres
+      - KC_DB_URL=jdbc:postgresql://keycloak-db:5432/${KEYCLOAK_DB_NAME}
+      - KC_DB_USERNAME=${KEYCLOAK_DB_USER}
+      - KC_DB_PASSWORD=${KEYCLOAK_DB_PASSWORD}
+      - KC_HOSTNAME=localhost
+      - KC_HOSTNAME_PORT=8090
+      - KC_HOSTNAME_STRICT=false
+      - KC_HOSTNAME_STRICT_BACKCHANNEL=false
+      - KC_HTTP_ENABLED=true
+      - KC_HEALTH_ENABLED=true
+    volumes:
+      - ./apps/keycloak/realm-export.json:/opt/keycloak/data/import/gitcode-dev-realm.json
+    command: >
+      start-dev
+      --import-realm
+    ports:
+      - '${KEYCLOAK_PORT}:8080'
+    depends_on:
+      keycloak-db:
+        condition: service_healthy
+    networks:
+      - gitcodedev-network
+    restart: unless-stopped
+
+  keycloak-db:
+    image: postgres:18-alpine
+    container_name: keycloak-db-dev
+    environment:
+      - POSTGRES_DB=${KEYCLOAK_DB_NAME}
+      - POSTGRES_USER=${KEYCLOAK_DB_USER}
+      - POSTGRES_PASSWORD=${KEYCLOAK_DB_PASSWORD}
+    volumes:
+      - keycloak-db-data-dev:/var/lib/postgresql/data
+    networks:
+      - gitcodedev-network
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'pg_isready -U ${KEYCLOAK_DB_USER} -d ${KEYCLOAK_DB_NAME}',
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  problem-db:
+    image: postgres:18-alpine
+    container_name: problems-db
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_USER=${PROBLEM_DB_USER}
+      - POSTGRES_PASSWORD=${PROBLEM_DB_PASSWORD}
+      - POSTGRES_DB=${PROBLEM_DB_NAME}
+    ports:
+      - '${PROBLEM_DB_PORT}:5432'
+    volumes:
+      - problem-db-data-dev:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${PROBLEM_DB_USER}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - gitcodedev-network
+    restart: unless-stopped
+
+  problem-redis:
+    image: redis:7-alpine
+    container_name: problem-redis-dev
+    ports:
+      - '${PROBLEM_REDIS_PORT}:6379'
+    volumes:
+      - problem-redis-data-dev:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - gitcodedev-network
+    restart: unless-stopped
+
+  docker-daemon:
+    image: docker:dind
+    container_name: docker-daemon-dev
+    privileged: true
+    environment:
+      - DOCKER_TLS_CERTDIR=
+    volumes:
+      - problem-executions:/tmp/executions
+    networks:
+      - gitcodedev-network
+    restart: unless-stopped
+
+networks:
+  gitcodedev-network:
+    driver: bridge
+
+volumes:
+  auth-db-data-dev:
+  auth-redis-data-dev:
+  keycloak-db-data-dev:
+  problem-db-data-dev:
+  problem-redis-data-dev:
+  problem-executions:

@@ -1,0 +1,69 @@
+{
+  "name": "@gitcode/swagger-docs",
+  "version": "0.0.1",
+  "private": true,
+  "nx": {
+    "targets": {
+      "prune-lockfile": {
+        "dependsOn": [
+          "build"
+        ],
+        "cache": true,
+        "executor": "@nx/js:prune-lockfile",
+        "outputs": [
+          "{workspaceRoot}/apps/swagger-docs/dist/package.json",
+          "{workspaceRoot}/apps/swagger-docs/dist/package-lock.json"
+        ],
+        "options": {
+          "buildTarget": "build"
+        }
+      },
+      "copy-workspace-modules": {
+        "dependsOn": [
+          "build"
+        ],
+        "cache": true,
+        "outputs": [
+          "{workspaceRoot}/apps/swagger-docs/dist/workspace_modules"
+        ],
+        "executor": "@nx/js:copy-workspace-modules",
+        "options": {
+          "buildTarget": "build"
+        }
+      },
+      "prune": {
+        "dependsOn": [
+          "prune-lockfile",
+          "copy-workspace-modules"
+        ],
+        "executor": "nx:noop"
+      },
+      "serve": {
+        "continuous": true,
+        "executor": "@nx/js:node",
+        "defaultConfiguration": "development",
+        "dependsOn": [
+          "build"
+        ],
+        "options": {
+          "buildTarget": "@gitcode/swagger-docs:build",
+          "runBuildTargetDependencies": false
+        },
+        "configurations": {
+          "development": {
+            "buildTarget": "@gitcode/swagger-docs:build:development"
+          },
+          "production": {
+            "buildTarget": "@gitcode/swagger-docs:build:production"
+          }
+        }
+      }
+    }
+  },
+  "dependencies": {
+    "express": "^5.1.0",
+    "openapi-merge": "^1.3.3",
+    "swagger-ui-express": "^4.6.3",
+    "axios": "^1.4.0"
+  }
+}
