@@ -1,12 +1,16 @@
-import { PrismaClient } from '@prisma/client-problem';
 import * as fs from 'fs';
 import * as path from 'path';
-import { Pool } from 'pg';
-import { PrismaPg } from '@prisma/adapter-pg';
+import * as dotenv from 'dotenv';
+dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
 
 const connectionString = process.env.PROBLEM_DATABASE_URL;
-const pool = new Pool({ connectionString });
-const adapter = new PrismaPg(pool);
+console.log('Using database connection string:', connectionString);
+import { PrismaClient } from '@prisma/client-problem';
+import { PrismaPg } from '@prisma/adapter-pg';
+
+const adapter = new PrismaPg({
+  connectionString: process.env.PROBLEM_DATABASE_URL,
+});
 const prisma = new PrismaClient({ adapter });
 
 interface Problem {
@@ -96,7 +100,7 @@ async function main() {
         }
 
         // Use transaction for data consistency
-        let createdProblemId: string = '';
+        // let createdProblemId: string = '';
         await prisma.$transaction(async (tx) => {
           const createdProblem = await tx.problem.create({
             data: {
@@ -109,7 +113,7 @@ async function main() {
               solutions: problem.solution,
             },
           });
-          createdProblemId = createdProblem.id;
+          // createdProblemId = createdProblem.id;
 
           // Create Topics
           if (problem.topics?.length > 0) {
