@@ -6,15 +6,10 @@ import {
   PaginatedResult,
   ProblemResponseDto,
   UserProgressResponseDto,
-  SubmissionDto,
   RecommendedResponseDto,
   TrendingResponseDto,
-  TrendingProblemDto,
   ProblemStatsResponseDto,
   UserSubmissionDto,
-  AttemptDto,
-  CreateProblemDto,
-  UpdateProblemDto,
 } from './dto';
 
 describe('ProblemController', () => {
@@ -103,8 +98,8 @@ describe('ProblemController', () => {
   });
 
   describe('getUserProgress', () => {
-    it('uses user id from request', async () => {
-      const req = { user: { id: 'user-1' } };
+    it('uses user id from @User() decorator', async () => {
+      const user = { id: 'user-1' } as any;
       const expected: UserProgressResponseDto = {
         userId: 'user-1',
         totalProblems: 10,
@@ -115,7 +110,7 @@ describe('ProblemController', () => {
       };
       mockProblemService.getUserProgress.mockResolvedValue(expected);
 
-      const result = await controller.getUserProgress(req as any);
+      const result = await controller.getUserProgress(user);
 
       expect(mockProblemService.getUserProgress).toHaveBeenCalledWith('user-1');
       expect(result).toBe(expected);
@@ -123,8 +118,8 @@ describe('ProblemController', () => {
   });
 
   describe('getRecommendedProblems', () => {
-    it('uses user id to fetch recommendations', async () => {
-      const req = { user: { id: 'user-2' } };
+    it('uses user id from @User() decorator', async () => {
+      const user = { id: 'user-2' } as any;
       const expected: RecommendedResponseDto = {
         userId: 'user-2',
         recommendedCount: 1,
@@ -132,7 +127,7 @@ describe('ProblemController', () => {
       };
       mockProblemService.getRecommended.mockResolvedValue(expected);
 
-      const result = await controller.getRecommendedProblems(req as any);
+      const result = await controller.getRecommendedProblems(user);
 
       expect(mockProblemService.getRecommended).toHaveBeenCalledWith('user-2');
       expect(result).toBe(expected);
@@ -225,9 +220,9 @@ describe('ProblemController', () => {
   });
 
   describe('getUserProblemSubmissions', () => {
-    it('uses slug and user id', async () => {
+    it('uses slug and user id from @User() decorator', async () => {
       const slug = 'two-sum';
-      const req = { user: { id: 'user-3' } };
+      const user = { id: 'user-3' } as any;
       const expected: UserSubmissionDto = {
         userId: 'user-3',
         problemSlug: slug,
@@ -240,10 +235,7 @@ describe('ProblemController', () => {
       };
       mockProblemService.getUserProblemSubmissions.mockResolvedValue(expected);
 
-      const result = await controller.getUserProblemSubmissions(
-        slug,
-        req as any,
-      );
+      const result = await controller.getUserProblemSubmissions(slug, user);
 
       expect(mockProblemService.getUserProblemSubmissions).toHaveBeenCalledWith(
         slug,

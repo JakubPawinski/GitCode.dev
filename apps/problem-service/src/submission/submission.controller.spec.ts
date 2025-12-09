@@ -18,9 +18,6 @@ describe('SubmissionController', () => {
   let service: jest.Mocked<SubmissionService>;
 
   const mockUserId = 'user-123';
-  const mockRequest = {
-    user: { id: mockUserId },
-  };
 
   const mockSubmissionStats: SubmissionStatsDto = {
     totalSubmissions: 42,
@@ -166,7 +163,9 @@ describe('SubmissionController', () => {
 
       service.create.mockResolvedValue(mockResponse as any);
 
-      const result = await controller.create(createSubmissionDto, mockRequest);
+      const result = await controller.create(createSubmissionDto, {
+        id: mockUserId,
+      } as any);
 
       expect(result).toEqual(mockResponse);
       expect(service.create).toHaveBeenCalledWith(
@@ -187,7 +186,7 @@ describe('SubmissionController', () => {
       );
 
       await expect(
-        controller.create(createSubmissionDto, mockRequest),
+        controller.create(createSubmissionDto, { id: mockUserId } as any),
       ).rejects.toThrow(BadRequestException);
     });
 
@@ -205,7 +204,7 @@ describe('SubmissionController', () => {
       );
 
       await expect(
-        controller.create(createSubmissionDto, mockRequest),
+        controller.create(createSubmissionDto, { id: mockUserId } as any),
       ).rejects.toThrow(NotFoundException);
     });
   });
@@ -227,7 +226,7 @@ describe('SubmissionController', () => {
       service.getUserSubmissionHistory.mockResolvedValue(mockResponse as any);
 
       const result = await controller.getUserHistory(
-        mockRequest,
+        { id: mockUserId } as any,
         mockPaginationDto,
       );
 
@@ -255,7 +254,7 @@ describe('SubmissionController', () => {
       service.getUserSubmissionHistory.mockResolvedValue(mockResponse as any);
 
       const result = await controller.getUserHistory(
-        mockRequest,
+        { id: mockUserId } as any,
         mockPaginationDto,
       );
 
@@ -284,7 +283,7 @@ describe('SubmissionController', () => {
       } as any);
 
       const result = await controller.getUserHistory(
-        mockRequest,
+        { id: mockUserId } as any,
         paginationDto,
       );
 
@@ -347,7 +346,7 @@ describe('SubmissionController', () => {
     it('should return user submission statistics', async () => {
       service.getUserStats.mockResolvedValue(mockSubmissionStats);
 
-      const result = await controller.getUserStats(mockRequest);
+      const result = await controller.getUserStats({ id: mockUserId } as any);
 
       expect(result).toEqual(mockSubmissionStats);
       expect(result.totalSubmissions).toBe(42);
@@ -368,7 +367,7 @@ describe('SubmissionController', () => {
 
       service.getUserStats.mockResolvedValue(emptyStats);
 
-      const result = await controller.getUserStats(mockRequest);
+      const result = await controller.getUserStats({ id: mockUserId } as any);
 
       expect(result.totalSubmissions).toBe(0);
       expect(result.avgExecutionTime).toBeNull();
@@ -379,7 +378,10 @@ describe('SubmissionController', () => {
     it('should return recent submissions with default limit', async () => {
       service.getRecentSubmissions.mockResolvedValue([mockRecentSubmission]);
 
-      const result = await controller.getRecentSubmissions(mockRequest, 10);
+      const result = await controller.getRecentSubmissions(
+        { id: mockUserId } as any,
+        10,
+      );
 
       expect(result).toHaveLength(1);
       expect(result[0].problemSlug).toBe('two-sum');
@@ -396,7 +398,10 @@ describe('SubmissionController', () => {
 
       service.getRecentSubmissions.mockResolvedValue(mockSubmissions);
 
-      const result = await controller.getRecentSubmissions(mockRequest, 5);
+      const result = await controller.getRecentSubmissions(
+        { id: mockUserId } as any,
+        5,
+      );
 
       expect(result).toHaveLength(5);
       expect(service.getRecentSubmissions).toHaveBeenCalledWith(mockUserId, 5);
@@ -405,7 +410,10 @@ describe('SubmissionController', () => {
     it('should return empty array if no recent submissions', async () => {
       service.getRecentSubmissions.mockResolvedValue([]);
 
-      const result = await controller.getRecentSubmissions(mockRequest, 10);
+      const result = await controller.getRecentSubmissions(
+        { id: mockUserId } as any,
+        10,
+      );
 
       expect(result).toHaveLength(0);
     });
@@ -415,10 +423,9 @@ describe('SubmissionController', () => {
     it('should return submission details by ID', async () => {
       service.getSubmissionById.mockResolvedValue(mockSubmissionDetail);
 
-      const result = await controller.getSubmissionById(
-        'submission-1',
-        mockRequest,
-      );
+      const result = await controller.getSubmissionById('submission-1', {
+        id: mockUserId,
+      } as any);
 
       expect(result).toEqual(mockSubmissionDetail);
       expect(result.id).toBe('submission-1');
@@ -435,7 +442,7 @@ describe('SubmissionController', () => {
       );
 
       await expect(
-        controller.getSubmissionById('nonexistent', mockRequest),
+        controller.getSubmissionById('nonexistent', { id: mockUserId } as any),
       ).rejects.toThrow(NotFoundException);
     });
 
@@ -482,10 +489,9 @@ describe('SubmissionController', () => {
         submissionWithAttempts as any,
       );
 
-      const result = await controller.getSubmissionById(
-        'submission-1',
-        mockRequest,
-      );
+      const result = await controller.getSubmissionById('submission-1', {
+        id: mockUserId,
+      } as any);
 
       expect(result.attempts).toHaveLength(2);
       expect(result.attempts[0].status).toBe('failed');
@@ -502,10 +508,9 @@ describe('SubmissionController', () => {
 
       service.deleteSubmission.mockResolvedValue(deleteResponse);
 
-      const result = await controller.deleteSubmission(
-        'submission-1',
-        mockRequest,
-      );
+      const result = await controller.deleteSubmission('submission-1', {
+        id: mockUserId,
+      } as any);
 
       expect(result.message).toBe('Submission deleted successfully');
       expect(result.deletedId).toBe('submission-1');
@@ -521,22 +526,21 @@ describe('SubmissionController', () => {
       );
 
       await expect(
-        controller.deleteSubmission('nonexistent', mockRequest),
+        controller.deleteSubmission('nonexistent', { id: mockUserId } as any),
       ).rejects.toThrow(NotFoundException);
     });
 
     it('should only allow users to delete their own submissions', async () => {
       const differentUserId = 'different-user';
-      const differentRequest = {
-        user: { id: differentUserId },
-      };
 
       service.deleteSubmission.mockRejectedValue(
         new NotFoundException('Submission not found'),
       );
 
       await expect(
-        controller.deleteSubmission('submission-1', differentRequest),
+        controller.deleteSubmission('submission-1', {
+          id: differentUserId,
+        } as any),
       ).rejects.toThrow(NotFoundException);
 
       expect(service.deleteSubmission).toHaveBeenCalledWith(
