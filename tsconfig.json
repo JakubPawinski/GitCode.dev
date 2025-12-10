@@ -26,6 +26,9 @@
     },
     {
       "path": "./apps/notification-service"
+    },
+    {
+      "path": "./packages/contracts"
     }
   ]
 }
