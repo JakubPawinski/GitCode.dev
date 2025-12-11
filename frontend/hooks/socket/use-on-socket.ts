@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { Socket } from 'socket.io-client'
 export interface SocketProps {
   rooms: string[]

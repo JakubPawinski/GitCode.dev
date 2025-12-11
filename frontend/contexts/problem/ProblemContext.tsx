@@ -1,6 +1,6 @@
 'use client'
 import { ProblemDataProps } from '@/app/problems/[problem]/layout'
-import { createContext, ReactNode, useContext, useState } from 'react'
+import { createContext, ReactNode, useContext } from 'react'
 export interface ProblemContextProps {
   problemData: ProblemDataProps | null
   setProblemData: (problemData: ProblemDataProps | null) => void
