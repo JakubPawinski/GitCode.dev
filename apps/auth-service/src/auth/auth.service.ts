@@ -349,7 +349,7 @@ export class AuthService {
       await this.redis.del(`refresh_token:${refreshToken}`);
     } catch (error) {
       this.logger.warn(`Failed to logout from Keycloak: ${error.message}`);
-      await this.redis.del(`refresh_token:${refreshToken}`).catch(() => {});
+      await this.redis.del(`refresh_token:${refreshToken}`);
     }
   }
 
