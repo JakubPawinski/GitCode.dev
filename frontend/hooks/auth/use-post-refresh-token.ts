@@ -6,16 +6,19 @@ export const usePostRefreshToken = <T>() => {
   const [loading, setLoading] = useState<boolean>(false)
   const [error, setError] = useState<any>()
 
-  const postMutation = useCallback(() => {
+  const postMutation = useCallback(async () => {
     setLoading(true)
     setError(null)
-    api
+    return api
       .post('/auth/refresh', null, { withCredentials: true })
       .then((res) => {
         setData(res.data.data)
+        return res.data.tata
       })
-
-      .catch((err) => setError(err))
+      .catch((err) => {
+        setError(err)
+        return Promise.reject(err)
+      })
       .finally(() => setLoading(false))
   }, [])
 

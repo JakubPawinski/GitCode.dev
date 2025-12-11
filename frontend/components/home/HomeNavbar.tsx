@@ -1,8 +1,13 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import { LoginButton } from './LoginButton'
+import { User } from 'lucide-react'
 
-export const HomeNavbar = () => {
+interface HomeNavbarProps {
+  avatarUrl?: string
+  username: string
+}
+
+export const HomeNavbar = ({ avatarUrl, username }: HomeNavbarProps) => {
   return (
     <nav className="border-primary/30 flex h-12 items-center justify-between border-b bg-transparent px-6 shadow-lg">
       <div className="flex items-center gap-6">
@@ -21,7 +26,20 @@ export const HomeNavbar = () => {
         </Link>
       </div>
       <div className="flex items-center gap-6">
-        <LoginButton />
+        <Link href={`/profile/${username}`}>
+          {avatarUrl ? (
+            <Image
+              loader={() => avatarUrl}
+              alt="avatar"
+              src={avatarUrl}
+              width={36}
+              height={36}
+              className="rounded-full"
+            />
+          ) : (
+            <User size={36} />
+          )}
+        </Link>
       </div>
     </nav>
   )

@@ -11,7 +11,7 @@ interface QueryProps {
   limit?: number
 }
 
-export const useGetProblems = <T>({ params }: { params: QueryProps }) => {
+export const useGetProblems = <T>({ params }: { params?: QueryProps }) => {
   const [data, setData] = useState<T>()
   const [loading, setLoading] = useState<boolean>(false)
   const [error, setError] = useState<any>()

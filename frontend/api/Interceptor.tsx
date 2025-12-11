@@ -1,14 +1,19 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { api } from '@/api/axios'
 import { usePostRefreshToken } from '@/hooks/auth/use-post-refresh-token'
 import { AuthContextProps } from '@/app/auth/callback/page'
 import { Loader } from '@/components/loading/Loader'
-import { getLoginRedirect } from '@/hooks/auth/use-get-login-redirect'
 import { useAuth } from '@/contexts/auth/AuthContext'
+import { usePathname, useRouter } from 'next/navigation'
 
 export const Interceptor = ({ children }: { children: React.ReactNode }) => {
+  const router = useRouter()
+
   const { data: authData, setData } = useAuth()
+
+  const pathname = usePathname()
+  const isLoginPage = pathname === '/login'
 
   const { postMutation, data, loading, error } =
     usePostRefreshToken<AuthContextProps>()
@@ -23,13 +28,13 @@ export const Interceptor = ({ children }: { children: React.ReactNode }) => {
     if (data && !authData) {
       setData(data)
     }
-  }, [data])
+  }, [data, authData])
 
   useEffect(() => {
     if (error) {
-      getLoginRedirect()
+      router.push('/login')
     }
-  }, [error])
+  }, [router, error])
 
   useEffect(() => {
     const token = data?.accessToken
@@ -44,12 +49,17 @@ export const Interceptor = ({ children }: { children: React.ReactNode }) => {
     )
     const responseInterceptor = api.interceptors.response.use(
       (response) => response,
-      (error) => {
+      async (error) => {
         if (error?.code === 'ERR_CANCELED') {
           return Promise.reject(null)
         }
         if (error?.response?.status === 401) {
-          getLoginRedirect()
+          return postMutation().then((tokenData) => {
+            setData(tokenData)
+            api.defaults.headers.common.Authorization = `Bearer ${tokenData.accessToken}`
+            error.config.headers.Authorization = `Bearer ${tokenData.accessToken}`
+            return api(error.config)
+          })
         }
         return Promise.reject(error)
       }
@@ -60,7 +70,7 @@ export const Interceptor = ({ children }: { children: React.ReactNode }) => {
     }
   }, [data?.accessToken])
 
-  if (loading || !authData?.accessToken) {
+  if (!isLoginPage && !authData?.accessToken) {
     return <Loader />
   }
   return children

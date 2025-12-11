@@ -17,7 +17,12 @@ import { ProblemLinkProps } from '@/components/problem/ProblemLink'
 import { useAuth } from '@/contexts/auth/AuthContext'
 import { useParams } from 'next/navigation'
 import { TopicProps } from '@/components/problem/Topic'
+import { useOnSocket } from '@/hooks/socket/use-on-socket'
+import { useEffect } from 'react'
+import { socket } from '@/ws/socket'
+
 export interface ProblemDataProps {
+  id: string
   title: string
   problemId: string
   difficulty: string
@@ -42,7 +47,32 @@ export default function ProblemLayout({
 }) {
   const { data: authData } = useAuth()
 
+  if (!authData) return null
+
+  useEffect(() => {
+    if (authData.user.id) {
+      socket.auth = { userId: authData.user.id }
+      socket.connect()
+    }
+    return () => {
+      socket.disconnect()
+    }
+  }, [authData.user.id])
+
+  // const rooms = [
+  //   'connect',
+  //   'connect_error',
+  //   // 'disconnect',
+  //   'attempt-update',
+  //   'test-result',
+  //   'submission-complete',
+  // ]
+
   const { problem } = useParams()
+
+  // const { messages } = useOnSocket({ rooms, socket })
+
+  // console.log(messages)
 
   const {
     data: problemData,
@@ -69,8 +99,6 @@ export default function ProblemLayout({
 
   const selectedLanguage = watch('language')
 
-  if (!authData?.accessToken) return null
-
   if (problemLoading) {
     return <Loader />
   }
@@ -79,16 +107,12 @@ export default function ProblemLayout({
   }
   if (!problemData) return null
 
-  const { problemId, testCases } = problemData
-
-  if (problemLoading) return <Loader />
-  if (problemError) return <Error {...problemError} />
-  if (!problemData) return null
+  const { id, testCases } = problemData
 
   const onSubmit = (data: EditorType) => {
     postMutation({
       payload: {
-        problemId: problemId,
+        problemId: id,
         code: data.code,
         language: data.language,
       },

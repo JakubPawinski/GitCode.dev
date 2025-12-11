@@ -6,7 +6,7 @@ import { Loader } from '@/components/loading/Loader'
 import { UserProps } from '@/components/user/User'
 export interface AuthContextProps {
   accessToken: string
-  user?: UserProps
+  user: UserProps
 }
 export default function AuthPage() {
   const searchParams = useSearchParams()

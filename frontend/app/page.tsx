@@ -12,6 +12,7 @@ import { Sort } from '@/components/home/Sort'
 import { DifficultyType } from '@/consts/filters/difficulty'
 import { sortOrderType } from '@/consts/sort/sortOrder'
 import { useDebounce } from '@/hooks/debounce/use-debounce'
+import { useAuth } from '@/contexts/auth/AuthContext'
 
 export interface ProblemsPageProps {
   problemId: number
@@ -29,6 +30,14 @@ export default function Home() {
   const [query, setQuery] = useState<string>('')
   const [page, setPage] = useState<number>(1)
   const LIMIT = 100
+
+  const { data: authData } = useAuth()
+
+  if (!authData) return null
+
+  const { user } = authData
+
+  const { avatarUrl, username } = user
 
   const { debouncedQuery } = useDebounce({ query })
 
@@ -54,7 +63,7 @@ export default function Home() {
   return (
     <div>
       <nav className="border-primary/10 from-background/95 via-primary/5 to-accent/5 sticky top-0 z-50 border-b shadow-2xl backdrop-blur-xl">
-        <HomeNavbar />
+        <HomeNavbar avatarUrl={avatarUrl} username={username} />
       </nav>
       <main className="container mx-auto px-6 py-10">
         <header className="mb-10">
