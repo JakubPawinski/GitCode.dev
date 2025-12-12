@@ -1,5 +1,6 @@
 http:
   routers:
+    # Auth Routes
     auth-router:
       rule: PathPrefix(`/api/auth`)
       service: auth-service
@@ -7,6 +8,8 @@ http:
         - gateway
       middlewares:
         - strip-api
+
+    # User Routes
     user-route:
       rule: PathPrefix(`/api/user`)
       service: auth-service
@@ -14,6 +17,8 @@ http:
         - gateway
       middlewares:
         - strip-api
+
+    # Problem Routes
     problem-route:
       rule: PathPrefix(`/api/problems`)
       service: problem-service
@@ -21,6 +26,8 @@ http:
         - gateway
       middlewares:
         - strip-api
+
+    #  Submission Routes
     submission-route:
       rule: PathPrefix(`/api/submissions`)
       service: problem-service
@@ -28,6 +35,16 @@ http:
         - gateway
       middlewares:
         - strip-api
+    submission-ws-route:
+      rule: PathPrefix(`/api/ws/submissions`)
+      service: problem-service-ws
+      entryPoints:
+        - gateway
+      middlewares:
+        - strip-api-ws
+      priority: 100
+
+    # Social Routes
     social-route:
       rule: PathPrefix(`/api/social`)
       service: auth-service
@@ -35,6 +52,8 @@ http:
         - gateway
       middlewares:
         - strip-api
+
+    # Swagger Docs Route
     swagger-router:
       rule: PathPrefix(`/api/docs`)
       service: swagger-service
@@ -56,6 +75,16 @@ http:
       loadBalancer:
         servers:
           - url: 'http://host.docker.internal:4002'
+    problem-service-ws:
+      loadBalancer:
+        sticky:
+          cookie:
+            name: ws-sticky-cookie
+            secure: false
+            httponly: true
+            sameSite: 'none'
+        servers:
+          - url: 'http://host.docker.internal:4002'
 
   middlewares:
     strip-api:
@@ -64,6 +93,11 @@ http:
           - '/api'
         forceSlash: false
 
+    strip-api-ws:
+      stripPrefix:
+        prefixes:
+          - '/api/ws/submissions'
+        forceSlash: true
     auth-middleware:
       forwardAuth:
         address: 'http://auth-service:4001/verify-token'
