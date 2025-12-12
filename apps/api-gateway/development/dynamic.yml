@@ -27,7 +27,7 @@ http:
       middlewares:
         - strip-api
 
-    #  Submission Routes
+    # Submission Routes
     submission-route:
       rule: PathPrefix(`/api/submissions`)
       service: problem-service
@@ -82,7 +82,7 @@ http:
             name: ws-sticky-cookie
             secure: false
             httponly: true
-            sameSite: 'none'
+            sameSite: 'lax'
         servers:
           - url: 'http://host.docker.internal:4002'
 
