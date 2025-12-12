@@ -307,7 +307,50 @@ export class AuthService {
   }
 
   async logout(refreshToken: string) {
-    await this.redis.del(`refresh_token:${refreshToken}`);
+    try {
+      const userId = await this.redis.get(`refresh_token:${refreshToken}`);
+
+      if (!userId) {
+        this.logger.warn('User ID not found for refresh token');
+        return;
+      }
+
+      // Get keycloak access token
+      const oauthToken = await this.prisma.oAuthToken.findUnique({
+        where: {
+          userId_provider: {
+            userId,
+            provider: 'keycloak',
+          },
+        },
+      });
+
+      if (oauthToken?.refreshToken) {
+        const keycloakConfig = this.configService.get('keycloak');
+        const logoutUrl = `${keycloakConfig.internalUrl}/realms/${keycloakConfig.realm}/protocol/openid-connect/logout`;
+
+        await axios.post(
+          logoutUrl,
+          new URLSearchParams({
+            client_id: keycloakConfig.clientId,
+            client_secret: keycloakConfig.clientSecret,
+            refresh_token: oauthToken.refreshToken,
+          }),
+          {
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          },
+        );
+
+        this.logger.log(
+          `Successfully logged out from Keycloak for user ${userId}`,
+        );
+      }
+
+      await this.redis.del(`refresh_token:${refreshToken}`);
+    } catch (error) {
+      this.logger.warn(`Failed to logout from Keycloak: ${error.message}`);
+      await this.redis.del(`refresh_token:${refreshToken}`);
+    }
   }
 
   async validateUser(userId: string) {

@@ -217,7 +217,43 @@ describe('AuthService', () => {
   });
 
   describe('logout', () => {
-    it('should delete refresh token', async () => {
+    it('should delete refresh token and logout from Keycloak', async () => {
+      redisService.get.mockResolvedValue('user-123');
+      (prismaService.oAuthToken.findUnique as jest.Mock).mockResolvedValue({
+        refreshToken: 'keycloak-refresh-token',
+      });
+      configService.get.mockImplementation((key: string) => {
+        if (key === 'keycloak') {
+          return {
+            internalUrl: 'http://localhost:8090',
+            realm: 'gitcode-dev',
+            clientId: 'gitcode-auth-service',
+            clientSecret: 'secret',
+          };
+        }
+        return undefined;
+      });
+
+      await service.logout('token');
+
+      expect(redisService.get).toHaveBeenCalledWith('refresh_token:token');
+      expect(redisService.del).toHaveBeenCalledWith('refresh_token:token');
+    });
+
+    it('should handle missing user gracefully', async () => {
+      redisService.get.mockResolvedValue(null);
+
+      await service.logout('invalid-token');
+
+      expect(redisService.del).not.toHaveBeenCalled();
+    });
+
+    it('should delete token even if Keycloak token not found', async () => {
+      redisService.get.mockResolvedValue('user-123');
+      (prismaService.oAuthToken.findUnique as jest.Mock).mockResolvedValue(
+        null,
+      );
+
       await service.logout('token');
 
       expect(redisService.del).toHaveBeenCalledWith('refresh_token:token');
@@ -235,7 +271,7 @@ describe('AuthService', () => {
         userStatus: 'ACTIVE',
       };
 
-      redisService.exists.mockResolvedValue(false); 
+      redisService.exists.mockResolvedValue(false);
       (prismaService.user.findUnique as jest.Mock).mockResolvedValue(mockUser);
 
       const result = await service.validateUser('1');
@@ -244,7 +280,7 @@ describe('AuthService', () => {
     });
 
     it('should throw if user blacklisted', async () => {
-      redisService.exists.mockResolvedValue(true); 
+      redisService.exists.mockResolvedValue(true);
 
       await expect(service.validateUser('1')).rejects.toThrow(
         UnauthorizedException,
@@ -262,7 +298,7 @@ describe('AuthService', () => {
 
     it('should throw if user not active', async () => {
       const mockUser = { userStatus: 'BANNED' };
-      redisService.exists.mockResolvedValue(false); 
+      redisService.exists.mockResolvedValue(false);
       (prismaService.user.findUnique as jest.Mock).mockResolvedValue(
         mockUser as any,
       );
