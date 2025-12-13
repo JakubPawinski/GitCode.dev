@@ -8,8 +8,9 @@ import { Server, Socket } from 'socket.io';
 import { Logger } from '@nestjs/common';
 
 @WebSocketGateway({
-  cors: { origin: '*' },
-  namespace: 'submissions',
+  cors: { origin: '*', credentials: true },
+  path: '/socket.io',
+  namespace: '/submissions',
 })
 export class SubmissionGateway
   implements OnGatewayConnection, OnGatewayDisconnect
