@@ -49,15 +49,15 @@ export default function ProblemLayout({
 
   if (!authData) return null
 
-  useEffect(() => {
-    if (authData.user.id) {
-      socket.auth = { userId: authData.user.id }
-      socket.connect()
-    }
-    return () => {
-      socket.disconnect()
-    }
-  }, [authData.user.id])
+  // useEffect(() => {
+  //   if (authData.user.id) {
+  //     socket.auth = { userId: authData.user.id }
+  //     socket.connect()
+  //   }
+  //   return () => {
+  //     socket.disconnect()
+  //   }
+  // }, [authData.user.id])
 
   // const rooms = [
   //   'connect',

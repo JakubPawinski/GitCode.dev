@@ -13,7 +13,7 @@ export const usePostRefreshToken = <T>() => {
       .post('/auth/refresh', null, { withCredentials: true })
       .then((res) => {
         setData(res.data.data)
-        return res.data.tata
+        return res.data.data
       })
       .catch((err) => {
         setError(err)
