@@ -1,9 +1,8 @@
-// GitCode.dev/frontend/app/auth/callback/page.tsx
 'use client';
 
 import { useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/auth/AuthContext';
 import TokenStore from '@/utils/token-store';
 
 export default function AuthCallbackPage() {
@@ -22,7 +21,7 @@ export default function AuthCallbackPage() {
         const error = searchParams.get('error');
         
         if (TokenStore.getToken()) {
-          router.push('/dashboard');
+          router.push('/');
           return;
         }
 
@@ -33,7 +32,7 @@ export default function AuthCallbackPage() {
         }
 
         await refreshAuth();
-        router.push('/dashboard');
+        router.push('/');
       } catch (error) {
         console.error('Callback error:', error);
         router.push('/login?error=callback_error');

@@ -1,9 +1,8 @@
-// GitCode.dev/frontend/app/login/page.tsx
 'use client';
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/auth/AuthContext';
 import LoginForm from '@/components/LoginForm';
 
 export default function LoginPage() {
@@ -12,7 +11,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
-      router.push('/dashboard');
+      router.push('/');
     }
   }, [isAuthenticated, isLoading, router]);
 

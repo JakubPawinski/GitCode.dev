@@ -1,13 +1,12 @@
-// GitCode.dev/frontend/components/LoginForm.tsx
 'use client';
 
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/auth/AuthContext';
 import { useSearchParams } from 'next/navigation';
 
 export default function LoginForm() {
   const { login } = useAuth();
   const searchParams = useSearchParams();
-  const redirect = searchParams.get('redirect') || '/dashboard';
+  const redirect = searchParams.get('redirect') || '/';
 
   const handleLogin = () => {
     login();
@@ -19,7 +18,7 @@ export default function LoginForm() {
       <button onClick={handleLogin}>
         Continue with Keycloak
       </button>
-      {redirect && redirect !== '/dashboard' && (
+      {redirect && redirect !== '/' && (
         <p>
           You will be redirected back to your previous page after login.
         </p>

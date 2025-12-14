@@ -1,4 +1,3 @@
-// GitCode.dev/frontend/hooks/api/use-refresh-token.ts
 import { api } from '@/api/axios'
 import { useCallback, useState } from 'react'
 

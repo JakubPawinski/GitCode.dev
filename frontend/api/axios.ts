@@ -1,4 +1,3 @@
-// GitCode.dev/frontend/api/axios.ts
 import axios from 'axios';
 import TokenStore from '@/utils/token-store';
 
@@ -31,7 +30,7 @@ api.interceptors.response.use(
       
       try {
         const refreshResponse = await axios.post(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/refresh`,
+          `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8080'}/api/auth/refresh`,
           {},
           { withCredentials: true }
         );

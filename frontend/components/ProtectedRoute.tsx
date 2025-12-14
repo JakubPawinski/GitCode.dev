@@ -1,8 +1,7 @@
-// GitCode.dev/frontend/components/ProtectedRoute.tsx
 'use client';
 
 import { useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/auth/AuthContext';
 import { useRouter, usePathname } from 'next/navigation';
 
 export const ProtectedRoute = ({ 

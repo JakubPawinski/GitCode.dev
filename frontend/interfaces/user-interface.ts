@@ -1,4 +1,3 @@
-// GitCode.dev/frontend/interfaces/user-interface.ts
 export interface User {
   id: string;
   email: string;

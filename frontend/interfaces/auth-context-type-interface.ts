@@ -1,4 +1,3 @@
-// GitCode.dev/frontend/interfaces/auth-context-type-interface.ts
 import { User } from './user-interface';
 
 export interface AuthContextType {

@@ -1,5 +1,4 @@
-// GitCode.dev/frontend/utils/token-store.ts
-class TokenStore {
+export default class TokenStore {
   private static accessToken: string | null = null;
 
   static setToken(token: string) {
@@ -18,5 +17,3 @@ class TokenStore {
     return !!this.accessToken;
   }
 }
-
-export default TokenStore;

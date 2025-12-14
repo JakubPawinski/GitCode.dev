@@ -1,10 +1,8 @@
-// GitCode.dev/frontend/hooks/api/use-get-profile.ts
 import { api } from '@/api/axios'
-import { ApiResponse } from '@/interfaces/api-response-interface'
 import { useCallback, useState } from 'react'
 
-export const useGetProfile = () => {
-  const [data, setData] = useState<ApiResponse>()
+export const useGetProfile = <T>() => {
+  const [data, setData] = useState<T>()
   const [loading, setLoading] = useState<boolean>(false)
   const [error, setError] = useState<any>()
 

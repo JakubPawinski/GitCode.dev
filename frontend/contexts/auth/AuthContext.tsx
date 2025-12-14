@@ -1,14 +1,13 @@
-// GitCode.dev/frontend/contexts/AuthContext.tsx
 'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AuthContextType } from '@/interfaces/auth-context-type-interface';
 import { User } from '@/interfaces/user-interface';
-import { useRefreshToken } from '@/hooks/api/use-refresh-token';
-import { useGetProfile } from '@/hooks/api/use-get-profile';
-import { useLogin } from '@/hooks/api/use-login';
-import { useLogout } from '@/hooks/api/use-logout';
+import { useRefreshToken } from '@/hooks/auth/use-refresh-token';
+import { useGetProfile } from '@/hooks/auth/use-get-profile';
+import { useLogin } from '@/hooks/auth/use-login';
+import { useLogout } from '@/hooks/auth/use-logout';
 import TokenStore from '@/utils/token-store';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);

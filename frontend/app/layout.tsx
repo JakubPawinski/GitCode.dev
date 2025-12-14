@@ -1,5 +1,4 @@
-// GitCode.dev/frontend/app/layout.tsx
-import { AuthProvider } from '@/contexts/AuthContext';
+import { AuthProvider } from '@/contexts/auth/AuthContext';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
