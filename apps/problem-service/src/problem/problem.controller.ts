@@ -5,7 +5,6 @@ import {
   Post,
   Param,
   Query,
-  Req,
   UseGuards,
   Patch,
   Delete,
@@ -17,7 +16,8 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { ProblemService } from './problem.service';
-import { JwtAuthGuard } from '@gitcode/auth';
+import { JwtAuthGuard, User } from '@gitcode/auth';
+import type { AuthenticatedUser } from '@gitcode/types';
 import {
   ProblemResponseDto,
   ProblemDetailResponseDto,
@@ -69,8 +69,10 @@ export class ProblemController {
     description: 'User progress statistics',
     type: UserProgressResponseDto,
   })
-  getUserProgress(@Req() req): Promise<UserProgressResponseDto> {
-    const userId = req.user.id;
+  getUserProgress(
+    @User() user: AuthenticatedUser,
+  ): Promise<UserProgressResponseDto> {
+    const userId = user.id;
     return this.problemService.getUserProgress(userId);
   }
 
@@ -83,8 +85,10 @@ export class ProblemController {
     description: 'Recommended problems based on user topics',
     type: RecommendedResponseDto,
   })
-  getRecommendedProblems(@Req() req): Promise<RecommendedResponseDto> {
-    const userId = req.user.id;
+  getRecommendedProblems(
+    @User() user: AuthenticatedUser,
+  ): Promise<RecommendedResponseDto> {
+    const userId = user.id;
     return this.problemService.getRecommended(userId);
   }
 
@@ -169,9 +173,9 @@ export class ProblemController {
   })
   getUserProblemSubmissions(
     @Param('slug') slug: string,
-    @Req() req,
+    @User() user: AuthenticatedUser,
   ): Promise<UserSubmissionDto> {
-    const userId = req.user.id;
+    const userId = user.id;
     return this.problemService.getUserProblemSubmissions(slug, userId);
   }
   //ADMIN ENDPOINTS
