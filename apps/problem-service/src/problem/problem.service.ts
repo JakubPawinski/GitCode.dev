@@ -57,7 +57,7 @@ export class ProblemService {
       where,
       skip,
       take: +limit,
-      orderBy: { [sortBy]: sortOrder },
+      orderBy: [{ problemId: 'asc' }, { [sortBy]: sortOrder }],
       select: {
         id: true,
         problemId: true,
@@ -216,7 +216,7 @@ export class ProblemService {
       where,
       skip,
       take: +limit,
-      orderBy: { [sortBy]: sortOrder },
+      orderBy: [{ problemId: 'asc' }, { [sortBy]: sortOrder }],
       select: {
         id: true,
         problemId: true,

@@ -3,11 +3,12 @@ import { NotFoundException } from '@nestjs/common';
 import { SocialService } from './social.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { FriendRequestStatus } from '../enums/friendRequest.enum';
-import { GetFriendDto } from '../dtos/get-friend.dto';
-import { InviteFriendDto } from '../dtos/invite-friend.dto';
-import { FriendRequestDto } from '../dtos/friend-request.dto';
-import { RespondFriendRequestDto } from '../dtos/respond-friend-request.dto';
-
+import {
+  GetFriendDto,
+  InviteFriendDto,
+  FriendRequestDto,
+  RespondFriendRequestDto,
+} from '../dtos';
 describe('SocialService', () => {
   let service: SocialService;
   let prismaService: jest.Mocked<PrismaService>;

@@ -1,12 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { FriendRequestStatus } from '../enums/friendRequest.enum';
-import { GetFriendDto } from '../dtos/get-friend.dto';
-import { InviteFriendDto } from '../dtos/invite-friend.dto';
 import { UUID } from '@gitcode/types';
-import { FriendRequestDto } from '../dtos/friend-request.dto';
-import { RespondFriendRequestDto } from '../dtos/respond-friend-request.dto';
-
+import {
+  GetFriendDto,
+  InviteFriendDto,
+  FriendRequestDto,
+  RespondFriendRequestDto,
+} from '../dtos';
 @Injectable()
 export class SocialService {
   constructor(private readonly prismaService: PrismaService) {}

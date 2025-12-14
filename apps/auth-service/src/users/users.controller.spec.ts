@@ -1,15 +1,16 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UsersController } from './users.controller';
 import { UsersService } from './providers/users.service';
-import { GetUsersQueryDto } from './dtos/get-users-query.dto';
-import { PatchProfileDto } from './dtos/patch-profile.dto';
-import { PatchPreferencesDto } from './dtos/patch-preferences.dto';
-import { SearchUsersDto } from './dtos/search-users.dto';
-import { SearchUsersAdminDto } from './dtos/search-users-admin.dto';
-import { GetProfileDto } from './dtos/get-profile.dto';
-import { GetPreferencesDto } from './dtos/get-preferences.dto';
-import { GetPublicProfileDto } from './dtos/get-public-profile.dto';
-import { GetUserDto } from './dtos/get-user.dto';
+import {
+  PatchProfileDto,
+  GetPreferencesDto,
+  PatchPreferencesDto,
+  GetPublicProfileDto,
+  GetUserDto,
+  SearchUsersDto,
+  SearchUsersAdminDto,
+  GetProfileDto,
+} from './dtos';
 import {
   PaginatedResult,
   privacyLevelEnum,
@@ -17,7 +18,7 @@ import {
   UserStatus,
 } from '@gitcode/types';
 import type { AuthenticatedUser, UUID } from '@gitcode/types';
-
+import { PaginationQueryDto } from '@gitcode/common';
 describe('UsersController', () => {
   let controller: UsersController;
   let usersService: jest.Mocked<UsersService>;
@@ -204,7 +205,7 @@ describe('UsersController', () => {
 
   describe('getAllUsers', () => {
     it('should return all users', async () => {
-      const query: GetUsersQueryDto = { page: 1, limit: 10 };
+      const query: PaginationQueryDto = { page: 1, limit: 10 };
       const mockResult: PaginatedResult<GetUserDto> = {
         data: [],
         meta: {
