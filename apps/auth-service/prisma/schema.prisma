@@ -62,7 +62,6 @@ model UserPreferences {
   userId          String   @unique @map("user_id")
   theme           Theme   @default(LIGHT)
   language        String   @default("en")
-  notifications   Boolean  @default(true)
   privacyLevel    PrivacyLevel   @default(PUBLIC)
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
