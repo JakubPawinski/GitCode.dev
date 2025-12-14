@@ -157,15 +157,7 @@ export class ProblemService {
       difficulty: problem.difficulty,
       problemSlug: problem.problemSlug,
       description: problem.description,
-      codeSnippets: problem.codeSnippets
-        ? (problem.codeSnippets as any[]).reduce(
-            (acc, snippet) => {
-              acc[snippet.language] = snippet.starterCode;
-              return acc;
-            },
-            {} as Record<string, string>,
-          )
-        : {},
+      codeSnippets: this.mapCodeSnippets(problem.codeSnippets),
       topics: problem.topics.map((t) => t.topic),
       examples: problem.examples.map((e) => ({
         inputText: e.inputText,
@@ -387,15 +379,7 @@ export class ProblemService {
         input: t.input,
         expectedOutput: t.expectedOutput,
       })),
-      codeSnippets: problem.codeSnippets
-        ? (problem.codeSnippets as any[]).reduce(
-            (acc, snippet) => {
-              acc[snippet.language] = snippet.starterCode;
-              return acc;
-            },
-            {} as Record<string, string>,
-          )
-        : {},
+      codeSnippets: this.mapCodeSnippets(problem.codeSnippets),
       similarProblems: problem.similarProblems.map((p) => p.problemTo),
     };
 
@@ -503,15 +487,7 @@ export class ProblemService {
         input: t.input,
         expectedOutput: t.expectedOutput,
       })),
-      codeSnippets: problem.codeSnippets
-        ? (problem.codeSnippets as any[]).reduce(
-            (acc, snippet) => {
-              acc[snippet.language] = snippet.starterCode;
-              return acc;
-            },
-            {} as Record<string, string>,
-          )
-        : {},
+      codeSnippets: this.mapCodeSnippets(problem.codeSnippets),
       similarProblems: problem.similarProblems.map((p) => p.problemTo),
     };
 
@@ -852,5 +828,16 @@ export class ProblemService {
         similarProblems: problem.similarProblems.map((p) => p.problemTo),
       })),
     };
+  }
+  private mapCodeSnippets(codeSnippets: any): Record<string, string> {
+    return codeSnippets
+      ? (codeSnippets as any[]).reduce(
+          (acc, snippet) => {
+            acc[snippet.language] = snippet.starterCode;
+            return acc;
+          },
+          {} as Record<string, string>,
+        )
+      : {};
   }
 }
