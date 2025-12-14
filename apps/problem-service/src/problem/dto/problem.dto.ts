@@ -1,6 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Difficulty } from '@prisma/client-problem';
-import { IsObject } from 'class-validator';
 
 export class ProblemResponseDto {
   @ApiProperty({
@@ -122,7 +121,6 @@ export class ProblemDetailResponseDto extends ProblemResponseDto {
       java: 'class Solution {\n    public int[] twoSum(int[] nums, int target) {\n        \n    }\n}',
     },
   })
-  @IsObject()
   codeSnippets: Record<string, string>;
 
   @ApiProperty({
