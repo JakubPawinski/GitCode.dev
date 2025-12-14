@@ -227,3 +227,4 @@ volumes:
   problem-db-data-dev:
   problem-redis-data-dev:
   problem-executions:
+  notification-db-data-dev:

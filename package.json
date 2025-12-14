@@ -7,7 +7,7 @@
     "test": "npx nx run-many --target=test --all",
     "start:infra": "docker compose -f docker-compose.infra.yml up -d",
     "stop:infra": "docker compose -f docker-compose.infra.yml down",
-    "dev": "npm run start:infra && npx nx run-many -t serve -p auth-service problem-service swagger-docs"
+    "dev": "npm run start:infra && npx nx run-many -t serve -p auth-service problem-service swagger-docs notification-service"
   },
   "keywords": [],
   "author": "",
@@ -91,6 +91,7 @@
     "@nestjs/websockets": "^11.1.9",
     "@prisma/adapter-pg": "^7.0.1",
     "@prisma/client": "^7.0.1",
+    "amqp-connection-manager": "^5.0.0",
     "amqplib": "^0.10.9",
     "axios": "^1.13.1",
     "bcrypt": "^6.0.0",
