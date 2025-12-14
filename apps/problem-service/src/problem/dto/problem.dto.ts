@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Difficulty } from '@prisma/client-problem';
+import { IsObject } from 'class-validator';
 
 export class ProblemResponseDto {
   @ApiProperty({
@@ -110,6 +111,19 @@ export class ProblemDetailResponseDto extends ProblemResponseDto {
     input: any;
     expectedOutput: any;
   }>;
+
+  @ApiProperty({
+    description: 'Code snippets for different programming languages',
+    type: Object,
+    example: {
+      python: 'def twoSum(nums, target):\n    pass',
+      javascript: 'function twoSum(nums, target) {\n    return null;\n}',
+      cpp: 'class Solution {\npublic:\n    vector<int> twoSum(vector<int>& nums, int target) {\n        \n    }\n};',
+      java: 'class Solution {\n    public int[] twoSum(int[] nums, int target) {\n        \n    }\n}',
+    },
+  })
+  @IsObject()
+  codeSnippets: Record<string, string>;
 
   @ApiProperty({
     description: 'Similar problems recommendations',

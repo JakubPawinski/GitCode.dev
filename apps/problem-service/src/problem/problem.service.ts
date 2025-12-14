@@ -118,6 +118,7 @@ export class ProblemService {
         difficulty: true,
         problemSlug: true,
         description: true,
+        codeSnippets: true,
         topics: { select: { topic: true } },
         examples: { select: { inputText: true, outputText: true } },
         constraints: { select: { constraint: true } },
@@ -156,6 +157,15 @@ export class ProblemService {
       difficulty: problem.difficulty,
       problemSlug: problem.problemSlug,
       description: problem.description,
+      codeSnippets: problem.codeSnippets
+        ? (problem.codeSnippets as any[]).reduce(
+            (acc, snippet) => {
+              acc[snippet.language] = snippet.starterCode;
+              return acc;
+            },
+            {} as Record<string, string>,
+          )
+        : {},
       topics: problem.topics.map((t) => t.topic),
       examples: problem.examples.map((e) => ({
         inputText: e.inputText,
@@ -331,6 +341,7 @@ export class ProblemService {
         constraints: true,
         hints: true,
         testCases: true,
+        codeSnippets: true,
         similarProblems: {
           select: {
             problemTo: {
@@ -376,6 +387,15 @@ export class ProblemService {
         input: t.input,
         expectedOutput: t.expectedOutput,
       })),
+      codeSnippets: problem.codeSnippets
+        ? (problem.codeSnippets as any[]).reduce(
+            (acc, snippet) => {
+              acc[snippet.language] = snippet.starterCode;
+              return acc;
+            },
+            {} as Record<string, string>,
+          )
+        : {},
       similarProblems: problem.similarProblems.map((p) => p.problemTo),
     };
 
@@ -446,6 +466,7 @@ export class ProblemService {
         constraints: true,
         hints: true,
         testCases: true,
+        codeSnippets: true,
         similarProblems: {
           select: {
             problemTo: {
@@ -482,6 +503,15 @@ export class ProblemService {
         input: t.input,
         expectedOutput: t.expectedOutput,
       })),
+      codeSnippets: problem.codeSnippets
+        ? (problem.codeSnippets as any[]).reduce(
+            (acc, snippet) => {
+              acc[snippet.language] = snippet.starterCode;
+              return acc;
+            },
+            {} as Record<string, string>,
+          )
+        : {},
       similarProblems: problem.similarProblems.map((p) => p.problemTo),
     };
 
