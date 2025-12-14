@@ -112,6 +112,18 @@ export class ProblemDetailResponseDto extends ProblemResponseDto {
   }>;
 
   @ApiProperty({
+    description: 'Code snippets for different programming languages',
+    type: Object,
+    example: {
+      python: 'def twoSum(nums, target):\n    pass',
+      javascript: 'function twoSum(nums, target) {\n    return null;\n}',
+      cpp: 'class Solution {\npublic:\n    vector<int> twoSum(vector<int>& nums, int target) {\n        \n    }\n};',
+      java: 'class Solution {\n    public int[] twoSum(int[] nums, int target) {\n        \n    }\n}',
+    },
+  })
+  codeSnippets: Record<string, string>;
+
+  @ApiProperty({
     description: 'Similar problems recommendations',
     type: [Object],
     example: [

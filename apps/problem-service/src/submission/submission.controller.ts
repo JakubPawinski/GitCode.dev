@@ -16,7 +16,6 @@ import {
 import { JwtAuthGuard, User } from '@gitcode/auth';
 import type { AuthenticatedUser } from '@gitcode/types';
 import { ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { PaginatedResult, PaginationDto } from '../problem/dto';
 import {
   AttemptDetailsDto,
   DeleteResponseDto,
@@ -25,6 +24,8 @@ import {
   SubmissionHistoryDto,
   SubmissionStatsDto,
 } from './dto';
+import { PaginationQueryDto } from '@gitcode/common';
+import { PaginatedResult } from '@gitcode/types';
 
 @Controller('submissions')
 export class SubmissionController {
@@ -50,7 +51,7 @@ export class SubmissionController {
   })
   getUserHistory(
     @User() user: AuthenticatedUser,
-    @Query() paginationDto: PaginationDto,
+    @Query() paginationDto: PaginationQueryDto,
   ): Promise<PaginatedResult<SubmissionHistoryDto>> {
     const userId = user.id;
     return this.submissionService.getUserSubmissionHistory(
