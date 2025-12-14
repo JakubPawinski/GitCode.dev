@@ -1,30 +1,18 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  images: {
-    remotePatterns: [
-      {
-        protocol: 'http',
-        hostname: 'localhost',
-      },
-      {
-        protocol: 'https',
-        hostname: 'avatar.example.com',
-      },
-    ],
+  env: {
+    BACKEND_URL: process.env.BACKEND_URL,
   },
-  async rewrites() {
+  async redirects() {
     return [
       {
-        source: '/api/:path*',
-        destination: 'http://localhost:8080/api/:path*',
+        source: '/problems/:slug',
+        destination: '/problems/:slug/description',
+        permanent: true,
       },
-      {
-        source: '/auth/:path*',
-        destination: 'http://localhost:8080/auth/:path*',
-      },
-    ];
+    ]
   },
-};
+}
 
 export default nextConfig;

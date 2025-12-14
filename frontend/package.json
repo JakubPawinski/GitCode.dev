@@ -12,12 +12,16 @@
     "prettier:fix": "prettier --write './**/*.{js,jsx,ts,tsx,json,md}'"
   },
   "dependencies": {
-    "axios": "^1.13.2",
-    "js-cookie": "^3.0.5",
+    "@hookform/resolvers": "^5.2.2",
+    "@monaco-editor/react": "^4.7.0",
+    "axios": "^1.13.1",
+    "lucide-react": "^0.552.0",
     "next": "16.0.1",
     "react": "19.2.0",
     "react-dom": "19.2.0",
-    "universal-cookie": "^7.1.2"
+    "react-hook-form": "^7.66.0",
+    "react-spinners": "^0.17.0",
+    "zod": "^4.1.12"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
