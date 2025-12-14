@@ -19,7 +19,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { InjectQueue } from '@nestjs/bullmq';
 import type { Queue } from 'bull';
 import { SubmissionGateway } from './submission.gateway';
-import { PaginationDto } from '@gitcode/common';
+import { PaginationQueryDto } from '@gitcode/common';
 import { PaginatedResult } from '@gitcode/types';
 
 @Injectable()
@@ -187,7 +187,7 @@ export class SubmissionService {
 
   async getUserSubmissionHistory(
     userId: string,
-    paginationDto: PaginationDto,
+    paginationDto: PaginationQueryDto,
   ): Promise<PaginatedResult<SubmissionHistoryDto>> {
     const page = paginationDto.page || 1;
     const limit = paginationDto.limit || 10;
