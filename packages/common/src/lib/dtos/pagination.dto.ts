@@ -24,13 +24,6 @@ export class PaginationDto {
   @IsIn(['asc', 'desc'])
   @ApiProperty({ example: 'desc', enum: ['asc', 'desc'], required: false })
   sortOrder?: 'asc' | 'desc' = 'desc';
-
-  @IsOptional()
-  @IsIn(['easy', 'medium', 'hard'])
-  difficulty?: 'easy' | 'medium' | 'hard';
-
-  @IsOptional()
-  topic?: string;
 }
 
 export class PaginationMetaDto {
