@@ -16,7 +16,6 @@ import {
 } from './dto/create-submission.dto';
 import { JwtAuthGuard } from '@gitcode/auth';
 import { ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { PaginatedResult, PaginationDto } from '../problem/dto';
 import {
   AttemptDetailsDto,
   DeleteResponseDto,
@@ -25,6 +24,8 @@ import {
   SubmissionHistoryDto,
   SubmissionStatsDto,
 } from './dto';
+import { PaginationDto } from '@gitcode/common';
+import { PaginatedResult } from '@gitcode/types';
 
 @Controller('submissions')
 export class SubmissionController {

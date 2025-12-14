@@ -5,8 +5,6 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import {
-  PaginatedResult,
-  PaginationDto,
   CreateProblemDto,
   UpdateProblemDto,
   ProblemResponseDto,
@@ -17,7 +15,8 @@ import {
   UserSubmissionDto,
   RecommendedResponseDto,
 } from './dto';
-
+import { PaginationDto } from '@gitcode/common';
+import { PaginatedResult } from '@gitcode/types';
 @Injectable()
 export class ProblemService {
   constructor(private prisma: PrismaService) {}
@@ -96,10 +95,10 @@ export class ProblemService {
 
     return {
       data: mappedData,
-      pagination: {
-        page,
-        limit,
-        total,
+      meta: {
+        currentPage: page,
+        pageSize: limit,
+        totalItems: total,
         totalPages,
         hasNextPage: page < totalPages,
         hasPreviousPage: page > 1,
@@ -249,10 +248,10 @@ export class ProblemService {
 
     return {
       data: mappedData,
-      pagination: {
-        page,
-        limit,
-        total,
+      meta: {
+        currentPage: page,
+        pageSize: limit,
+        totalItems: total,
         totalPages,
         hasNextPage: page < totalPages,
         hasPreviousPage: page > 1,

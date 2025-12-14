@@ -5,9 +5,9 @@ import { SubmissionGateway } from './submission.gateway';
 import { DockerExecutorService } from './docker-executor.service';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 import { CreateSubmissionDto } from './dto/create-submission.dto';
-import { PaginationDto } from '../problem/dto';
 import { Queue } from 'bull';
 import { getQueueToken } from '@nestjs/bullmq';
+import { PaginationDto } from '@gitcode/common';
 
 describe('SubmissionService', () => {
   let service: SubmissionService;
@@ -332,9 +332,9 @@ describe('SubmissionService', () => {
       );
 
       expect(result.data).toHaveLength(1);
-      expect(result.pagination.page).toBe(1);
-      expect(result.pagination.limit).toBe(10);
-      expect(result.pagination.total).toBe(1);
+      expect(result.meta.currentPage).toBe(1);
+      expect(result.meta.pageSize).toBe(10);
+      expect(result.meta.totalItems).toBe(1);
     });
 
     it('should handle empty submission history', async () => {
@@ -347,7 +347,7 @@ describe('SubmissionService', () => {
       );
 
       expect(result.data).toHaveLength(0);
-      expect(result.pagination.total).toBe(0);
+      expect(result.meta.totalItems).toBe(0);
     });
 
     it('should apply pagination correctly', async () => {
@@ -366,11 +366,11 @@ describe('SubmissionService', () => {
         paginationDto,
       );
 
-      expect(result.pagination.page).toBe(2);
-      expect(result.pagination.limit).toBe(5);
-      expect(result.pagination.totalPages).toBe(3);
-      expect(result.pagination.hasNextPage).toBe(true);
-      expect(result.pagination.hasPreviousPage).toBe(true);
+      expect(result.meta.currentPage).toBe(2);
+      expect(result.meta.pageSize).toBe(5);
+      expect(result.meta.totalPages).toBe(3);
+      expect(result.meta.hasNextPage).toBe(true);
+      expect(result.meta.hasPreviousPage).toBe(true);
     });
   });
 

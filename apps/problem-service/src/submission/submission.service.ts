@@ -15,11 +15,12 @@ import {
   AttemptDetailsDto,
   DeleteResponseDto,
 } from './dto';
-import { PaginatedResult, PaginationDto } from '../problem/dto';
 import { PrismaService } from '../prisma/prisma.service';
 import { InjectQueue } from '@nestjs/bullmq';
 import type { Queue } from 'bull';
 import { SubmissionGateway } from './submission.gateway';
+import { PaginationDto } from '@gitcode/common';
+import { PaginatedResult } from '@gitcode/types';
 
 @Injectable()
 export class SubmissionService {
@@ -253,10 +254,10 @@ export class SubmissionService {
 
     return {
       data,
-      pagination: {
-        page,
-        limit,
-        total,
+      meta: {
+        currentPage: page,
+        pageSize: limit,
+        totalItems: total,
         totalPages,
         hasNextPage: page < totalPages,
         hasPreviousPage: page > 1,

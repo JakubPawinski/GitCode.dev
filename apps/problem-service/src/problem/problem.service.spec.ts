@@ -88,8 +88,8 @@ describe('ProblemService', () => {
       const result = await service.getPaginatedProblems(mockPaginationDto);
 
       expect(result.data).toHaveLength(1);
-      expect(result.pagination.page).toBe(1);
-      expect(result.pagination.limit).toBe(10);
+      expect(result.meta.currentPage).toBe(1);
+      expect(result.meta.pageSize).toBe(10);
       expect(prisma.problem.findMany).toHaveBeenCalled();
     });
 

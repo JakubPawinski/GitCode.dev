@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { SubmissionController } from './submission.controller';
 import { SubmissionService } from './submission.service';
 import { CreateSubmissionDto } from './dto/create-submission.dto';
-import { PaginationDto } from '../problem/dto';
+import { PaginationDto } from '@gitcode/common';
 import {
   SubmissionStatsDto,
   RecentSubmissionDto,
@@ -214,10 +214,10 @@ describe('SubmissionController', () => {
     it('should return paginated submission history', async () => {
       const mockResponse = {
         data: [mockSubmissionHistory],
-        pagination: {
-          page: 1,
-          limit: 10,
-          total: 1,
+        meta: {
+          currentPage: 1,
+          pageSize: 10,
+          totalItems: 1,
           totalPages: 1,
           hasNextPage: false,
           hasPreviousPage: false,
@@ -232,7 +232,7 @@ describe('SubmissionController', () => {
       );
 
       expect(result.data).toHaveLength(1);
-      expect(result.pagination.page).toBe(1);
+      expect(result.meta.currentPage).toBe(1);
       expect(service.getUserSubmissionHistory).toHaveBeenCalledWith(
         mockUserId,
         mockPaginationDto,
@@ -242,10 +242,10 @@ describe('SubmissionController', () => {
     it('should handle empty submission history', async () => {
       const mockResponse = {
         data: [],
-        pagination: {
-          page: 1,
-          limit: 10,
-          total: 0,
+        meta: {
+          currentPage: 1,
+          pageSize: 10,
+          totalItems: 0,
           totalPages: 0,
           hasNextPage: false,
           hasPreviousPage: false,
@@ -260,7 +260,7 @@ describe('SubmissionController', () => {
       );
 
       expect(result.data).toHaveLength(0);
-      expect(result.pagination.total).toBe(0);
+      expect(result.meta.totalItems).toBe(0);
     });
 
     it('should apply pagination correctly', async () => {
@@ -273,10 +273,10 @@ describe('SubmissionController', () => {
 
       service.getUserSubmissionHistory.mockResolvedValue({
         data: [],
-        pagination: {
-          page: 2,
-          limit: 20,
-          total: 40,
+        meta: {
+          currentPage: 2,
+          pageSize: 20,
+          totalItems: 40,
           totalPages: 2,
           hasNextPage: false,
           hasPreviousPage: true,
@@ -288,8 +288,8 @@ describe('SubmissionController', () => {
         paginationDto,
       );
 
-      expect(result.pagination.page).toBe(2);
-      expect(result.pagination.limit).toBe(20);
+      expect(result.meta.currentPage).toBe(2);
+      expect(result.meta.pageSize).toBe(20);
       expect(service.getUserSubmissionHistory).toHaveBeenCalledWith(
         mockUserId,
         paginationDto,

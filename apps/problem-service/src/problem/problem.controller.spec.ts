@@ -2,21 +2,15 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ProblemController } from './problem.controller';
 import { ProblemService } from './problem.service';
 import {
-  PaginationDto,
-  PaginatedResult,
   ProblemResponseDto,
   UserProgressResponseDto,
-  SubmissionDto,
   RecommendedResponseDto,
   TrendingResponseDto,
-  TrendingProblemDto,
   ProblemStatsResponseDto,
   UserSubmissionDto,
-  AttemptDto,
-  CreateProblemDto,
-  UpdateProblemDto,
 } from './dto';
-
+import { PaginationDto } from '@gitcode/common';
+import { PaginatedResult } from '@gitcode/types';
 describe('ProblemController', () => {
   let controller: ProblemController;
 
@@ -82,10 +76,10 @@ describe('ProblemController', () => {
             similarProblems: [],
           },
         ],
-        pagination: {
-          page: 2,
-          limit: 5,
-          total: 10,
+        meta: {
+          currentPage: 2,
+          pageSize: 5,
+          totalItems: 10,
           totalPages: 2,
           hasNextPage: false,
           hasPreviousPage: true,
@@ -149,10 +143,10 @@ describe('ProblemController', () => {
       };
       const expected: PaginatedResult<ProblemResponseDto> = {
         data: [],
-        pagination: {
-          page: 1,
-          limit: 10,
-          total: 0,
+        meta: {
+          currentPage: 1,
+          pageSize: 10,
+          totalItems: 0,
           totalPages: 0,
           hasNextPage: false,
           hasPreviousPage: false,

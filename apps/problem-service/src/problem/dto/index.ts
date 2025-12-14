@@ -5,5 +5,4 @@ export * from './user-progress.dto';
 export * from './recommended.dto';
 export * from './create-problem.dto';
 export * from './update-problem.dto';
-export * from './pagination.dto';
 export * from './user-submission.dto';

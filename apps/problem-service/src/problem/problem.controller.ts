@@ -19,8 +19,6 @@ import {
 import { ProblemService } from './problem.service';
 import { JwtAuthGuard } from '@gitcode/auth';
 import {
-  PaginatedResult,
-  PaginationDto,
   ProblemResponseDto,
   ProblemDetailResponseDto,
   ProblemStatsResponseDto,
@@ -31,6 +29,9 @@ import {
   CreateProblemDto,
   UpdateProblemDto,
 } from './dto';
+
+import { PaginationDto } from '@gitcode/common';
+import { PaginatedResult } from '@gitcode/types';
 
 @ApiTags('Problems')
 @Controller('problems')
