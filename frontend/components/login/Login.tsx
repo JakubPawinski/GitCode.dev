@@ -3,7 +3,7 @@
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { useSearchParams } from 'next/navigation';
 
-export default function LoginForm() {
+export default function Login() {
   const { login } = useAuth();
   const searchParams = useSearchParams();
   const redirect = searchParams.get('redirect') || '/';

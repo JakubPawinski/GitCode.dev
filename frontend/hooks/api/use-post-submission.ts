@@ -17,7 +17,7 @@ export const usePostSubmission = <T>() => {
     setLoading(true)
     setError(null)
     api
-      .post('/submission', { ...payload }, { headers: headers })
+      .post('/api/submission', { ...payload }, { headers: headers })
       .then((res) => setData(res.data))
       .catch((err) => setError(err))
       .finally(() => setLoading(false))

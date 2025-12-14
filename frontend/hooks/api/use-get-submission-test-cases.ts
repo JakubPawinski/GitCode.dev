@@ -15,7 +15,7 @@ export const useGetSubmissionTestCases = <T>({
     setLoading(true)
     setError(null)
     api
-      .get(`/submission/${submissionId}`, { signal: controller.signal })
+      .get(`/api/submission/${submissionId}`, { signal: controller.signal })
       .then((res) => setData(res.data))
       .catch((err) => setError(err))
       .finally(() => setLoading(false))

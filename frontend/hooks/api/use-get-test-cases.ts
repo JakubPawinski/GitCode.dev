@@ -15,7 +15,7 @@ export const useGetTestCases = <T>({
     setLoading(true)
     setError(null)
     api
-      .get(`/problems/${problemSlug}`, { signal: controller.signal })
+      .get(`/api/problems/${problemSlug}`, { signal: controller.signal })
       .then((res) => setData(res.data))
       .catch((err) => setError(err))
       .finally(() => setLoading(false))

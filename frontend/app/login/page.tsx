@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/auth/AuthContext';
-import LoginForm from '@/components/LoginForm';
+import Login from '@/components/login/Login';
 
 export default function LoginPage() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -19,5 +19,5 @@ export default function LoginPage() {
     return <div>Loading...</div>;
   }
 
-  return <LoginForm />;
+  return <Login />;
 }

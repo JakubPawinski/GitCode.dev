@@ -10,7 +10,7 @@ export const useRefreshToken = () => {
     setError(null)
     
     try {
-      const response = await api.post('/api/auth/refresh')
+      const response = await api.post('/api/auth/refresh', {}, {withCredentials: true})
       return response.data
     } catch (err: any) {
       setError(err)

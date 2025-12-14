@@ -3,23 +3,20 @@
 import { useEffect } from 'react';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { useRouter, usePathname } from 'next/navigation';
+import { Loader } from '@/components/loading/Loader';
+
+interface ProtectedRouteProps {
+  children: React.ReactNode;
+  allowedRoles?: string[];
+}
 
 export const ProtectedRoute = ({ 
   children, 
   allowedRoles = [] 
-}: {
-  children: React.ReactNode;
-  allowedRoles?: string[];
-}) => {
+}: ProtectedRouteProps) => {
   const { isAuthenticated, isLoading, user } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
-
-  const hasRequiredRole = () => {
-    if (allowedRoles.length === 0) return true;
-    if (!user?.roles?.length) return false;
-    return user.roles.some(role => allowedRoles.includes(role));
-  };
 
   useEffect(() => {
     if (isLoading) return;
@@ -30,13 +27,30 @@ export const ProtectedRoute = ({
       return;
     }
 
-    if (!hasRequiredRole()) {
-      router.push('/forbidden');
+    if (allowedRoles.length > 0 && user?.roles) {
+      const hasRequiredRole = user.roles.some(role => allowedRoles.includes(role));
+      if (!hasRequiredRole) {
+        router.push('/forbidden');
+      }
     }
-  }, [isLoading, isAuthenticated, user, allowedRoles, pathname, router]);
+  }, [isLoading, isAuthenticated, user, allowedRoles, router, pathname]);
 
-  if (isLoading) return <div>Loading authentication...</div>;
-  if (!isAuthenticated || !hasRequiredRole()) return <div>Checking permissions...</div>;
+  if (isLoading) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-background/50 backdrop-blur-sm">
+        <Loader />
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return null;
+  }
+
+  if (allowedRoles.length > 0 && user?.roles) {
+     const hasRequiredRole = user.roles.some(role => allowedRoles.includes(role));
+     if (!hasRequiredRole) return null;
+  }
 
   return <>{children}</>;
 };
