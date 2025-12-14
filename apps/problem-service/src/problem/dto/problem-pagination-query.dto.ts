@@ -1,8 +1,8 @@
 import { IsIn, IsOptional } from 'class-validator';
-import { PaginationDto } from '@gitcode/common';
+import { PaginationQueryDto } from '@gitcode/common';
 import { ApiProperty } from '@nestjs/swagger';
 
-export class ProblemPaginationQueryDto extends PaginationDto {
+export class ProblemPaginationQueryDto extends PaginationQueryDto {
   @IsOptional()
   @IsIn(['easy', 'medium', 'hard'])
   @ApiProperty({

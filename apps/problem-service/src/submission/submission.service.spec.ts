@@ -7,7 +7,7 @@ import { NotFoundException, BadRequestException } from '@nestjs/common';
 import { CreateSubmissionDto } from './dto/create-submission.dto';
 import { Queue } from 'bull';
 import { getQueueToken } from '@nestjs/bullmq';
-import { PaginationDto } from '@gitcode/common';
+import { PaginationQueryDto } from '@gitcode/common';
 
 describe('SubmissionService', () => {
   let service: SubmissionService;
@@ -67,7 +67,7 @@ describe('SubmissionService', () => {
     completedAt: null,
   };
 
-  const mockPaginationDto: PaginationDto = {
+  const mockPaginationDto: PaginationQueryDto = {
     page: 1,
     limit: 10,
     sortBy: 'createdAt',
@@ -351,7 +351,7 @@ describe('SubmissionService', () => {
     });
 
     it('should apply pagination correctly', async () => {
-      const paginationDto: PaginationDto = {
+      const paginationDto: PaginationQueryDto = {
         page: 2,
         limit: 5,
         sortBy: 'submittedAt',

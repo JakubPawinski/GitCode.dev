@@ -24,7 +24,7 @@ import {
   SubmissionHistoryDto,
   SubmissionStatsDto,
 } from './dto';
-import { PaginationDto } from '@gitcode/common';
+import { PaginationQueryDto } from '@gitcode/common';
 import { PaginatedResult } from '@gitcode/types';
 
 @Controller('submissions')
@@ -51,7 +51,7 @@ export class SubmissionController {
   })
   getUserHistory(
     @User() user: AuthenticatedUser,
-    @Query() paginationDto: PaginationDto,
+    @Query() paginationDto: PaginationQueryDto,
   ): Promise<PaginatedResult<SubmissionHistoryDto>> {
     const userId = user.id;
     return this.submissionService.getUserSubmissionHistory(
