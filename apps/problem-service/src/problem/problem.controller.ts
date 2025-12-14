@@ -28,9 +28,9 @@ import {
   UserSubmissionDto,
   CreateProblemDto,
   UpdateProblemDto,
+  ProblemPaginationQueryDto
 } from './dto';
 
-import { PaginationDto } from '@gitcode/common';
 import { PaginatedResult } from '@gitcode/types';
 
 @ApiTags('Problems')
@@ -55,7 +55,7 @@ export class ProblemController {
     isArray: true,
   })
   findAll(
-    @Query() paginationDto: PaginationDto,
+    @Query() paginationDto: ProblemPaginationQueryDto,
   ): Promise<PaginatedResult<ProblemResponseDto>> {
     return this.problemService.getPaginatedProblems(paginationDto);
   }
@@ -108,7 +108,7 @@ export class ProblemController {
   })
   search(
     @Query('q') query: string,
-    @Query() paginationDto: PaginationDto,
+    @Query() paginationDto: ProblemPaginationQueryDto,
   ): Promise<PaginatedResult<ProblemResponseDto>> {
     return this.problemService.searchProblems(query, paginationDto);
   }

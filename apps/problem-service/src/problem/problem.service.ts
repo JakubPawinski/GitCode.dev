@@ -14,8 +14,8 @@ import {
   UserProgressResponseDto,
   UserSubmissionDto,
   RecommendedResponseDto,
+  ProblemPaginationQueryDto,
 } from './dto';
-import { PaginationDto } from '@gitcode/common';
 import { PaginatedResult } from '@gitcode/types';
 import { CodeSnippet } from '@prisma/client-problem';
 
@@ -26,7 +26,7 @@ export class ProblemService {
     return { status: 'Problem Service is healthy' };
   }
   async getPaginatedProblems(
-    paginationDto: PaginationDto,
+    paginationDto: ProblemPaginationQueryDto,
   ): Promise<PaginatedResult<ProblemResponseDto>> {
     const page = paginationDto.page || 1;
     const limit = paginationDto.limit || 10;
@@ -182,7 +182,7 @@ export class ProblemService {
 
   async searchProblems(
     query: string,
-    paginationDto: PaginationDto,
+    paginationDto: ProblemPaginationQueryDto,
   ): Promise<PaginatedResult<ProblemResponseDto>> {
     if (!query || query.trim().length === 0) {
       throw new BadRequestException('Search query cannot be empty');

@@ -8,8 +8,8 @@ import {
   TrendingResponseDto,
   ProblemStatsResponseDto,
   UserSubmissionDto,
+  ProblemPaginationQueryDto,
 } from './dto';
-import { PaginationDto } from '@gitcode/common';
 import { PaginatedResult } from '@gitcode/types';
 describe('ProblemController', () => {
   let controller: ProblemController;
@@ -57,7 +57,7 @@ describe('ProblemController', () => {
 
   describe('findAll', () => {
     it('returns paginated problems', async () => {
-      const paginationDto: PaginationDto = {
+      const paginationDto: ProblemPaginationQueryDto = {
         page: 2,
         limit: 5,
         sortBy: 'createdAt',
@@ -135,7 +135,7 @@ describe('ProblemController', () => {
 
   describe('search', () => {
     it('passes query and pagination to service', async () => {
-      const paginationDto: PaginationDto = {
+      const paginationDto: ProblemPaginationQueryDto = {
         page: 1,
         limit: 10,
         sortBy: 'createdAt',
