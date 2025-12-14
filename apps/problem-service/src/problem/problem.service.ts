@@ -17,6 +17,8 @@ import {
 } from './dto';
 import { PaginationDto } from '@gitcode/common';
 import { PaginatedResult } from '@gitcode/types';
+import { CodeSnippet } from '@prisma/client-problem';
+
 @Injectable()
 export class ProblemService {
   constructor(private prisma: PrismaService) {}
@@ -829,9 +831,11 @@ export class ProblemService {
       })),
     };
   }
-  private mapCodeSnippets(codeSnippets: any): Record<string, string> {
+  private mapCodeSnippets(
+    codeSnippets: CodeSnippet[] | null,
+  ): Record<string, string> {
     return codeSnippets
-      ? (codeSnippets as any[]).reduce(
+      ? codeSnippets.reduce(
           (acc, snippet) => {
             acc[snippet.language] = snippet.starterCode;
             return acc;
