@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { SubmissionController } from './submission.controller';
 import { SubmissionService } from './submission.service';
 import { CreateSubmissionDto } from './dto/create-submission.dto';
-import { PaginationDto } from '@gitcode/common';
+import { PaginationQueryDto } from '@gitcode/common';
 import {
   SubmissionStatsDto,
   RecentSubmissionDto,
@@ -106,7 +106,7 @@ describe('SubmissionController', () => {
     submittedAt: new Date(),
   };
 
-  const mockPaginationDto: PaginationDto = {
+  const mockPaginationDto: PaginationQueryDto = {
     page: 1,
     limit: 10,
     sortBy: 'createdAt',
@@ -263,7 +263,7 @@ describe('SubmissionController', () => {
     });
 
     it('should apply pagination correctly', async () => {
-      const paginationDto: PaginationDto = {
+      const paginationDto: PaginationQueryDto = {
         page: 2,
         limit: 20,
         sortBy: 'submittedAt',
