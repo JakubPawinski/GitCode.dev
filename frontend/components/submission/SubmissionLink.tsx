@@ -2,13 +2,12 @@ import Link from 'next/link'
 import {
   CheckCircle,
   XCircle,
-  Code,
   Calendar,
   Clock,
   Database,
   Timer,
 } from 'lucide-react'
-import { useParams, usePathname } from 'next/navigation'
+import { useParams } from 'next/navigation'
 
 export interface SubmissionLinkProps {
   id: string

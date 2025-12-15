@@ -15,8 +15,7 @@ export const Interceptor = ({ children }: { children: React.ReactNode }) => {
   const pathname = usePathname()
   const isLoginPage = pathname === '/login'
 
-  const { postMutation, data, error } =
-    usePostRefreshToken<AuthContextProps>()
+  const { postMutation, data, error } = usePostRefreshToken<AuthContextProps>()
 
   useEffect(() => {
     if (!authData) {

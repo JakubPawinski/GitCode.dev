@@ -1,5 +1,4 @@
 import { io } from 'socket.io-client'
-import { baseURL } from '@/api/axios'
 
 const testUrl = 'http://localhost:8080/submissions'
 export const socket = io(testUrl, {
