@@ -20,6 +20,7 @@ import { TopicProps } from '@/components/problem/Topic'
 import { useOnSocket } from '@/hooks/socket/use-on-socket'
 import { useEffect } from 'react'
 import { socket } from '@/ws/socket'
+import { LeftProblemNavbar } from '@/components/navbar/LeftProblemNavbar'
 
 export interface ProblemDataProps {
   id: string
@@ -40,6 +41,10 @@ export interface ProblemDataProps {
   similarProblems: ProblemLinkProps[]
 }
 
+interface SubmissionDataProps {
+  submissionId: string
+}
+
 export default function ProblemLayout({
   children,
 }: {
@@ -47,32 +52,19 @@ export default function ProblemLayout({
 }) {
   const { data: authData } = useAuth()
 
-  if (!authData) return null
+  useEffect(() => {
+    if (!authData?.user.id) return
+    socket.auth = { userId: authData.user.id }
+    if (!socket.connected) {
+      socket.connect()
+    }
+  }, [authData?.user.id])
 
-  // useEffect(() => {
-  //   if (authData.user.id) {
-  //     socket.auth = { userId: authData.user.id }
-  //     socket.connect()
-  //   }
-  //   return () => {
-  //     socket.disconnect()
-  //   }
-  // }, [authData.user.id])
-
-  // const rooms = [
-  //   'connect',
-  //   'connect_error',
-  //   // 'disconnect',
-  //   'attempt-update',
-  //   'test-result',
-  //   'submission-complete',
-  // ]
+  const rooms = ['attempt_update', 'test_result', 'submission_complete']
 
   const { problem } = useParams()
 
-  // const { messages } = useOnSocket({ rooms, socket })
-
-  // console.log(messages)
+  const { messages } = useOnSocket({ rooms, socket })
 
   const {
     data: problemData,
@@ -80,7 +72,8 @@ export default function ProblemLayout({
     error: problemError,
   } = useGetProblem<ProblemDataProps>(problem as string)
 
-  const { postMutation, data, loading, error } = usePostSubmission()
+  const { postMutation, data, loading, error } =
+    usePostSubmission<SubmissionDataProps>()
 
   const defaultLanguage = availableLanguages[0]
 
@@ -118,7 +111,7 @@ export default function ProblemLayout({
       },
     })
   }
-
+  console.log(messages)
   return (
     <ProblemProvider problemData={problemData}>
       <form className="text-foreground flex h-screen flex-col">
@@ -129,7 +122,11 @@ export default function ProblemLayout({
         />
         <section className="flex flex-grow gap-4 overflow-hidden p-4">
           <div className="border-primary/20 flex w-3/5 flex-col rounded-lg border bg-transparent p-4">
-            {/* <LeftProblemNavbar hasPassed={hasPassed} submitId={submitId} /> */}
+            <LeftProblemNavbar
+              testsPassed={messages?.attempt_update.passedTests}
+              totalTests={messages?.attempt_update.totalTests}
+              submissionId={data?.submissionId}
+            />
             <div className="custom-scrollbar mt-4 overflow-y-auto">
               {children}
             </div>

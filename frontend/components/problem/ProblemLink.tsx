@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { Ref } from 'react'
 
 export interface ProblemLinkProps {
   problemId?: number

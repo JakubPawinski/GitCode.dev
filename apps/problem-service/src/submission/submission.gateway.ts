@@ -20,7 +20,7 @@ export class SubmissionGateway
   private userConnections = new Map<string, string[]>();
 
   handleConnection(client: Socket) {
-    const userId = client.handshake.query.userId as string;
+    const userId = client.handshake.auth.userId as string;
     if (!userId) {
       this.logger.warn('No userId provided');
       client.disconnect();
@@ -37,7 +37,7 @@ export class SubmissionGateway
   }
 
   handleDisconnect(client: Socket) {
-    const userId = client.handshake.query.userId as string;
+    const userId = client.handshake.auth.userId as string;
     if (!userId) return;
 
     const sockets = this.userConnections.get(userId) || [];
@@ -57,7 +57,7 @@ export class SubmissionGateway
     }
 
     sockets.forEach((socketId) => {
-      this.server.to(socketId).emit('attempt-update', {
+      this.server.to(socketId).emit('attempt_update', {
         attemptId,
         status: data.status,
         message: data.message,
@@ -89,7 +89,7 @@ export class SubmissionGateway
     }
 
     sockets.forEach((socketId) => {
-      this.server.to(socketId).emit('test-result', {
+      this.server.to(socketId).emit('test_result', {
         attemptId,
         ...result,
       });

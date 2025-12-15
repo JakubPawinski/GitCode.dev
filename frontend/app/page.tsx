@@ -6,7 +6,7 @@ import { HomeNavbar } from '@/components/home/HomeNavbar'
 import { Loader } from '@/components/loading/Loader'
 import { ProblemLink } from '@/components/problem/ProblemLink'
 import { useGetProblems } from '@/hooks/api/use-get-problems'
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Search } from '@/components/home/Search'
 import { Sort } from '@/components/home/Sort'
 import { DifficultyType } from '@/consts/filters/difficulty'
@@ -29,6 +29,11 @@ export default function Home() {
   const [sortOrder, setSortOrder] = useState<sortOrderType | ''>('')
   const [query, setQuery] = useState<string>('')
   const [page, setPage] = useState<number>(1)
+
+  const [fetchedProblems, setFetchedProblems] = useState<ProblemsPageProps[]>(
+    []
+  )
+  const pageRef = useRef<HTMLDivElement | null>(null)
   const LIMIT = 100
 
   const { data: authData } = useAuth()
@@ -49,14 +54,41 @@ export default function Home() {
     page: page,
     limit: LIMIT,
   }
-  const onFilterReset = useCallback(() => {
-    setDifficulty('')
-    setTopic('')
-  }, [])
 
   const { data, loading, error } = useGetProblems<ProblemsPageProps[]>({
     params,
   })
+
+  useEffect(() => {
+    setPage(1)
+  }, [difficulty, topic, sortOrder, debouncedQuery])
+
+  useEffect(() => {
+    if (!pageRef.current) return
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !loading) {
+          setPage((previous) => previous + 1)
+        }
+      },
+      { threshold: 1.0 }
+    )
+    observer.observe(pageRef.current)
+
+    return () => observer.disconnect()
+  }, [pageRef.current, loading])
+
+  useEffect(() => {
+    if (!data) return
+    setFetchedProblems((previous) =>
+      page === 1 && previous ? data : [...previous, ...data]
+    )
+  }, [data])
+
+  const onFilterReset = useCallback(() => {
+    setDifficulty('')
+    setTopic('')
+  }, [])
 
   if (error) return <Error {...error} />
 
@@ -86,13 +118,12 @@ export default function Home() {
           />
         </nav>
         <section className="custom-scrollbar border-primary/30 from-background/40 via-primary/5 to-accent/5 relative z-0 mx-auto max-w-5xl space-y-4 rounded-2xl border bg-gradient-to-b p-6 shadow-2xl backdrop-blur-md">
-          {loading ? (
-            <Loader />
-          ) : data ? (
-            data.map((problem) => (
-              <ProblemLink key={problem.problemId} {...problem} />
-            ))
-          ) : null}
+          {data &&
+            fetchedProblems.map((problem, index) => (
+              <ProblemLink key={`${problem.problemId}-${index}`} {...problem} />
+            ))}
+          <div ref={pageRef} className="h-px"></div>
+          {loading && <Loader />}
         </section>
       </main>
     </div>

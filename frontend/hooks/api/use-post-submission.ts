@@ -8,12 +8,12 @@ export const usePostSubmission = <T>() => {
   const [loading, setLoading] = useState<boolean>(false)
   const [error, setError] = useState<any>()
 
-  const postMutation = useCallback(({ payload }: PostProps<T>) => {
+  const postMutation = useCallback(({ payload }: any) => {
     setLoading(true)
     setError(null)
     api
       .post('/submissions', { ...payload })
-      .then((res) => setData(res.data))
+      .then((res) => setData(res.data.data))
       .catch((err) => setError(err))
       .finally(() => setLoading(false))
   }, [])
