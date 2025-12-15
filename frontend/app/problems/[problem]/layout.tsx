@@ -111,7 +111,6 @@ export default function ProblemLayout({
       },
     })
   }
-  console.log(messages)
   return (
     <ProblemProvider problemData={problemData}>
       <form className="text-foreground flex h-screen flex-col">

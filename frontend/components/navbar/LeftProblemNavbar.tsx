@@ -14,8 +14,6 @@ export const LeftProblemNavbar = ({
   totalTests,
   submissionId,
 }: NavbarProps) => {
-  console.log(testsPassed, totalTests, submissionId)
-
   const pathname = usePathname()
   const pathParts = pathname.split('/')
   const basePath = `/${pathParts[1]}/${pathParts[2]}`
