@@ -30,16 +30,17 @@ import {
 import { AppPermission, PaginatedResult } from '@gitcode/types';
 import type { AuthenticatedUser, UUID } from '@gitcode/types';
 import { ApiResponseDto } from '@gitcode/common';
-import { GetUsersQueryDto } from './dtos/get-users-query.dto';
-import { GetProfileDto } from './dtos/get-profile.dto';
-import { PatchProfileDto } from './dtos/patch-profile.dto';
-import { GetPreferencesDto } from './dtos/get-preferences.dto';
-import { PatchPreferencesDto } from './dtos/patch-preferences.dto';
-import { GetPublicProfileDto } from './dtos/get-public-profile.dto';
-import { GetUserDto } from './dtos/get-user.dto';
-import { SearchUsersDto } from './dtos/search-users.dto';
-import { SearchUsersAdminDto } from './dtos/search-users-admin.dto';
-
+import {
+  PatchProfileDto,
+  GetPreferencesDto,
+  PatchPreferencesDto,
+  GetPublicProfileDto,
+  GetUserDto,
+  SearchUsersDto,
+  SearchUsersAdminDto,
+  GetProfileDto,
+} from './dtos';
+import { PaginationQueryDto } from '@gitcode/common';
 @Controller('users')
 @ApiTags('Users management')
 @ApiExtraModels(
@@ -239,7 +240,7 @@ export class UsersController {
     },
   })
   public getAllUsers(
-    @Query() getUsersQueryDto: GetUsersQueryDto,
+    @Query() getUsersQueryDto: PaginationQueryDto,
   ): Promise<PaginatedResult<GetUserDto>> {
     return this.usersService.getAllUsers(getUsersQueryDto);
   }

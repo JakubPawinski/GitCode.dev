@@ -1,7 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { GetUsersQueryDto } from '../dtos/get-users-query.dto';
-import { GetProfileDto } from '../dtos/get-profile.dto';
 import {
   UUID,
   themeEnum,
@@ -11,14 +9,18 @@ import {
   PaginatedResult,
   UserStatus,
 } from '@gitcode/types';
-import { PatchProfileDto } from '../dtos/patch-profile.dto';
-import { GetPreferencesDto } from '../dtos/get-preferences.dto';
-import { PatchPreferencesDto } from '../dtos/patch-preferences.dto';
-import { GetPublicProfileDto } from '../dtos/get-public-profile.dto';
-import { GetUserDto } from '../dtos/get-user.dto';
-import { SearchUsersDto } from '../dtos/search-users.dto';
+import {
+  PatchProfileDto,
+  GetPreferencesDto,
+  PatchPreferencesDto,
+  GetPublicProfileDto,
+  GetUserDto,
+  SearchUsersDto,
+  SearchUsersAdminDto,
+  GetProfileDto,
+} from '../dtos';
+import { PaginationQueryDto } from '@gitcode/common';
 import { Prisma } from '@prisma/client-auth';
-import { SearchUsersAdminDto } from '../dtos/search-users-admin.dto';
 import { AuthService } from '../../auth/auth.service';
 
 @Injectable()
@@ -274,16 +276,21 @@ export class UsersService {
    * Get all users
    */
   public async getAllUsers(
-    query: GetUsersQueryDto,
+    paginationDto: PaginationQueryDto,
   ): Promise<PaginatedResult<GetUserDto>> {
     // Fetch users from database with pagination
-    const { page = 1, limit = 10 } = query;
+    const page = paginationDto.page || 1;
+    const limit = paginationDto.limit || 10;
+    const sortBy = paginationDto.sortBy || 'createdAt';
+    const sortOrder = paginationDto.sortOrder || 'desc';
+
     const skip = (page - 1) * limit;
 
     const [users, totalItems] = await Promise.all([
       this.prismaService.user.findMany({
         skip,
         take: limit,
+        orderBy: [{ id: 'asc' }, { [sortBy]: sortOrder }],
         include: { preferences: true },
       }),
       this.prismaService.user.count(),
@@ -398,6 +405,8 @@ export class UsersService {
     // Search users by username with pagination
     const { username } = searchUsersDto;
     const { limit = 10, page = 1 } = searchUsersDto;
+    const sortBy = searchUsersDto.sortBy || 'createdAt';
+    const sortOrder = searchUsersDto.sortOrder || 'desc';
     const skip = (page - 1) * limit;
 
     const whereCondition: Prisma.UserWhereInput = {
@@ -413,7 +422,7 @@ export class UsersService {
         where: whereCondition,
         skip,
         take: limit,
-        orderBy: { username: 'asc' },
+        orderBy: [{ username: 'asc' }, { [sortBy]: sortOrder }],
         select: {
           id: true,
           username: true,
@@ -461,6 +470,8 @@ export class UsersService {
     // Search users by email and username with pagination
     const { username, email } = searchUsersAdminDto;
     const { limit = 10, page = 1 } = searchUsersAdminDto;
+    const sortBy = searchUsersAdminDto.sortBy || 'createdAt';
+    const sortOrder = searchUsersAdminDto.sortOrder || 'desc';
     const skip = (page - 1) * limit;
 
     const whereCondition: Prisma.UserWhereInput = {
@@ -489,7 +500,7 @@ export class UsersService {
         where: whereCondition,
         skip,
         take: limit,
-        orderBy: { username: 'asc' },
+        orderBy: [{ username: 'asc' }, { [sortBy]: sortOrder }],
         include: { preferences: true },
       }),
       this.prismaService.user.count({
