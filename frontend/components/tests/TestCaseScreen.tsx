@@ -1,6 +1,6 @@
 'use client'
 import { TestCase } from './TestCase'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { FlaskConical } from 'lucide-react'
 
 export interface TestCasesProps {
