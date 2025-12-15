@@ -1,5 +1,5 @@
 import { Example, ExampleProps } from './Example'
-import { Constraint, ConstraintProps } from './Constraint'
+import { Constraint } from './Constraint'
 import { Hint, HintProps } from './Hint'
 import { Topic, TopicProps } from './Topic'
 
@@ -8,7 +8,7 @@ export interface DescriptionProps {
   title: string
   description: string
   examples: ExampleProps[]
-  constraints: ConstraintProps[]
+  constraints: string[]
   topics: TopicProps[]
   hints: HintProps[]
 }
@@ -30,16 +30,23 @@ export const Description = ({
         </h1>
       </header>
       <section className="mb-8">
-        <p className="text-foreground/90 text-base leading-relaxed">
-          {description}
-        </p>
+        <div className="bg-primary/5 border-primary/20 rounded-lg border p-5 shadow-md">
+          <h2 className="text-primary mb-3 flex items-center gap-2 text-lg font-semibold">
+            <span className="bg-primary/20 rounded-full px-3 py-1 text-sm">
+              Description
+            </span>
+          </h2>
+          <p className="text-foreground text-base leading-relaxed">
+            {description}
+          </p>
+        </div>
       </section>
       <section>
         <h2 className="text-accent mb-4 text-xl font-semibold tracking-wide">
           Examples
         </h2>
-        {examples?.map((example) => (
-          <Example {...example} />
+        {examples?.map((example, index) => (
+          <Example key={`${example.exampleNum}-${index}`} {...example} />
         ))}
       </section>
       <div className="border-primary/30 mt-8 border-t pt-6">
@@ -47,20 +54,23 @@ export const Description = ({
           Constraints
         </h2>
         <ul className="list-inside list-disc space-y-2 text-base">
-          {constraints?.map((constraint) => (
-            <Constraint {...constraint} />
+          {constraints?.map((constraint, index) => (
+            <Constraint
+              key={`${constraint}-${index}`}
+              constraint={constraint}
+            />
           ))}
         </ul>
       </div>
-      <footer>
+      <footer className="my-4">
         <div>
-          {hints?.map((hint) => (
-            <Hint {...hint} />
+          {hints?.map((hint, index) => (
+            <Hint key={`${hint}-${index}`} {...hint} />
           ))}
         </div>
         <div>
-          {topics?.map((topic) => (
-            <Topic {...topic} />
+          {topics?.map((topic, index) => (
+            <Topic key={`${topic.topic}-${index}`} {...topic} />
           ))}
         </div>
       </footer>

@@ -1,9 +1,11 @@
 'use client'
-import { Description, DescriptionProps } from '@/components/problem/Description'
-import { ProblemContext } from '@/contexts/ProblemContext'
-import { useContext } from 'react'
+import { Description } from '@/components/problem/Description'
+import { useProblemContext } from '@/contexts/problem/ProblemContext'
 
 export default function DescriptionPage() {
-  const problemData = useContext(ProblemContext) as DescriptionProps
+  const problemData = useProblemContext()
+
+  if (!problemData) return null
+
   return <Description {...problemData} />
 }
