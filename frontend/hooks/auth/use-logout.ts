@@ -7,7 +7,7 @@ export const useLogout = () => {
   const logoutMutation = useCallback(async () => {
     setLoading(true)
     try {
-      const response = await api.post('/api/auth/logout')
+      const response = await api.post('/api/auth/logout', {}, {withCredentials: true})
       return response.data
     } finally {
       setLoading(false)

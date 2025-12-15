@@ -11,6 +11,10 @@ export default function Home() {
   const { isAuthenticated, isLoading, user } = useAuth()
   const router = useRouter()
 
+  const descriptionroute = () => {
+    router.push('/problems/two-sum/description')
+  }
+
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       router.push('/login')
@@ -26,6 +30,8 @@ export default function Home() {
   }
 
   return (
-    <main className="bg-background h-screen w-full p-4">{user ? user.firstName : 'nie ma'},{TokenStore.getToken()} <LogoutButton /></main>
+    <main className="bg-background h-screen w-full p-4">{user ? user.firstName : 'nie ma tokena'},{TokenStore.getToken()} 
+    <button onClick={descriptionroute}>two-sum</button>
+    <LogoutButton /></main>
   )
 }
