@@ -1,10 +1,10 @@
 export enum SubmissionStatus {
   /**
    * IN_PROGRESS
-   * - User has started working on the problem
-   * - Code has been saved in the editor but not yet submitted
-   * - No test execution has occurred
-   * - User can continue editing the code
+   * - Submission is being processed (e.g., code has been submitted and is currently being tested)
+   * - Tests may be running or queued, and results are not yet available
+   * - User cannot submit again until processing is complete
+   * - This status is set when it is submitted for testing
    */
   IN_PROGRESS = 'in_progress',
 
@@ -13,6 +13,7 @@ export enum SubmissionStatus {
    * - User has submitted the code for testing
    * - Tests have been executed but NOT all passed
    * - At least one test case failed
+   * - Error may have occurred
    * - User can edit the code and resubmit
    * - Last attempt details available in attempts array
    */

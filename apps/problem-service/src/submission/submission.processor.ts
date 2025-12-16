@@ -119,6 +119,13 @@ export class SubmissionProcessor extends WorkerHost {
           completedAt: new Date(),
         },
       });
+
+      // Get current submission to check if already accepted
+      const currentSubmission = await this.prisma.userSubmission.findUnique({
+        where: { id: submissionId },
+        select: { acceptedAt: true, submittedAt: true },
+      });
+
       // Update user submission
       await this.prisma.userSubmission.update({
         where: { id: submissionId },
@@ -129,10 +136,15 @@ export class SubmissionProcessor extends WorkerHost {
           lastAttemptId: attemptId,
           passedTestCases: passedTests,
           totalTestCases: results.length,
-          submittedAt: new Date(),
-          acceptedAt: isAllPassed ? new Date() : null,
+          // Only set submittedAt on first submission
+          submittedAt: currentSubmission?.submittedAt || new Date(),
+          // Only set acceptedAt on first successful attempt
+          acceptedAt: isAllPassed
+            ? currentSubmission?.acceptedAt || new Date()
+            : currentSubmission?.acceptedAt,
         },
       });
+
       // Get current problem stats
       const stats = await this.prisma.problemStats.findUnique({
         where: { problemId },
@@ -206,6 +218,7 @@ export class SubmissionProcessor extends WorkerHost {
         where: { id: submissionId },
         data: {
           status: SubmissionStatus.SUBMITTED,
+          lastAttemptId: attemptId,
         },
       });
 
