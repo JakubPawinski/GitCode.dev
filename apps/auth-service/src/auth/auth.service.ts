@@ -184,7 +184,6 @@ export class AuthService {
           create: {
             theme: 'LIGHT',
             language: 'en',
-            notifications: true,
             privacyLevel: 'PUBLIC',
           },
         },
