@@ -77,10 +77,9 @@ export class UserSubmissionDto {
 
   @ApiProperty({
     description: 'Current submission status',
-    enum: ['success', 'failed', 'pending'],
-    example: 'success',
+    example: 'true',
   })
-  status: string;
+  isSolved: boolean;
 
   @ApiProperty({
     description: 'Current programming language',

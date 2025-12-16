@@ -24,10 +24,9 @@ export class SubmissionResponseDto {
 
   @ApiProperty({
     description: 'Submission status',
-    enum: ['success', 'failed', 'pending'],
-    example: 'success',
+    example: true,
   })
-  status: string;
+  isSolved: boolean;
 
   @ApiProperty({
     description: 'Programming language used',

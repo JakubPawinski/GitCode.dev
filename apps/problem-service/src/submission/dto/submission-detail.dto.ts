@@ -81,7 +81,7 @@ export class SubmissionDetailDto {
   };
 
   @ApiProperty()
-  status: string;
+  isSolved: boolean;
 
   @ApiProperty()
   currentCode: string;
@@ -99,7 +99,7 @@ export class SubmissionDetailDto {
   commitHash: string | null;
 
   @ApiProperty({ nullable: true })
-  acceptedAt: Date | null;
+  solvedAt: Date | null;
 
   @ApiProperty()
   createdAt: Date;

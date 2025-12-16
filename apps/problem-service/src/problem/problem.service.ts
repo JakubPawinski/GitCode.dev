@@ -630,9 +630,7 @@ export class ProblemService {
       where: { isActive: true },
     });
 
-    const solvedProblems = userSubmissions.filter(
-      (sub) => sub.attempts[0]?.status === 'success',
-    ).length;
+    const solvedProblems = userSubmissions.filter((sub) => sub.isSolved).length;
 
     const attemptedProblems = userSubmissions.length;
 
@@ -700,7 +698,7 @@ export class ProblemService {
         userId,
         problemSlug: slug,
         totalAttempts: 0,
-        status: 'pending',
+        isSolved: false,
         currentLanguage: 'python',
         attempts: [],
         bestAttempt: null,
@@ -708,15 +706,15 @@ export class ProblemService {
       };
     }
 
-    const bestAttempt = userSubmission.attempts.find(
-      (attempt) => attempt.status === 'success',
-    );
+    const bestAttempt = userSubmission.attempts
+      .filter((attempt) => attempt.status === 'success')
+      .sort((a, b) => (a.executionTime || 0) - (b.executionTime || 0))[0];
 
     return {
       userId,
       problemSlug: slug,
       totalAttempts: userSubmission.attempts.length,
-      status: userSubmission.status,
+      isSolved: userSubmission.isSolved,
       currentLanguage: userSubmission.currentLanguage,
       attempts: userSubmission.attempts.map((a) => ({
         id: a.id,
@@ -746,11 +744,7 @@ export class ProblemService {
     const solvedProblems = await this.prisma.userSubmission.findMany({
       where: {
         userId,
-        attempts: {
-          some: {
-            status: 'success',
-          },
-        },
+        isSolved: true,
       },
       select: {
         problemId: true,

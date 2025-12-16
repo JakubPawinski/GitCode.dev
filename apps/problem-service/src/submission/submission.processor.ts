@@ -4,7 +4,7 @@ import { Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { DockerExecutorService } from './docker-executor.service';
 import { SubmissionGateway } from './submission.gateway';
-import { AttemptStatus, SubmissionStatus } from './enum';
+import { AttemptStatus } from './enum';
 @Processor('submissions')
 export class SubmissionProcessor extends WorkerHost {
   private readonly logger = new Logger(SubmissionProcessor.name);
@@ -123,25 +123,22 @@ export class SubmissionProcessor extends WorkerHost {
       // Get current submission to check if already accepted
       const currentSubmission = await this.prisma.userSubmission.findUnique({
         where: { id: submissionId },
-        select: { acceptedAt: true, submittedAt: true },
+        select: { isSolved: true, solvedAt: true, submittedAt: true },
       });
 
       // Update user submission
       await this.prisma.userSubmission.update({
         where: { id: submissionId },
         data: {
-          status: isAllPassed
-            ? SubmissionStatus.ACCEPTED
-            : SubmissionStatus.SUBMITTED,
+          isSolved: isAllPassed || currentSubmission?.isSolved,
+          solvedAt:
+            isAllPassed && !currentSubmission?.solvedAt
+              ? new Date()
+              : currentSubmission?.solvedAt,
           lastAttemptId: attemptId,
           passedTestCases: passedTests,
           totalTestCases: results.length,
-          // Only set submittedAt on first submission
           submittedAt: currentSubmission?.submittedAt || new Date(),
-          // Only set acceptedAt on first successful attempt
-          acceptedAt: isAllPassed
-            ? currentSubmission?.acceptedAt || new Date()
-            : currentSubmission?.acceptedAt,
         },
       });
 
@@ -217,7 +214,6 @@ export class SubmissionProcessor extends WorkerHost {
       await this.prisma.userSubmission.update({
         where: { id: submissionId },
         data: {
-          status: SubmissionStatus.SUBMITTED,
           lastAttemptId: attemptId,
         },
       });

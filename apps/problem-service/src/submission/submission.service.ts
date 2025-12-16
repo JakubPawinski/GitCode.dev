@@ -21,7 +21,7 @@ import type { Queue } from 'bull';
 import { SubmissionGateway } from './submission.gateway';
 import { PaginationQueryDto } from '@gitcode/common';
 import { PaginatedResult } from '@gitcode/types';
-import { AttemptStatus, SubmissionStatus } from './enum';
+import { AttemptStatus } from './enum';
 
 @Injectable()
 export class SubmissionService {
@@ -64,7 +64,6 @@ export class SubmissionService {
       update: {
         currentCode: createSubmissionDto.code,
         currentLanguage: createSubmissionDto.language.toLocaleLowerCase(),
-        status: SubmissionStatus.IN_PROGRESS,
         updatedAt: new Date(),
       },
       create: {
@@ -72,7 +71,7 @@ export class SubmissionService {
         problemId: createSubmissionDto.problemId,
         currentCode: createSubmissionDto.code,
         currentLanguage: createSubmissionDto.language.toLocaleLowerCase(),
-        status: SubmissionStatus.IN_PROGRESS,
+        isSolved: false,
         totalTestCases: problem.testCases.length,
       },
     });
@@ -242,7 +241,7 @@ export class SubmissionService {
         problemTitle: sub.problem.title,
         problemSlug: sub.problem.problemSlug,
         problemDifficulty: sub.problem.difficulty,
-        status: sub.status,
+        isSolved: sub.isSolved,
         language: sub.currentLanguage,
         executionTime: lastAttempt?.executionTime || null,
         memoryUsed: lastAttempt?.memoryUsed || null,
@@ -285,9 +284,7 @@ export class SubmissionService {
     const successfulAttempts = allAttempts.filter(
       (a) => a.status === AttemptStatus.SUCCESS,
     );
-    const problemsSolved = submissions.filter((s) =>
-      s.attempts.some((a) => a.status === AttemptStatus.SUCCESS),
-    ).length;
+    const problemsSolved = submissions.filter((s) => s.isSolved).length;
 
     const executionTimes = allAttempts
       .map((a) => a.executionTime)
@@ -409,13 +406,13 @@ export class SubmissionService {
     return {
       id: submission.id,
       problem: submission.problem,
-      status: submission.status,
+      isSolved: submission.isSolved,
       currentCode: submission.currentCode,
       currentLanguage: submission.currentLanguage,
       totalTestCases: submission.totalTestCases,
       githubUrl: submission.githubUrl,
       commitHash: submission.commitHash,
-      acceptedAt: submission.acceptedAt,
+      solvedAt: submission.solvedAt,
       createdAt: submission.createdAt,
       updatedAt: submission.updatedAt,
       submittedAt: submission.submittedAt,

@@ -147,12 +147,14 @@ model UserSubmission {
   problemId       String
   problem         Problem    @relation(fields: [problemId], references: [id], onDelete: Cascade)
   // Status tracking
-  status          String     @default("in_progress") // "in_progress", "submitted", "accepted", "rejected"
+  isSolved        Boolean    @default(false) @map("is_solved")
+  solvedAt        DateTime?  @map("solved_at")
   currentLanguage String     @map("current_language") // "python", "javascript", etc.
   currentCode     String     @db.Text @map("current_code")
   // Results
+  firstAttemptAt  DateTime?  @map("first_attempt_at")
   lastAttemptId   String?    @map("last_attempt_id")
-  acceptedAt      DateTime?  @map("accepted_at")
+  // Summary of test case results
   passedTestCases Int        @default(0) @map("passed_test_cases")
   totalTestCases  Int        @map("total_test_cases")
   // GitHub integration
@@ -169,8 +171,7 @@ model UserSubmission {
   @@map("user_submissions")
   @@index([userId])
   @@index([problemId])
-  @@index([status])
-  @@index([acceptedAt])
+  @@index([isSolved])
 }
 
 model SolutionAttempt {
