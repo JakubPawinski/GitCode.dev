@@ -29,7 +29,11 @@
           "watchDepsName": "watch-deps"
         }
       },
-      "exclude": ["packages/auth/*", "packages/common/*"]
+      "exclude": [
+        "packages/auth/*",
+        "packages/common/*",
+        "packages/messaging/*"
+      ]
     },
     {
       "plugin": "@nx/webpack/plugin",
@@ -44,7 +48,11 @@
     },
     {
       "plugin": "@nx/js/typescript",
-      "include": ["packages/auth/*", "packages/common/*"],
+      "include": [
+        "packages/auth/*",
+        "packages/common/*",
+        "packages/messaging/*"
+      ],
       "options": {
         "typecheck": {
           "targetName": "typecheck"

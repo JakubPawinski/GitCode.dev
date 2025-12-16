@@ -29,6 +29,9 @@
     },
     {
       "path": "./packages/contracts"
+    },
+    {
+      "path": "./packages/messaging"
     }
   ]
 }
