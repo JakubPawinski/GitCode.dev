@@ -34,15 +34,15 @@ model NotificationPreference {
   id             String        @id @default(uuid())
   userId         String        @map("user_id")
 
-  channels    ChannelType[] 
-  types       NotificationType
+  channels    ChannelType[]    @default([EMAIL, IN_APP])
+  type      NotificationType
 
   createdAt      DateTime      @default(now()) @map("created_at")
   updatedAt      DateTime      @updatedAt @map("updated_at")
 
   @@index([userId])
-  @@unique([userId, types])
-  @@map("notification_preferences")
+  @@unique([userId, type])
+  @@map("notification_preference")
 
 }
 
