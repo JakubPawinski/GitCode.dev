@@ -16,7 +16,7 @@ describe('SubmissionGateway', () => {
     mockSocket = {
       id: 'socket-123',
       handshake: {
-        query: { userId: 'user-123' },
+        auth: { userId: 'user-123' },
       },
       disconnect: jest.fn(),
     } as any;
@@ -47,7 +47,7 @@ describe('SubmissionGateway', () => {
       const firstSocket = mockSocket;
       const secondSocket = {
         id: 'socket-456',
-        handshake: { query: { userId: 'user-123' } },
+        handshake: { auth: { userId: 'user-123' } },
       } as any;
 
       gateway.handleConnection(firstSocket);
@@ -62,7 +62,7 @@ describe('SubmissionGateway', () => {
     it('should disconnect socket if no userId provided', () => {
       const socketWithoutUserId = {
         id: 'socket-789',
-        handshake: { query: {} },
+        handshake: { auth: {} },
         disconnect: jest.fn(),
       } as any;
 
@@ -85,7 +85,7 @@ describe('SubmissionGateway', () => {
     it('should handle disconnect with no userId', () => {
       const socketWithoutUserId = {
         id: 'socket-789',
-        handshake: { query: {} },
+        handshake: { auth: {} },
       } as any;
 
       expect(() => {
@@ -96,7 +96,7 @@ describe('SubmissionGateway', () => {
     it('should handle disconnect for unknown user', () => {
       const socketUnknownUser = {
         id: 'socket-999',
-        handshake: { query: { userId: 'unknown-user' } },
+        handshake: { auth: { userId: 'unknown-user' } },
       } as any;
 
       expect(() => {
@@ -108,7 +108,7 @@ describe('SubmissionGateway', () => {
       const firstSocket = mockSocket;
       const secondSocket = {
         id: 'socket-456',
-        handshake: { query: { userId: 'user-123' } },
+        handshake: { auth: { userId: 'user-123' } },
       } as any;
 
       gateway.handleConnection(firstSocket);
@@ -124,7 +124,7 @@ describe('SubmissionGateway', () => {
   });
 
   describe('notifyAttemptUpdate', () => {
-    it('should emit attempt-update event to all user sockets', () => {
+    it('should emit attempt_update event to all user sockets', () => {
       gateway.handleConnection(mockSocket);
 
       const updateData = {
@@ -139,7 +139,7 @@ describe('SubmissionGateway', () => {
 
       expect(mockServer.to).toHaveBeenCalledWith('socket-123');
       expect(mockServer.emit).toHaveBeenCalledWith(
-        'attempt-update',
+        'attempt_update',
         expect.objectContaining({
           attemptId: 'attempt-1',
           status: 'queued',
@@ -166,7 +166,7 @@ describe('SubmissionGateway', () => {
       gateway.notifyAttemptUpdate('user-123', 'attempt-1', updateData);
 
       expect(mockServer.emit).toHaveBeenCalledWith(
-        'attempt-update',
+        'attempt_update',
         expect.objectContaining({
           passedTests: 8,
           failedTests: 2,
@@ -188,7 +188,7 @@ describe('SubmissionGateway', () => {
       gateway.notifyAttemptUpdate('user-123', 'attempt-1', updateData);
 
       expect(mockServer.emit).toHaveBeenCalledWith(
-        'attempt-update',
+        'attempt_update',
         expect.objectContaining({
           errorMessage: 'Compilation failed',
         }),
@@ -207,7 +207,7 @@ describe('SubmissionGateway', () => {
       const firstSocket = mockSocket;
       const secondSocket = {
         id: 'socket-456',
-        handshake: { query: { userId: 'user-123' } },
+        handshake: { auth: { userId: 'user-123' } },
       } as any;
 
       gateway.handleConnection(firstSocket);
@@ -223,7 +223,7 @@ describe('SubmissionGateway', () => {
   });
 
   describe('notifyTestResult', () => {
-    it('should emit test-result event to user sockets', () => {
+    it('should emit test_result event to user sockets', () => {
       gateway.handleConnection(mockSocket);
 
       const testResult = {
@@ -238,7 +238,7 @@ describe('SubmissionGateway', () => {
 
       expect(mockServer.to).toHaveBeenCalledWith('socket-123');
       expect(mockServer.emit).toHaveBeenCalledWith(
-        'test-result',
+        'test_result',
         expect.objectContaining({
           attemptId: 'attempt-1',
           ...testResult,
@@ -258,7 +258,7 @@ describe('SubmissionGateway', () => {
       const firstSocket = mockSocket;
       const secondSocket = {
         id: 'socket-456',
-        handshake: { query: { userId: 'user-123' } },
+        handshake: { auth: { userId: 'user-123' } },
       } as any;
 
       gateway.handleConnection(firstSocket);

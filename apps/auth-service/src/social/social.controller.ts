@@ -18,9 +18,6 @@ import {
 } from '@gitcode/auth';
 import type { AuthenticatedUser, UUID } from '@gitcode/types';
 import { AppPermission } from '@gitcode/types';
-import { GetFriendDto } from './dtos/get-friend.dto';
-import { InviteFriendDto } from './dtos/invite-friend.dto';
-import { RespondFriendRequestDto } from './dtos/respond-friend-request.dto';
 import {
   ApiBearerAuth,
   ApiBody,
@@ -31,7 +28,12 @@ import {
   getSchemaPath,
 } from '@nestjs/swagger';
 import { ApiResponseDto } from '@gitcode/common';
-import { FriendRequestDto } from './dtos/friend-request.dto';
+import {
+  GetFriendDto,
+  InviteFriendDto,
+  FriendRequestDto,
+  RespondFriendRequestDto,
+} from './dtos';
 
 @Controller('social')
 @ApiTags('Social')

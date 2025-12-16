@@ -5,8 +5,6 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import {
-  PaginatedResult,
-  PaginationDto,
   CreateProblemDto,
   UpdateProblemDto,
   ProblemResponseDto,
@@ -16,7 +14,10 @@ import {
   UserProgressResponseDto,
   UserSubmissionDto,
   RecommendedResponseDto,
+  ProblemPaginationQueryDto,
 } from './dto';
+import { PaginatedResult } from '@gitcode/types';
+import { CodeSnippet } from '@prisma/client-problem';
 
 @Injectable()
 export class ProblemService {
@@ -25,7 +26,7 @@ export class ProblemService {
     return { status: 'Problem Service is healthy' };
   }
   async getPaginatedProblems(
-    paginationDto: PaginationDto,
+    paginationDto: ProblemPaginationQueryDto,
   ): Promise<PaginatedResult<ProblemResponseDto>> {
     const page = paginationDto.page || 1;
     const limit = paginationDto.limit || 10;
@@ -56,7 +57,7 @@ export class ProblemService {
       where,
       skip,
       take: +limit,
-      orderBy: { [sortBy]: sortOrder },
+      orderBy: [{ problemId: 'asc' }, { [sortBy]: sortOrder }],
       select: {
         id: true,
         problemId: true,
@@ -96,10 +97,10 @@ export class ProblemService {
 
     return {
       data: mappedData,
-      pagination: {
-        page,
-        limit,
-        total,
+      meta: {
+        currentPage: page,
+        pageSize: limit,
+        totalItems: total,
         totalPages,
         hasNextPage: page < totalPages,
         hasPreviousPage: page > 1,
@@ -119,6 +120,7 @@ export class ProblemService {
         difficulty: true,
         problemSlug: true,
         description: true,
+        codeSnippets: true,
         topics: { select: { topic: true } },
         examples: { select: { inputText: true, outputText: true } },
         constraints: { select: { constraint: true } },
@@ -157,6 +159,7 @@ export class ProblemService {
       difficulty: problem.difficulty,
       problemSlug: problem.problemSlug,
       description: problem.description,
+      codeSnippets: this.mapCodeSnippets(problem.codeSnippets),
       topics: problem.topics.map((t) => t.topic),
       examples: problem.examples.map((e) => ({
         inputText: e.inputText,
@@ -179,7 +182,7 @@ export class ProblemService {
 
   async searchProblems(
     query: string,
-    paginationDto: PaginationDto,
+    paginationDto: ProblemPaginationQueryDto,
   ): Promise<PaginatedResult<ProblemResponseDto>> {
     if (!query || query.trim().length === 0) {
       throw new BadRequestException('Search query cannot be empty');
@@ -213,7 +216,7 @@ export class ProblemService {
       where,
       skip,
       take: +limit,
-      orderBy: { [sortBy]: sortOrder },
+      orderBy: [{ problemId: 'asc' }, { [sortBy]: sortOrder }],
       select: {
         id: true,
         problemId: true,
@@ -249,10 +252,10 @@ export class ProblemService {
 
     return {
       data: mappedData,
-      pagination: {
-        page,
-        limit,
-        total,
+      meta: {
+        currentPage: page,
+        pageSize: limit,
+        totalItems: total,
         totalPages,
         hasNextPage: page < totalPages,
         hasPreviousPage: page > 1,
@@ -332,6 +335,7 @@ export class ProblemService {
         constraints: true,
         hints: true,
         testCases: true,
+        codeSnippets: true,
         similarProblems: {
           select: {
             problemTo: {
@@ -377,6 +381,7 @@ export class ProblemService {
         input: t.input,
         expectedOutput: t.expectedOutput,
       })),
+      codeSnippets: this.mapCodeSnippets(problem.codeSnippets),
       similarProblems: problem.similarProblems.map((p) => p.problemTo),
     };
 
@@ -447,6 +452,7 @@ export class ProblemService {
         constraints: true,
         hints: true,
         testCases: true,
+        codeSnippets: true,
         similarProblems: {
           select: {
             problemTo: {
@@ -483,6 +489,7 @@ export class ProblemService {
         input: t.input,
         expectedOutput: t.expectedOutput,
       })),
+      codeSnippets: this.mapCodeSnippets(problem.codeSnippets),
       similarProblems: problem.similarProblems.map((p) => p.problemTo),
     };
 
@@ -823,5 +830,18 @@ export class ProblemService {
         similarProblems: problem.similarProblems.map((p) => p.problemTo),
       })),
     };
+  }
+  private mapCodeSnippets(
+    codeSnippets: CodeSnippet[] | null,
+  ): Record<string, string> {
+    return codeSnippets
+      ? codeSnippets.reduce(
+          (acc, snippet) => {
+            acc[snippet.language] = snippet.starterCode;
+            return acc;
+          },
+          {} as Record<string, string>,
+        )
+      : {};
   }
 }

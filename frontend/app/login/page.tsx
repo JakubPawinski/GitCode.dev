@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/auth/AuthContext';
-import Login from '@/components/login/Login';
+import { Login } from '@/components/login/Login';
 
 export default function LoginPage() {
   const { isAuthenticated, isLoading } = useAuth();

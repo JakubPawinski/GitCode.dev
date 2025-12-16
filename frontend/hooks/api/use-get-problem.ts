@@ -1,6 +1,6 @@
 import { api } from '@/api/axios'
 import { useCallback, useEffect, useState } from 'react'
-export const useGetProblem = <T>({ problem }: { problem: string }) => {
+export const useGetProblem = <T>(problem?: string) => {
   const [data, setData] = useState<T>()
   const [loading, setLoading] = useState<boolean>(false)
   const [error, setError] = useState<any>()
@@ -10,17 +10,19 @@ export const useGetProblem = <T>({ problem }: { problem: string }) => {
     setLoading(true)
     setError(null)
     api
-      .get(`/api/problems/${problem}`, { signal: controller.signal })
-      .then((res) => setData(res.data))
+      .get(`/api/problems/${problem}`, {
+        signal: controller.signal,
+      })
+      .then((res) => setData(res.data.data))
       .catch((err) => setError(err))
       .finally(() => setLoading(false))
-  }, [])
+  }, [problem])
 
   useEffect(() => {
     if (!data) getQuery()
 
     return () => controller.abort()
-  }, [problem])
+  }, [])
 
   return { data, loading, error }
 }

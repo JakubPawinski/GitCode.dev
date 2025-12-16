@@ -19,8 +19,6 @@ import { ProblemService } from './problem.service';
 import { JwtAuthGuard, User } from '@gitcode/auth';
 import type { AuthenticatedUser } from '@gitcode/types';
 import {
-  PaginatedResult,
-  PaginationDto,
   ProblemResponseDto,
   ProblemDetailResponseDto,
   ProblemStatsResponseDto,
@@ -30,7 +28,10 @@ import {
   UserSubmissionDto,
   CreateProblemDto,
   UpdateProblemDto,
+  ProblemPaginationQueryDto
 } from './dto';
+
+import { PaginatedResult } from '@gitcode/types';
 
 @ApiTags('Problems')
 @Controller('problems')
@@ -54,7 +55,7 @@ export class ProblemController {
     isArray: true,
   })
   findAll(
-    @Query() paginationDto: PaginationDto,
+    @Query() paginationDto: ProblemPaginationQueryDto,
   ): Promise<PaginatedResult<ProblemResponseDto>> {
     return this.problemService.getPaginatedProblems(paginationDto);
   }
@@ -107,7 +108,7 @@ export class ProblemController {
   })
   search(
     @Query('q') query: string,
-    @Query() paginationDto: PaginationDto,
+    @Query() paginationDto: ProblemPaginationQueryDto,
   ): Promise<PaginatedResult<ProblemResponseDto>> {
     return this.problemService.searchProblems(query, paginationDto);
   }

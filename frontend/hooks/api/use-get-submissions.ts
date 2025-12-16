@@ -11,7 +11,7 @@ export const useGetSubmissions = <T>({ problem }: { problem: string }) => {
     setError(null)
     api
       .get(`/api/problems/${problem}/submissions`, { signal: controller.signal })
-      .then((res) => setData(res.data))
+      .then((res) => setData(res.data.data))
       .catch((err) => setError(err))
       .finally(() => setLoading(false))
   }, [])
