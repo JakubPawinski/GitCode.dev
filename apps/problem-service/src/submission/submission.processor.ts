@@ -4,7 +4,7 @@ import { Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { DockerExecutorService } from './docker-executor.service';
 import { SubmissionGateway } from './submission.gateway';
-
+import { AttemptStatus, SubmissionStatus } from './enum';
 @Processor('submissions')
 export class SubmissionProcessor extends WorkerHost {
   private readonly logger = new Logger(SubmissionProcessor.name);
@@ -21,18 +21,19 @@ export class SubmissionProcessor extends WorkerHost {
   async process(job: Job<any, any, string>): Promise<any> {
     this.logger.log(`Processing job ${job.id}...`);
 
-    const { attemptId, code, language, problemId, userId } = job.data;
+    const { attemptId, code, language, problemId, userId, submissionId } =
+      job.data;
 
     try {
       // Update status
       await this.prisma.solutionAttempt.update({
         where: { id: attemptId },
-        data: { status: 'running' },
+        data: { status: AttemptStatus.RUNNING },
       });
 
       this.logger.log(`Sending 'running' event to user ${userId}`);
       this.submissionGateway.notifyAttemptUpdate(userId, attemptId, {
-        status: 'running',
+        status: AttemptStatus.RUNNING,
         message: 'Running tests...',
       });
 
@@ -104,7 +105,7 @@ export class SubmissionProcessor extends WorkerHost {
           : 0;
 
       const isAllPassed = passedTests === results.length;
-      const status = isAllPassed ? 'success' : 'failed';
+      const status = isAllPassed ? AttemptStatus.SUCCESS : AttemptStatus.FAILED;
 
       // Update attempt with results
       await this.prisma.solutionAttempt.update({
@@ -118,7 +119,20 @@ export class SubmissionProcessor extends WorkerHost {
           completedAt: new Date(),
         },
       });
-
+      // Update user submission
+      await this.prisma.userSubmission.update({
+        where: { id: submissionId },
+        data: {
+          status: isAllPassed
+            ? SubmissionStatus.ACCEPTED
+            : SubmissionStatus.SUBMITTED,
+          lastAttemptId: attemptId,
+          passedTestCases: passedTests,
+          totalTestCases: results.length,
+          submittedAt: new Date(),
+          acceptedAt: isAllPassed ? new Date() : null,
+        },
+      });
       // Get current problem stats
       const stats = await this.prisma.problemStats.findUnique({
         where: { problemId },
@@ -180,16 +194,24 @@ export class SubmissionProcessor extends WorkerHost {
       await this.prisma.solutionAttempt.update({
         where: { id: attemptId },
         data: {
-          status: 'error',
+          status: AttemptStatus.ERROR,
           errorMessage:
             error instanceof Error ? error.message : 'Unknown error',
           completedAt: new Date(),
         },
       });
 
+      // Update user submission on error
+      await this.prisma.userSubmission.update({
+        where: { id: submissionId },
+        data: {
+          status: SubmissionStatus.SUBMITTED,
+        },
+      });
+
       // Notify about errors
       this.submissionGateway.notifyAttemptUpdate(userId, attemptId, {
-        status: 'error',
+        status: AttemptStatus.ERROR,
         message: 'Error running code',
         errorMessage: error instanceof Error ? error.message : 'Unknown error',
       });

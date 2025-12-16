@@ -21,6 +21,7 @@ import type { Queue } from 'bull';
 import { SubmissionGateway } from './submission.gateway';
 import { PaginationQueryDto } from '@gitcode/common';
 import { PaginatedResult } from '@gitcode/types';
+import { AttemptStatus, SubmissionStatus } from './enum';
 
 @Injectable()
 export class SubmissionService {
@@ -63,7 +64,7 @@ export class SubmissionService {
       update: {
         currentCode: createSubmissionDto.code,
         currentLanguage: createSubmissionDto.language.toLocaleLowerCase(),
-        status: 'in_progress',
+        status: SubmissionStatus.IN_PROGRESS,
         updatedAt: new Date(),
       },
       create: {
@@ -71,7 +72,7 @@ export class SubmissionService {
         problemId: createSubmissionDto.problemId,
         currentCode: createSubmissionDto.code,
         currentLanguage: createSubmissionDto.language.toLocaleLowerCase(),
-        status: 'in_progress',
+        status: SubmissionStatus.IN_PROGRESS,
         totalTestCases: problem.testCases.length,
       },
     });
@@ -86,7 +87,7 @@ export class SubmissionService {
           (await this.prisma.solutionAttempt.count({
             where: { submissionId: userSubmission.id },
           })) + 1,
-        status: 'pending',
+        status: AttemptStatus.PENDING,
         totalTests: problem.testCases.length,
       },
     });
@@ -103,6 +104,7 @@ export class SubmissionService {
         language: createSubmissionDto.language.toLowerCase(),
         problemId: problem.id,
         userId,
+        submissionId: userSubmission.id,
       },
       {
         removeOnComplete: true,
@@ -281,10 +283,10 @@ export class SubmissionService {
 
     const allAttempts = submissions.flatMap((s) => s.attempts);
     const successfulAttempts = allAttempts.filter(
-      (a) => a.status === 'success',
+      (a) => a.status === AttemptStatus.SUCCESS,
     );
     const problemsSolved = submissions.filter((s) =>
-      s.attempts.some((a) => a.status === 'success'),
+      s.attempts.some((a) => a.status === AttemptStatus.SUCCESS),
     ).length;
 
     const executionTimes = allAttempts
