@@ -11,8 +11,8 @@ export default function RootLayout({
     <html lang="en">
       <body className="from-background via-background to-primary/100 text-foreground bg-background h-screen">
         <AuthProvider>
-            <HomeNavbar />
-            {children}
+          <HomeNavbar />
+          {children}
         </AuthProvider>
       </body>
     </html>
