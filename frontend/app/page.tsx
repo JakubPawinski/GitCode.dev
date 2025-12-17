@@ -1,14 +1,4 @@
-import {
-  ArrowRight,
-  Code,
-  Layers,
-  Rocket,
-  TrendingUp,
-  Twitter,
-  Github,
-  Linkedin,
-} from 'lucide-react'
-import Image from 'next/image'
+import { ArrowRight, Code, Layers, Rocket, TrendingUp } from 'lucide-react'
 import Link from 'next/link'
 
 export default function HomePage() {
