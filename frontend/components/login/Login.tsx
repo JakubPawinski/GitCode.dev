@@ -6,7 +6,7 @@ import { useSearchParams } from 'next/navigation';
 export const Login = () => {
   const { login } = useAuth();
   const searchParams = useSearchParams();
-  const redirect = searchParams.get('redirect') || '/';
+  const redirect = searchParams.get('redirect');
   const handleLogin = () => {
     login();
   };

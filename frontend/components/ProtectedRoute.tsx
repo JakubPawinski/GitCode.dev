@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { useAuth } from '@/contexts/auth/AuthContext';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { Loader } from '@/components/loading/Loader';
 
 interface ProtectedRouteProps {
@@ -14,18 +14,10 @@ export const ProtectedRoute = ({
   children, 
   allowedRoles = [] 
 }: ProtectedRouteProps) => {
-  const { isAuthenticated, isLoading, user } = useAuth();
+  const { isLoading, user } = useAuth();
   const router = useRouter();
-  const pathname = usePathname();
 
   useEffect(() => {
-    if (isLoading) return;
-
-    if (!isAuthenticated) {
-      const redirectUrl = encodeURIComponent(pathname);
-      router.push(`/login?redirect=${redirectUrl}`);
-      return;
-    }
 
     if (allowedRoles.length > 0 && user?.roles) {
       const hasRequiredRole = user.roles.some(role => allowedRoles.includes(role));
@@ -33,7 +25,7 @@ export const ProtectedRoute = ({
         router.push('/forbidden');
       }
     }
-  }, [isLoading, isAuthenticated, user, allowedRoles, router, pathname]);
+  }, [isLoading, user, allowedRoles, router]);
 
   if (isLoading) {
     return (
@@ -41,10 +33,6 @@ export const ProtectedRoute = ({
         <Loader />
       </div>
     );
-  }
-
-  if (!isAuthenticated) {
-    return null;
   }
 
   if (allowedRoles.length > 0 && user?.roles) {

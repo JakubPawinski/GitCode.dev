@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import TokenStore from '@/utils/token-store';
+import { Loader } from '@/components/loading/Loader';
 
 export default function AuthCallbackPage() {
   const router = useRouter();
@@ -19,9 +20,10 @@ export default function AuthCallbackPage() {
       try {
         const success = searchParams.get('success');
         const error = searchParams.get('error');
+        const redirectDestination = searchParams.get('redirect') || '/';
         
         if (TokenStore.getToken()) {
-          router.push('/');
+          router.push(redirectDestination);
           return;
         }
 
@@ -32,7 +34,7 @@ export default function AuthCallbackPage() {
         }
 
         await refreshAuth();
-        router.push('/');
+        router.push(redirectDestination);
       } catch (error) {
         console.error('Callback error:', error);
         router.push('/login?error=callback_error');
@@ -43,9 +45,6 @@ export default function AuthCallbackPage() {
   }, [isLoading, searchParams, router, refreshAuth]);
 
   return (
-    <div>
-      <h2>Finalizing authentication...</h2>
-      <p>Please wait while we complete your login.</p>
-    </div>
+    <Loader />
   );
 }
