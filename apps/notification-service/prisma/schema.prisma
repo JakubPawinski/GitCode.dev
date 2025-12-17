@@ -63,5 +63,6 @@ model Notification {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([userId])
+  @@unique([userId, id])
   @@map("notifications")
 }

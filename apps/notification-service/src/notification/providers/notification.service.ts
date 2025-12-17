@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RealtimeService } from '../../realtime/realtime.service';
 import { ChannelType, NotificationType } from '@prisma/client-notification';
@@ -209,5 +209,152 @@ export class NotificationService {
     await Promise.all(updates);
 
     return this.getUserPreferences(userId);
+  }
+
+  /*
+   * Get all notifications for the user
+   */
+  public async getAllNotifications(
+    userId: UUID,
+  ): Promise<GetNotificationDto[]> {
+    this.logger.log(`Fetching all notifications for user ${userId}`);
+
+    // Fetch notifications from the database
+    const notifications = await this.prismaService.notification.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+    });
+    this.logger.log(
+      `Fetched ${notifications.length} notifications for user ${userId}`,
+    );
+
+    // Map to GetNotificationDto
+    return notifications.map((notification) => ({
+      id: notification.id,
+      userId: notification.userId,
+      kind: notification.kind as NotificationKind,
+      type: notification.type,
+      severity: notification.severity,
+      payload: notification.payload as unknown as NotificationPayload,
+      channelsSent: notification.channelsSent,
+      createdAt: notification.createdAt,
+      updatedAt: notification.updatedAt,
+      isRead: notification.isRead,
+    }));
+  }
+
+  /*
+   * Get unread notifications for the user
+   */
+  public async getUnreadNotifications(
+    userId: UUID,
+  ): Promise<GetNotificationDto[]> {
+    this.logger.log(`Fetching unread notifications for user ${userId}`);
+
+    // Fetch unread notifications from the database
+    const notifications = await this.prismaService.notification.findMany({
+      where: { userId, isRead: false },
+      orderBy: { createdAt: 'desc' },
+    });
+    this.logger.log(
+      `Fetched ${notifications.length} unread notifications for user ${userId}`,
+    );
+
+    // Map to GetNotificationDto
+    return notifications.map((notification) => ({
+      id: notification.id,
+      userId: notification.userId,
+      kind: notification.kind as NotificationKind,
+      type: notification.type,
+      severity: notification.severity,
+      payload: notification.payload as unknown as NotificationPayload,
+      channelsSent: notification.channelsSent,
+      createdAt: notification.createdAt,
+      updatedAt: notification.updatedAt,
+      isRead: notification.isRead,
+    }));
+  }
+
+  /*
+   * Get count of unread notifications for the user
+   */
+  public async getUnreadNotificationCount(userId: UUID): Promise<number> {
+    this.logger.log(`Counting unread notifications for user ${userId}`);
+    return this.prismaService.notification.count({
+      where: { userId, isRead: false },
+    });
+  }
+
+  /*
+   * Mark a specific notification as read
+   */
+  public async markAsRead(userId: UUID, id: UUID): Promise<GetNotificationDto> {
+    this.logger.log(`Marking notification ${id} as read for user ${userId}`);
+    // Update the notification to mark it as read
+    const notification = await this.prismaService.notification.findFirst({
+      where: { id: id, userId: userId },
+    });
+
+    if (!notification) {
+      throw new NotFoundException('Notification not found');
+    }
+    await this.prismaService.notification.update({
+      where: { id: notification.id },
+      data: { isRead: true },
+    });
+
+    // Map to GetNotificationDto and return
+    return {
+      id: notification.id,
+      userId: notification.userId,
+      kind: notification.kind as NotificationKind,
+      type: notification.type,
+      severity: notification.severity,
+      payload: notification.payload as unknown as NotificationPayload,
+      channelsSent: notification.channelsSent,
+      createdAt: notification.createdAt,
+      updatedAt: notification.updatedAt,
+      isRead: notification.isRead,
+    };
+  }
+
+  /*
+   * Mark all notifications as read for the user
+   */
+  public async markAllAsRead(userId: UUID): Promise<void> {
+    this.logger.log(`Marking all notifications as read for user ${userId}`);
+    // Update all notifications to mark them as read
+    await this.prismaService.notification.updateMany({
+      where: { userId, isRead: false },
+      data: { isRead: true },
+    });
+  }
+
+  /*
+   * Get a specific notification by ID for the user
+   */
+  public async getNotificationById(
+    userId: UUID,
+    id: UUID,
+  ): Promise<GetNotificationDto> {
+    this.logger.log(`Fetching notification ${id} for user ${userId}`);
+    const notification = await this.prismaService.notification.findUnique({
+      where: { id, userId },
+    });
+    if (!notification) {
+      throw new NotFoundException('Notification not found');
+    }
+    return {
+      id: notification.id,
+      userId: notification.userId,
+      kind: notification.kind as NotificationKind,
+      type: notification.type,
+      severity: notification.severity,
+      payload: notification.payload as unknown as NotificationPayload,
+      channelsSent: notification.channelsSent,
+      createdAt: notification.createdAt,
+      updatedAt: notification.updatedAt,
+      isRead: notification.isRead,
+    };
   }
 }

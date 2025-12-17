@@ -15,9 +15,7 @@ export class NotificationConsumer {
    * Handle create notification events
    */
   @EventPattern([NOTIFICATION_PATTERNS.SEND_NOTIFICATION_CMD])
-  public async handleCreateNotification(
-    @Payload() data: ,
-  ) {
+  public async handleCreateNotification(@Payload() data) {
     await this.notificationService.processNotification(data);
   }
 
