@@ -9,6 +9,7 @@ import { useGetProfile } from '@/hooks/auth/use-get-profile';
 import { useLogin } from '@/hooks/auth/use-login';
 import { useLogout } from '@/hooks/auth/use-logout';
 import TokenStore from '@/utils/token-store';
+import { Loader } from '@/components/loading/Loader';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -98,6 +99,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     logout: handleLogout,
     refreshAuth: initializeAuth,
   };
+
+  if (isLoading) {
+    return <Loader />;
+  }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
