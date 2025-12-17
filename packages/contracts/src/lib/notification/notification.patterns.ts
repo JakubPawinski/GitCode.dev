@@ -1,5 +1,6 @@
-export const NOTIFICATION_SERVICE = 'NOTIFICATION_SERVICE';
-
+/*
+ * Notification messaging patterns
+ */
 export const NOTIFICATION_PATTERNS = {
-  CREATE: 'notification.create',
+  SEND_NOTIFICATION_CMD: 'notification.cmd.send_direct',
 };
