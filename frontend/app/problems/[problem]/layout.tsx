@@ -16,7 +16,6 @@ import { Error } from '@/components/error/Error'
 import { ProblemLinkProps } from '@/components/problem/ProblemLink'
 import { useAuth } from '@/contexts/auth/AuthContext'
 import { useParams } from 'next/navigation'
-import { TopicProps } from '@/components/problem/Topic'
 import { useOnSocket } from '@/hooks/socket/use-on-socket'
 import { useEffect } from 'react'
 import { socket } from '@/ws/socket'
@@ -28,7 +27,7 @@ export interface ProblemDataProps {
   problemId: string
   difficulty: string
   problemSlug: string
-  topics: TopicProps[]
+  topics: string[]
   description: string
   examples: ExampleProps[]
   constraints: string[]
