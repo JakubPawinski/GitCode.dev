@@ -35,8 +35,6 @@ export default function TrendingPage() {
 
   const { trending } = data
 
-  console.log(trending[0].topics)
-
   return (
     <div className="container mx-auto p-4">
       <header className="mb-8 flex items-center gap-4">
