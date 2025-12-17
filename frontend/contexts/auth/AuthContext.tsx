@@ -69,7 +69,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     } finally {
       TokenStore.clear();
       setUser(null);
-      router.push('/login');
+      router.push('/');
     }
   };
 

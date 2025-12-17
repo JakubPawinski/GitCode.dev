@@ -14,11 +14,15 @@ export default function ProblemLayout({
   const pathname = usePathname()
 
   useEffect(() => {
-      if (!isLoading && !isAuthenticated && !user) {
+    if (!isLoading && !isAuthenticated && !user) {
+      if (pathname === '/problems') {
+        router.push('/login');
+      } else {
         const redirectUrl = encodeURIComponent(pathname);
         router.push(`/login?redirect=${redirectUrl}`);
       }
-    }, [isLoading, isAuthenticated, router, user, pathname])
+    }
+  }, [isLoading, isAuthenticated, router, user, pathname])
 
   return (
     <>{children}</>
