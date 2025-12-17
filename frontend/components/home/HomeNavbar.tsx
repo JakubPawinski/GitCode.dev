@@ -1,14 +1,19 @@
+'use client'
 import Image from 'next/image'
 import Link from 'next/link'
 import { User } from 'lucide-react'
 import LogoutButton from '../logout/LogoutButton'
+import { useParams } from 'next/navigation'
+import { useAuth } from '@/contexts/auth/AuthContext'
 
-interface HomeNavbarProps {
-  avatarUrl?: string
-  username: string
-}
+export const HomeNavbar = () => {
+  const { problem } = useParams()
+  const { user } = useAuth()
 
-export const HomeNavbar = ({ avatarUrl, username }: HomeNavbarProps) => {
+  if (problem || !user) return null
+
+  const { avatarUrl, username } = user
+
   return (
     <nav className="border-primary/30 flex h-12 items-center justify-between border-b bg-transparent px-6 shadow-lg">
       <div className="flex items-center gap-6">

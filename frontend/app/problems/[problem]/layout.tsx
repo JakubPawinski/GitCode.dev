@@ -15,8 +15,7 @@ import { Loader } from '@/components/loading/Loader'
 import { Error } from '@/components/error/Error'
 import { ProblemLinkProps } from '@/components/problem/ProblemLink'
 import { useAuth } from '@/contexts/auth/AuthContext'
-import { useParams, useRouter, usePathname } from 'next/navigation'
-import { TopicProps } from '@/components/problem/Topic'
+import { useParams } from 'next/navigation'
 import { useOnSocket } from '@/hooks/socket/use-on-socket'
 import { useEffect } from 'react'
 import { socket } from '@/ws/socket'
@@ -28,7 +27,7 @@ export interface ProblemDataProps {
   problemId: string
   difficulty: string
   problemSlug: string
-  topics: TopicProps[]
+  topics: string[]
   description: string
   examples: ExampleProps[]
   constraints: string[]
@@ -50,16 +49,7 @@ export default function ProblemLayout({
 }: {
   children: React.ReactNode
 }) {
-  const { isAuthenticated, isLoading, user } = useAuth()
-  const router = useRouter()
-  const pathname = usePathname()
-
-  useEffect(() => {
-      if (!isLoading && !isAuthenticated && !user) {
-        const redirectUrl = encodeURIComponent(pathname);
-        router.push(`/login?redirect=${redirectUrl}`);
-      }
-    }, [isLoading, isAuthenticated, router, user, pathname])
+  const { user } = useAuth()
 
   useEffect(() => {
     if (!user?.id) return

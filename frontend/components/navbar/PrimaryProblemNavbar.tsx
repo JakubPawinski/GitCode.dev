@@ -22,7 +22,7 @@ export const PrimaryProblemNavbar = ({
   const [isOpen, setIsOpen] = useState<boolean>(false)
 
   return (
-    <nav className="border-primary/30 grid h-30 grid-cols-3 items-center border-b bg-transparent px-4 shadow-lg">
+    <nav className="border-primary/30 grid h-22 grid-cols-3 items-center border-b bg-transparent px-4 shadow-lg">
       <div className="flex items-center gap-6">
         <Link
           href="/"
