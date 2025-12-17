@@ -2,6 +2,8 @@ import { ClipLoader } from 'react-spinners'
 
 export const Loader = () => {
   return (
-    <ClipLoader className="align-center absolute flex h-screen w-screen justify-center" />
+    <div className="flex h-full w-full items-center justify-center">
+      <div className="border-primary h-12 w-12 animate-spin rounded-full border-4 border-solid border-t-transparent"></div>
+    </div>
   )
 }
