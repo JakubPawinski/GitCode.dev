@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { NotepadText, Clock8 } from 'lucide-react'
 import { SubmissionResultLink } from './SubmissionResultLink'
+import { ChartNoAxesCombined } from 'lucide-react'
 interface NavbarProps {
   testsPassed?: number
   totalTests?: number
@@ -31,6 +32,10 @@ export const LeftProblemNavbar = ({
       <Link href={`${basePath}/submissions`} className={linkClasses}>
         <Clock8 size={20} />
         <span className="tracking-wide">Submissions</span>
+      </Link>
+      <Link href={`${basePath}/stats`} className={linkClasses}>
+        <ChartNoAxesCombined size={20} />
+        <span className="tracking-wide">Stats</span>
       </Link>
 
       {submissionId && (

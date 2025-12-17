@@ -36,10 +36,11 @@ export const PrimaryProblemNavbar = ({
           <span className="text-xl font-bold">GitCode.dev</span>
         </Link>
         <button
+          type="button"
           onClick={() => setIsOpen(!isOpen)}
           className="text-foreground hover:text-accent gap-2 transition-colors"
         >
-          <ExpandPanel isOpen={isOpen} />
+          <ExpandPanel isOpen={isOpen} onClose={() => setIsOpen(false)} />
           <div className="flex items-center gap-2">
             <SquareMenu />
             <p className="font-semibold tracking-wider">Questions</p>

@@ -42,7 +42,9 @@ export const ProblemLink = ({
       className="hover:bg-primary/20 flex items-center justify-between rounded-lg p-3 transition-all duration-300 hover:shadow-lg"
     >
       <div className="flex items-center gap-4">
-        <div className="text-foreground/60 w-8 text-center">{problemId}.</div>
+        {problemId && (
+          <div className="text-foreground/60 w-8 text-center">{problemId}.</div>
+        )}
         <div className="text-foreground font-medium">{title}</div>
       </div>
       <div
