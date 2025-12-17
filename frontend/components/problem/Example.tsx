@@ -1,12 +1,18 @@
 import Image from 'next/image'
 
 export interface ExampleProps {
-  exampleNum: number
-  exampleText: string
+  inputText: string
+  outputText: string
+  exampleNum?: number
   images?: string[]
 }
 
-export const Example = ({ exampleNum, exampleText, images }: ExampleProps) => {
+export const Example = ({
+  inputText,
+  outputText,
+  exampleNum = 1,
+  images,
+}: ExampleProps) => {
   return (
     <div
       key={exampleNum}
@@ -38,7 +44,13 @@ export const Example = ({ exampleNum, exampleText, images }: ExampleProps) => {
         <p>
           <strong className="text-accent/80 font-semibold">Input:</strong>{' '}
           <code className="bg-primary/20 text-foreground/80 rounded-md px-2 py-1">
-            {exampleText}
+            {inputText}
+          </code>
+        </p>
+        <p>
+          <strong className="text-accent/80 font-semibold">Output:</strong>{' '}
+          <code className="bg-primary/20 text-foreground/80 rounded-md px-2 py-1">
+            {outputText}
           </code>
         </p>
       </div>

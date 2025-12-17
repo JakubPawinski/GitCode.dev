@@ -1,25 +1,14 @@
-import { ProblemLink, ProblemLinkProps } from '../problem/ProblemLink'
 import { X } from 'lucide-react'
-import { Error } from '../error/Error'
-import { Loader } from '../loading/Loader'
+import { useProblemContext } from '@/contexts/problem/ProblemContext'
 
 export interface ExpandPanelProps {
-  data?: ProblemLinkProps[]
-  loading: boolean
-  error: any
   isOpen: boolean
 }
-export const ExpandPanel = ({
-  data,
-  loading,
-  error,
-  isOpen,
-}: ExpandPanelProps) => {
-  if (loading) {
-    return <Loader />
-  }
+export const ExpandPanel = ({ isOpen }: ExpandPanelProps) => {
+  const problemData = useProblemContext()
+
   if (!isOpen) return null
-  if (!data) return null
+
   return (
     <div>
       <nav>
@@ -27,16 +16,10 @@ export const ExpandPanel = ({
         <X />
       </nav>
       <main>
-        {data.map((problemLink) => (
-          <ProblemLink
-            problemId={problemLink.problemId}
-            problemSlug={problemLink.problemSlug}
-            title={problemLink.title}
-            difficulty={problemLink.difficulty}
-          />
-        ))}
+        {/* {similarProblems.map((problemLink) => (
+          <ProblemLink {...problemLink} />
+        ))} */}
       </main>
-      {error && <Error {...error} />}
     </div>
   )
 }

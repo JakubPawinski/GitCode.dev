@@ -4,16 +4,19 @@ import { useState } from 'react'
 import { FlaskConical } from 'lucide-react'
 
 export interface TestCasesProps {
-  testInputOutput: {
+  testCases: {
     input: string
-    output: string
+    expectedOutput: string
   }[]
 }
-export const TestCaseScreen = ({ testInputOutput }: TestCasesProps) => {
+export const TestCaseScreen = ({ testCases }: TestCasesProps) => {
   const [activeTab, setActiveTab] = useState(0)
 
-  const reducedTestCases =
-    testInputOutput.length > 3 ? testInputOutput.slice(2) : testInputOutput
+  if (!testCases || testCases.length === 0) {
+    return null
+  }
+
+  const displayedTestCases = testCases.slice(0, 3)
 
   return (
     <section className="text-foreground h-full p-4 shadow-lg">
@@ -21,25 +24,31 @@ export const TestCaseScreen = ({ testInputOutput }: TestCasesProps) => {
         <FlaskConical className="text-accent" />
         <div className="text-lg font-semibold">Test Cases</div>
       </header>
-      <nav className="border-primary/20 flex border-b">
-        {reducedTestCases.map((_, index) => (
+      <nav className="border-primary/20 flex gap-1 border-b">
+        {displayedTestCases.map((_, index) => (
           <button
             key={`tab-${index}`}
-            className={`border-b-2 px-4 py-2 text-sm font-medium transition-colors ${
+            type="button"
+            className={`border-b-2 px-4 py-2 text-sm font-medium transition-all duration-200 ${
               activeTab === index
                 ? 'border-accent text-accent'
-                : 'text-foreground/60 hover:text-foreground border-transparent'
+                : 'text-foreground/60 hover:text-foreground hover:bg-primary/10 border-transparent'
             }`}
-            onClick={() => setActiveTab(index)}
+            onClick={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              setActiveTab(index)
+            }}
           >
             Case {index + 1}
           </button>
         ))}
       </nav>
-      <main className="p-4">
-        <div>
-          <TestCase key={activeTab} testCase={reducedTestCases[activeTab]} />
-        </div>
+      <main
+        className="custom-scrollbar overflow-y-auto p-4"
+        style={{ maxHeight: 'calc(100% - 120px)' }}
+      >
+        <TestCase testCase={displayedTestCases[activeTab]} />
       </main>
     </section>
   )

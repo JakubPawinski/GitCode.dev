@@ -1,13 +1,14 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { SocialController } from './social.controller';
 import { SocialService } from './providers/social.service';
-import { GetFriendDto } from './dtos/get-friend.dto';
-import { InviteFriendDto } from './dtos/invite-friend.dto';
-import { FriendRequestDto } from './dtos/friend-request.dto';
-import { RespondFriendRequestDto } from './dtos/respond-friend-request.dto';
 import { FriendRequestStatus } from './enums/friendRequest.enum';
 import type { AuthenticatedUser, UUID } from '@gitcode/types';
-
+import {
+  GetFriendDto,
+  InviteFriendDto,
+  FriendRequestDto,
+  RespondFriendRequestDto,
+} from './dtos';
 describe('SocialController', () => {
   let controller: SocialController;
   let socialService: jest.Mocked<SocialService>;

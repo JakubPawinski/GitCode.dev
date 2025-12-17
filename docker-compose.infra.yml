@@ -171,6 +171,8 @@ services:
     privileged: true
     environment:
       - DOCKER_TLS_CERTDIR=
+    ports:
+      - '2375:2375'
     volumes:
       - problem-executions:/tmp/executions
     networks:

@@ -2,16 +2,15 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ProblemController } from './problem.controller';
 import { ProblemService } from './problem.service';
 import {
-  PaginationDto,
-  PaginatedResult,
   ProblemResponseDto,
   UserProgressResponseDto,
   RecommendedResponseDto,
   TrendingResponseDto,
   ProblemStatsResponseDto,
   UserSubmissionDto,
+  ProblemPaginationQueryDto,
 } from './dto';
-
+import { PaginatedResult } from '@gitcode/types';
 describe('ProblemController', () => {
   let controller: ProblemController;
 
@@ -58,7 +57,7 @@ describe('ProblemController', () => {
 
   describe('findAll', () => {
     it('returns paginated problems', async () => {
-      const paginationDto: PaginationDto = {
+      const paginationDto: ProblemPaginationQueryDto = {
         page: 2,
         limit: 5,
         sortBy: 'createdAt',
@@ -77,10 +76,10 @@ describe('ProblemController', () => {
             similarProblems: [],
           },
         ],
-        pagination: {
-          page: 2,
-          limit: 5,
-          total: 10,
+        meta: {
+          currentPage: 2,
+          pageSize: 5,
+          totalItems: 10,
           totalPages: 2,
           hasNextPage: false,
           hasPreviousPage: true,
@@ -136,7 +135,7 @@ describe('ProblemController', () => {
 
   describe('search', () => {
     it('passes query and pagination to service', async () => {
-      const paginationDto: PaginationDto = {
+      const paginationDto: ProblemPaginationQueryDto = {
         page: 1,
         limit: 10,
         sortBy: 'createdAt',
@@ -144,10 +143,10 @@ describe('ProblemController', () => {
       };
       const expected: PaginatedResult<ProblemResponseDto> = {
         data: [],
-        pagination: {
-          page: 1,
-          limit: 10,
-          total: 0,
+        meta: {
+          currentPage: 1,
+          pageSize: 10,
+          totalItems: 0,
           totalPages: 0,
           hasNextPage: false,
           hasPreviousPage: false,

@@ -3,11 +3,12 @@ import { NotFoundException } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuthService } from '../../auth/auth.service';
-import { GetUsersQueryDto } from '../dtos/get-users-query.dto';
-import { PatchProfileDto } from '../dtos/patch-profile.dto';
-import { PatchPreferencesDto } from '../dtos/patch-preferences.dto';
-import { SearchUsersDto } from '../dtos/search-users.dto';
-import { SearchUsersAdminDto } from '../dtos/search-users-admin.dto';
+import {
+  PatchProfileDto,
+  PatchPreferencesDto,
+  SearchUsersDto,
+  SearchUsersAdminDto,
+} from '../dtos';
 import {
   AppRole,
   AppPermission,
@@ -15,6 +16,7 @@ import {
   themeEnum,
   privacyLevelEnum,
 } from '@gitcode/types';
+import { PaginationQueryDto } from '@gitcode/common';
 
 describe('UsersService', () => {
   let service: UsersService;
@@ -326,7 +328,7 @@ describe('UsersService', () => {
       (prismaService.user.findMany as jest.Mock).mockResolvedValue(mockUsers);
       (prismaService.user.count as jest.Mock).mockResolvedValue(1);
 
-      const query: GetUsersQueryDto = { page: 1, limit: 10 };
+      const query: PaginationQueryDto = { page: 1, limit: 10 };
       const result = await service.getAllUsers(query);
 
       expect(result.data).toHaveLength(1);
