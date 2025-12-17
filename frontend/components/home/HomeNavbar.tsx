@@ -1,6 +1,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { User } from 'lucide-react'
+import LogoutButton from '../logout/LogoutButton'
 
 interface HomeNavbarProps {
   avatarUrl?: string
@@ -40,6 +41,7 @@ export const HomeNavbar = ({ avatarUrl, username }: HomeNavbarProps) => {
             <User size={36} />
           )}
         </Link>
+        <LogoutButton />
       </div>
     </nav>
   )

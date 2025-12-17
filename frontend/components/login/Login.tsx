@@ -33,8 +33,8 @@ export const Login = () => {
           <LogIn size={20} />
           <span>Sign In</span>
         </button>
-        {redirect && redirect !== '/dashboard' && (
-        <p>
+        {redirect && redirect !== '/' && (
+        <p className="text-foreground/70 mt-2">
           You will be redirected back to your previous page after login.
         </p>
       )}

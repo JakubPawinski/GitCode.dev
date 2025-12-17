@@ -7,6 +7,8 @@ import { useState } from 'react'
 import { Loader } from '../loading/Loader'
 import { Error } from '../error/Error'
 import { Brain } from 'lucide-react'
+import LogoutButton from '../logout/LogoutButton';
+
 interface NavbarSubmitProps {
   onSubmit: () => void
   submissionLoading: boolean
@@ -73,6 +75,7 @@ export const PrimaryProblemNavbar = ({
         >
           Profile
         </Link>
+      <LogoutButton />
       </div>
       {submissionError && <Error {...submissionError} />}
     </nav>
