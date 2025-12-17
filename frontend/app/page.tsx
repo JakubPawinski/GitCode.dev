@@ -47,14 +47,6 @@ export default function Home() {
       }
     }, [isLoading, isAuthenticated, router])
 
-  if (isLoading) {
-    return (
-      <div className="flex h-screen w-full items-center justify-center bg-background/50 backdrop-blur-sm">
-        <Loader />
-      </div>
-    )
-  }
-
   const { debouncedQuery } = useDebounce({ query })
 
   const params = {
@@ -100,6 +92,14 @@ export default function Home() {
     setDifficulty('')
     setTopic('')
   }, [])
+
+  if (isLoading) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-background/50 backdrop-blur-sm">
+        <Loader />
+      </div>
+    )
+  }
 
   if (error) return <Error {...error} />
 
