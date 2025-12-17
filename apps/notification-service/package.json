@@ -55,12 +55,26 @@
         ],
         "executor": "nx:noop"
       },
+      "prisma-generate": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "npx prisma generate --config=apps/notification-service/prisma.config.ts"
+        }
+      },
+      "db-migrate": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "npx prisma migrate dev --config=apps/notification-service/prisma.config.ts"
+        }
+      },
       "serve": {
         "continuous": true,
         "executor": "@nx/js:node",
         "defaultConfiguration": "development",
         "dependsOn": [
-          "build"
+          "build",
+          "prisma-generate",
+          "db-migrate"
         ],
         "options": {
           "buildTarget": "@gitcode/notification-service:build",

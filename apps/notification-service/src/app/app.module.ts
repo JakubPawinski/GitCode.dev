@@ -6,14 +6,18 @@ import { ConfigModule } from '@nestjs/config';
 import databaseConfig from './config/database.config';
 import rabbitmqConfig from './config/rabbitmq.config';
 import envValidation from './config/env.validation';
-
+import { NotificationModule } from '../notification/notification.module';
+import { GitCodeAuthModule } from '@gitcode/auth';
+import jwtConfig from './config/jwt.config';
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [databaseConfig, rabbitmqConfig],
+      load: [databaseConfig, rabbitmqConfig, jwtConfig],
       validationSchema: envValidation,
     }),
+    NotificationModule,
+    GitCodeAuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],

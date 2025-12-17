@@ -20,5 +20,19 @@
     "eslint.config.js",
     "eslint.config.cjs",
     "eslint.config.mjs"
+  ],
+  "references": [
+    {
+      "path": "../../packages/types/tsconfig.lib.json"
+    },
+    {
+      "path": "../../packages/contracts/tsconfig.lib.json"
+    },
+    {
+      "path": "../../packages/common/tsconfig.lib.json"
+    },
+    {
+      "path": "../../packages/auth/tsconfig.lib.json"
+    }
   ]
 }
