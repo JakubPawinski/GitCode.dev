@@ -1,7 +1,7 @@
 import { Example, ExampleProps } from './Example'
 import { Constraint } from './Constraint'
 import { Hint, HintProps } from './Hint'
-import { Topic, TopicProps } from './Topic'
+import { Topic } from './Topic'
 
 export interface DescriptionProps {
   problemId: number
@@ -9,7 +9,7 @@ export interface DescriptionProps {
   description: string
   examples: ExampleProps[]
   constraints: string[]
-  topics: TopicProps[]
+  topics: string[]
   hints: HintProps[]
 }
 
@@ -70,7 +70,7 @@ export const Description = ({
         </div>
         <div>
           {topics?.map((topic, index) => (
-            <Topic key={`${topic.topic}-${index}`} {...topic} />
+            <Topic key={`${topic}-${index}`} topic={topic} />
           ))}
         </div>
       </footer>

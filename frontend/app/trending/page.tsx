@@ -4,7 +4,7 @@ import { Loader } from '@/components/loading/Loader'
 import { Topic } from '@/components/problem/Topic'
 import { useGetTrending } from '@/hooks/api/use-get-trending'
 import Link from 'next/link'
-import { TrendingUp, Percent } from 'lucide-react'
+import { TrendingUp } from 'lucide-react'
 
 interface TrendingProps {
   trending: {

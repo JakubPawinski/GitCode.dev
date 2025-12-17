@@ -2,7 +2,6 @@
 import { Error } from '@/components/error/Error'
 import { Filter } from '@/components/problems/Filter'
 import { HomeHeader } from '@/components/problems/HomeHeader'
-import { HomeNavbar } from '@/components/home/HomeNavbar'
 import { Loader } from '@/components/loading/Loader'
 import { ProblemLink } from '@/components/problem/ProblemLink'
 import { useGetProblems } from '@/hooks/api/use-get-problems'
@@ -12,7 +11,6 @@ import { Sort } from '@/components/problems/Sort'
 import { DifficultyType } from '@/consts/filters/difficulty'
 import { sortOrderType } from '@/consts/sort/sortOrder'
 import { useDebounce } from '@/hooks/debounce/use-debounce'
-import { useAuth } from '@/contexts/auth/AuthContext'
 
 export interface ProblemsPageProps {
   problemId: number
