@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Logger } from '@nestjs/common';
-import { EventEnvelope } from './event-envelope.js';
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
+import { EventEnvelopeDto } from './dtos/event-envelope.dto.js';
 
 @Injectable()
 export class EventBus {
@@ -13,7 +13,7 @@ export class EventBus {
     payload: T,
     correlationId?: string,
   ): Promise<void> {
-    const envelope = EventEnvelope.create(pattern, payload, correlationId);
+    const envelope = EventEnvelopeDto.create(pattern, payload, correlationId);
 
     this.logger.log(`Publishing event to pattern ${pattern}`);
 
@@ -21,7 +21,7 @@ export class EventBus {
       await this.amqpConnection.publish('gitcode_exchange', pattern, envelope, {
         correlationId: envelope.correlationId,
         messageId: envelope.eventId,
-        timestamp: envelope.occurredOn.getTime(),
+        timestamp: new Date(envelope.occurredOn).getTime(),
       });
       this.logger.debug(`Event published to pattern ${pattern}`);
     } catch (error) {
