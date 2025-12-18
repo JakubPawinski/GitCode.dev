@@ -376,6 +376,7 @@ describe('ProblemService', () => {
           {
             userId: 'user1',
             problemId: '1',
+            isSolved: true,
             problem: {
               id: '1',
               title: 'Two Sum',
@@ -452,7 +453,7 @@ describe('ProblemService', () => {
           userId: 'user1',
           problemSlug: 'two-sum',
           totalAttempts: 1,
-          status: 'success',
+          isSolved: true,
           currentLanguage: 'python',
           attempts: [
             {
@@ -505,7 +506,7 @@ describe('ProblemService', () => {
         );
 
         expect(result.totalAttempts).toBe(0);
-        expect(result.status).toBe('pending');
+        expect(result.isSolved).toBe(false);
         expect(result.attempts).toEqual([]);
       });
     });
