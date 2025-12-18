@@ -40,7 +40,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         TokenStore.setToken(accessToken);
         return accessToken;
       }
-    } catch (error) {}
+    } catch (error) {
+      console.error('Refresh token error:', error);
+    }
     TokenStore.clear();
     return null;
   };
@@ -54,7 +56,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setUser(userData);
         return userData;
       }
-    } catch (error) {}
+    } catch (error) {
+      console.error('Refresh user error:', error);
+    }
     setUser(null);
     return null;
   };
@@ -81,6 +85,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const user = await refreshUser();
       return !!user;
     } catch (error) {
+      console.error('Initialize auth error:', error);
       return false;
     } finally {
       setIsLoading(false);
