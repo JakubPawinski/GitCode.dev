@@ -7,6 +7,8 @@ import axios from 'axios';
 import * as crypto from 'crypto';
 import { mapRolesToPermissions } from './mappers/permissions.mapper';
 import { mapRealmRolesToAppRoles } from './mappers/roles.mapper';
+import { EventBus } from '@gitcode/messaging';
+import { AUTH_PATTERNS, UserCreatedEvent } from '@gitcode/contracts';
 
 const USER_BLACKLIST_TTL = 7 * 24 * 60 * 60; // 24 hours in seconds (greater than refresh token TTL)
 @Injectable()
@@ -17,6 +19,7 @@ export class AuthService {
     private redis: RedisService,
     private jwtService: JwtService,
     private configService: ConfigService,
+    private eventBus: EventBus,
   ) {}
 
   async initiateLogin(provider: string = 'keycloak') {
@@ -54,6 +57,26 @@ export class AuthService {
       `Mapped app permissions: ${JSON.stringify(appPermissions)}`,
     );
     this.logger.debug(`Mapped app roles: ${JSON.stringify(appRoles)}`);
+
+    // Check if user exists, if not, publish UserCreatedEvent
+    const userExists = await this.prisma.user.findUnique({
+      where: { keycloakId: userInfo.sub },
+      select: { id: true },
+    });
+    if (!userExists) {
+      this.logger.log(
+        `Publishing UserCreatedEvent for new user ${userInfo.sub}`,
+      );
+      this.eventBus.publish(
+        AUTH_PATTERNS.USER_CREATED,
+        new UserCreatedEvent(
+          userInfo.sub,
+          userInfo.email,
+          userInfo.given_name,
+          userInfo.family_name,
+        ),
+      );
+    }
 
     // Create or update user in database
     const user = await this.upsertUser(
