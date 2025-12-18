@@ -1,26 +1,35 @@
 import { DynamicModule, Global, Module } from '@nestjs/common';
 import { EventBus } from './event-bus.service.js';
-import { ClientsModule, Transport } from '@nestjs/microservices';
+import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
+import { APP_INTERCEPTOR } from '@nestjs/core';
+import { RmqMetadataInterceptor } from './interceptors/rmq-metadata.interceptor.js';
 
 @Global()
-@Module({})
+@Module({
+  providers: [EventBus,
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: RmqMetadataInterceptor,
+    }
+  ],
+  exports: [EventBus],
+})
 export class MessagingModule {
   static forRoot(urls: string[]): DynamicModule {
     return {
       module: MessagingModule,
-      providers: [EventBus],
-      exports: [EventBus],
       imports: [
-        ClientsModule.register([
-          {
-            name: 'RABBITMQ_CLIENT',
-            transport: Transport.RMQ,
-            options: {
-              urls,
-              queue: '',
+        RabbitMQModule.forRoot({
+          exchanges: [
+            {
+              name: 'gitcode_exchange',
+              type: 'topic',
             },
-          },
-        ]),
+          ],
+          uri: urls[0],
+          enableControllerDiscovery: true,
+          connectionInitOptions: { wait: false },
+        }),
       ],
     };
   }

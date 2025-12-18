@@ -1,15 +1,12 @@
-import { Inject, Injectable } from '@nestjs/common';
-import { ClientProxy } from '@nestjs/microservices';
+import { Injectable } from '@nestjs/common';
 import { Logger } from '@nestjs/common';
-import { firstValueFrom } from 'rxjs';
 import { EventEnvelope } from './event-envelope.js';
+import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 
 @Injectable()
 export class EventBus {
   private readonly logger = new Logger(EventBus.name);
-  constructor(
-    @Inject('RABBITMQ_CLIENT') private readonly rabbitMqClient: ClientProxy,
-  ) {}
+  constructor(private readonly amqpConnection: AmqpConnection) {}
 
   public async publish<T>(
     pattern: string,
@@ -21,7 +18,12 @@ export class EventBus {
     this.logger.log(`Publishing event to pattern ${pattern}`);
 
     try {
-      await firstValueFrom(this.rabbitMqClient.emit(pattern, envelope));
+      await this.amqpConnection.publish('gitcode_exchange', pattern, envelope, {
+        correlationId: envelope.correlationId,
+        messageId: envelope.eventId,
+        timestamp: envelope.occurredOn.getTime(),
+      });
+      this.logger.debug(`Event published to pattern ${pattern}`);
     } catch (error) {
       this.logger.error(`[EventBus] Failed to publish ${pattern}`, error);
       throw error;
