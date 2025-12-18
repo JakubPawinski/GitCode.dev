@@ -18,7 +18,6 @@ export const ProtectedRoute = ({
   const router = useRouter();
 
   useEffect(() => {
-
     if (allowedRoles.length > 0 && user?.roles) {
       const hasRequiredRole = user.roles.some(role => allowedRoles.includes(role));
       if (!hasRequiredRole) {
@@ -33,11 +32,6 @@ export const ProtectedRoute = ({
         <Loader />
       </div>
     );
-  }
-
-  if (allowedRoles.length > 0 && user?.roles) {
-     const hasRequiredRole = user.roles.some(role => allowedRoles.includes(role));
-     if (!hasRequiredRole) return null;
   }
 
   return <>{children}</>;
