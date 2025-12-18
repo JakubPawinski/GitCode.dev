@@ -12,7 +12,7 @@ export const usePostSubmission = <T>() => {
     setLoading(true)
     setError(null)
     api
-      .post('/submissions', { ...payload })
+      .post('/api/submissions', { ...payload })
       .then((res) => setData(res.data.data))
       .catch((err) => setError(err))
       .finally(() => setLoading(false))

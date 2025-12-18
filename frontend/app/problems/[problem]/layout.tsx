@@ -49,15 +49,15 @@ export default function ProblemLayout({
 }: {
   children: React.ReactNode
 }) {
-  const { data: authData } = useAuth()
+  const { user } = useAuth()
 
   useEffect(() => {
-    if (!authData?.user.id) return
-    socket.auth = { userId: authData.user.id }
+    if (!user?.id) return
+    socket.auth = { userId: user.id }
     if (!socket.connected) {
       socket.connect()
     }
-  }, [authData?.user.id])
+  }, [user?.id])
 
   const rooms = ['attempt_update', 'test_result', 'submission_complete']
 

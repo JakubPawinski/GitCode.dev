@@ -2,16 +2,15 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { User } from 'lucide-react'
+import LogoutButton from '../logout/LogoutButton'
 import { useParams } from 'next/navigation'
 import { useAuth } from '@/contexts/auth/AuthContext'
 
 export const HomeNavbar = () => {
   const { problem } = useParams()
-  const { data } = useAuth()
+  const { user } = useAuth()
 
-  if (problem || !data) return null
-
-  const { user } = data
+  if (problem || !user) return null
 
   const { avatarUrl, username } = user
 
@@ -47,6 +46,7 @@ export const HomeNavbar = () => {
             <User size={36} />
           )}
         </Link>
+        <LogoutButton />
       </div>
     </nav>
   )

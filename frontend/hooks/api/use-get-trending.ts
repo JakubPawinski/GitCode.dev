@@ -10,7 +10,7 @@ export const useGetTrending = <T>() => {
     setLoading(true)
     setError(null)
     api
-      .get(`/problems/trending`, {
+      .get(`/api/problems/trending`, {
         signal: controller.signal,
       })
       .then((res) => setData(res.data.data))

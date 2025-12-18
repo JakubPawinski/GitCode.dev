@@ -1,25 +1,113 @@
-'use client'
-import { createContext, PropsWithChildren, useContext, useState } from 'react'
-import { AuthContextProps } from '@/app/auth/callback/page'
+'use client';
 
-export interface AuthContextType {
-  data: AuthContextProps | null
-  setData: (data: AuthContextProps | null) => void
-}
-export const AuthContext = createContext<AuthContextType | null>(null)
+import { createContext, useContext, useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { AuthContextType } from '@/interfaces/auth-context-type-interface';
+import { User } from '@/interfaces/user-interface';
+import { useRefreshToken } from '@/hooks/auth/use-refresh-token';
+import { useGetProfile } from '@/hooks/auth/use-get-profile';
+import { useLogin } from '@/hooks/auth/use-login';
+import { useLogout } from '@/hooks/auth/use-logout';
+import TokenStore from '@/utils/token-store';
+import { Loader } from '@/components/loading/Loader';
 
-export const AuthProvider = ({ children }: PropsWithChildren) => {
-  const [data, setData] = useState<AuthContextProps | null>(null)
-  return (
-    <AuthContext.Provider value={{ data, setData }}>
-      {children}
-    </AuthContext.Provider>
-  )
-}
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
 export const useAuth = () => {
-  const context = useContext(AuthContext)
-  if (!context) {
-    throw new Error('Provider outside the scope')
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
   }
-  return context
-}
+  return context;
+};
+
+export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
+
+  const { refreshMutation } = useRefreshToken();
+  const { refetch: getProfile } = useGetProfile();
+  const { login } = useLogin();
+  const { logoutMutation } = useLogout();
+
+  const refreshToken = async (): Promise<string | null> => {
+    try {
+      const refreshResponse = await refreshMutation();
+      const accessToken = refreshResponse?.data?.accessToken;
+      
+      if (accessToken) {
+        TokenStore.setToken(accessToken);
+        return accessToken;
+      }
+    } catch (error) {
+      console.error('Refresh token error:', error);
+    }
+    TokenStore.clear();
+    return null;
+  };
+
+  const refreshUser = async (): Promise<User | null> => {
+    try {
+      const profileResponse = await getProfile();
+      const userData = profileResponse?.data;
+      
+      if (userData) {
+        setUser(userData);
+        return userData;
+      }
+    } catch (error) {
+      console.error('Refresh user error:', error);
+    }
+    setUser(null);
+    return null;
+  };
+
+  const handleLogin = () => {
+    login();
+  };
+
+  const handleLogout = async (): Promise<void> => {
+    try {
+      await logoutMutation();
+    } finally {
+      TokenStore.clear();
+      setUser(null);
+      router.push('/');
+    }
+  };
+
+  const initializeAuth = async (): Promise<boolean> => {
+    try {
+      const token = await refreshToken();
+      if (!token) return false;
+      
+      const user = await refreshUser();
+      return !!user;
+    } catch (error) {
+      console.error('Initialize auth error:', error);
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    initializeAuth();
+  }, []);
+
+  const value: AuthContextType = {
+    user,
+    isLoading,
+    isAuthenticated: !!user,
+    login: handleLogin,
+    logout: handleLogout,
+    refreshAuth: initializeAuth,
+  };
+
+  if (isLoading) {
+    return <Loader />;
+  }
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+};

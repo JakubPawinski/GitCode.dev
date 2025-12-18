@@ -23,7 +23,7 @@ export const useGetProblems = <T>({ params }: { params?: QueryProps }) => {
     setLoading(true)
     setError(null)
     api
-      .get('/problems', {
+      .get('/api/problems', {
         params: params,
         signal: controller.signal,
       })

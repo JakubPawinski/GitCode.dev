@@ -10,7 +10,7 @@ export const useGetProblem = <T>(problem?: string) => {
     setLoading(true)
     setError(null)
     api
-      .get(`/problems/${problem}`, {
+      .get(`/api/problems/${problem}`, {
         signal: controller.signal,
       })
       .then((res) => setData(res.data.data))

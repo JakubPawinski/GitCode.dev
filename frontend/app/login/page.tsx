@@ -1,19 +1,26 @@
-'use client'
+'use client';
 
-import { Login } from '@/components/login/Login'
-import { useAuth } from '@/contexts/auth/AuthContext'
-import { useRouter } from 'next/navigation'
-import { useEffect } from 'react'
+import { useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useAuth } from '@/contexts/auth/AuthContext';
+import { Login } from '@/components/login/Login';
+import { Loader } from '@/components/loading/Loader';
 
 export default function LoginPage() {
-  const { data } = useAuth()
-  const router = useRouter()
+  const { isAuthenticated, isLoading } = useAuth();
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
   useEffect(() => {
-    if (data?.accessToken) {
-      router.replace('/')
+    if (!isLoading && isAuthenticated) {
+      const redirect = searchParams.get('redirect') || '/';
+      router.push(redirect);
     }
-  }, [router, data?.accessToken])
+  }, [isAuthenticated, isLoading, router, searchParams]);
 
-  return <Login />
+  if (isLoading || isAuthenticated) {
+    return <Loader />;
+  }
+
+  return <Login />;
 }
