@@ -130,12 +130,6 @@ export class NotificationService {
       preferencesMap[row.type] = row.channels;
     });
 
-    Object.values(NotificationType).forEach((type) => {
-      if (!preferencesMap[type]) {
-        preferencesMap[type] = this.DEFAULT_PREFERENCES[type];
-      }
-    });
-
     const preferences: GetNotificationPreferencesDto = {
       preferences: Object.entries(preferencesMap).map(([type, channels]) => ({
         type: type as NotificationType,

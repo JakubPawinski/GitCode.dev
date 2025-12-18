@@ -9,6 +9,7 @@ import envValidation from './config/env.validation';
 import { NotificationModule } from '../notification/notification.module';
 import { GitCodeAuthModule } from '@gitcode/auth';
 import jwtConfig from './config/jwt.config';
+import { MessagingModule } from '@gitcode/messaging';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -18,6 +19,7 @@ import jwtConfig from './config/jwt.config';
     }),
     NotificationModule,
     GitCodeAuthModule,
+    MessagingModule.forRoot([process.env.RABBITMQ_URL]),
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -6,6 +6,7 @@ import {
   Post,
   Sse,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { Get } from '@nestjs/common';
 import {
@@ -23,8 +24,10 @@ import {
   type AuthenticatedUser,
 } from '@gitcode/types';
 import { GetNotificationDto, UpdateNotificationPreferencesDto } from './dtos';
+import { ResponseInterceptor } from '@gitcode/common';
 
 @Controller('notifications')
+@UseInterceptors(ResponseInterceptor)
 export class NotificationController {
   constructor(
     private readonly realtimeService: RealtimeService,

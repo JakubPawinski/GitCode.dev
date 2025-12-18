@@ -1,18 +1,11 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app/app.module';
-import { Transport } from '@nestjs/microservices';
 import { ValidationPipe } from '@nestjs/common';
-import { rabbitMQOptions } from './app/config/rabbitmq.options';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { ResponseInterceptor, HttpExceptionFilter } from '@gitcode/common';
+import { HttpExceptionFilter } from '@gitcode/common';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-
-  app.connectMicroservice<any>({
-    transport: Transport.RMQ,
-    options: rabbitMQOptions,
-  });
 
   app.useGlobalPipes(
     new ValidationPipe({
@@ -21,9 +14,6 @@ async function bootstrap() {
       forbidNonWhitelisted: true,
     }),
   );
-
-  // Global response interceptor
-  app.useGlobalInterceptors(new ResponseInterceptor());
 
   // Global exception filter
   app.useGlobalFilters(new HttpExceptionFilter());
@@ -43,8 +33,6 @@ async function bootstrap() {
 
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('docs', app, document);
-
-  app.startAllMicroservices();
 
   const port = process.env.NOTIFICATION_PORT || 4003;
   await app.listen(port);
