@@ -1,17 +1,46 @@
+import {
+  IsString,
+  IsNotEmpty,
+  IsUUID,
+  IsOptional,
+  IsObject,
+} from 'class-validator';
+
+/*
+ * Command to send a notification to a user.
+ */
 export class SendNotificationCommand {
+  @IsUUID()
+  @IsNotEmpty()
+  userId: string;
+
+  @IsString()
+  @IsNotEmpty()
+  type: string;
+
+  @IsString()
+  @IsNotEmpty()
+  kind: string;
+
+  @IsString()
+  @IsNotEmpty()
+  severity: string;
+
+  @IsOptional()
+  @IsObject()
+  payload?: Record<string, any>;
+
   constructor(
-    // Kto ma dostać (niezbędne)
-    public readonly userId: string,
-
-    // Typ powiadomienia (np. 'SYSTEM', 'MARKETING' - ważne dla filtrów w bazie)
-    public readonly type: string,
-
-    // Treść dla użytkownika
-    public readonly title: string,
-    public readonly message: string,
-
-    // Opcjonalne: metadata (np. link do przekierowania, ID obiektu)
-    // Używamy Record<string, any> bo to uniwersalny JSON
-    public readonly payload?: Record<string, any>,
-  ) {}
+    userId: string,
+    type: string,
+    kind: string,
+    severity: string,
+    payload?: Record<string, any>,
+  ) {
+    this.userId = userId;
+    this.type = type;
+    this.kind = kind;
+    this.severity = severity;
+    this.payload = payload;
+  }
 }

@@ -1,9 +1,40 @@
+import {
+  IsString,
+  IsNotEmpty,
+  IsEmail,
+  IsOptional,
+  IsUUID,
+} from 'class-validator';
+
+/*
+ * Event emitted when a new user is created.
+ */
 export class UserCreatedEvent {
+  @IsUUID()
+  @IsNotEmpty()
+  userId: string;
+
+  @IsEmail()
+  @IsNotEmpty()
+  email: string;
+
+  @IsString()
+  @IsOptional()
+  firstName?: string;
+
+  @IsString()
+  @IsOptional()
+  lastName?: string;
+
   constructor(
-    public readonly userId: string,
-    public readonly email: string,
-    public readonly firstName?: string,
-    public readonly lastName?: string,
-    public readonly occurredAt: Date = new Date(),
-  ) {}
+    userId: string,
+    email: string,
+    firstName?: string,
+    lastName?: string,
+  ) {
+    this.userId = userId;
+    this.email = email;
+    this.firstName = firstName;
+    this.lastName = lastName;
+  }
 }
