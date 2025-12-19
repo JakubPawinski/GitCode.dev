@@ -1,10 +1,5 @@
 import { Controller, Logger } from '@nestjs/common';
-import { EventPattern, Payload } from '@nestjs/microservices';
-import {
-  NOTIFICATION_PATTERNS,
-  AUTH_PATTERNS,
-  SendNotificationCommand,
-} from '@gitcode/contracts';
+import { NOTIFICATION_PATTERNS, AUTH_PATTERNS } from '@gitcode/contracts';
 import { NotificationService } from './providers/notification.service';
 import { GetNotificationPreferencesDto, PostNotificationDto } from './dtos';
 import {
@@ -18,7 +13,10 @@ import {
   RabbitPayload,
   RabbitSubscribe,
 } from '@golevelup/nestjs-rabbitmq';
-import { UserCreatedEnvelope } from './events/envelopes';
+import {
+  SendNotificationCommandEnvelope,
+  UserCreatedEnvelope,
+} from './events/envelopes';
 
 @Controller()
 export class NotificationConsumer {
@@ -28,27 +26,33 @@ export class NotificationConsumer {
   /*
    * Handle create notification events
    */
-  @EventPattern([NOTIFICATION_PATTERNS.SEND_NOTIFICATION_CMD])
+  @RabbitSubscribe({
+    exchange: 'gitcode_exchange',
+    routingKey: NOTIFICATION_PATTERNS.SEND_NOTIFICATION_CMD,
+    queue: 'notification_queue',
+    errorBehavior: MessageHandlerErrorBehavior.NACK,
+  })
   public async handleCreateNotification(
-    @Payload() cmd: SendNotificationCommand,
+    @RabbitPayload() cmd: SendNotificationCommandEnvelope,
   ) {
+    const payload = cmd.payload;
     const userPreferences: GetNotificationPreferencesDto =
-      await this.notificationService.getUserPreferences(cmd.userId);
+      await this.notificationService.getUserPreferences(payload.userId);
 
-    if (!userPreferences.preferences[cmd.type]) {
+    if (!userPreferences.preferences[payload.type]) {
       this.logger.warn(
-        `User ${cmd.userId} has no preferences for notification type ${cmd.type}, skipping notification.`,
+        `User ${payload.userId} has no preferences for notification type ${payload.type}, skipping notification.`,
       );
       // User has no preferences set for this notification type, skip sending
       return;
     }
     const dto: PostNotificationDto = {
-      type: cmd.type as NotificationType,
-      kind: cmd.kind as NotificationKind,
-      severity: cmd.severity as NotificationSeverity,
-      payload: cmd.payload as NotificationPayload,
-      userId: cmd.userId,
-      channelsSent: userPreferences.preferences[cmd.type],
+      type: payload.type as NotificationType,
+      kind: payload.kind as NotificationKind,
+      severity: payload.severity as NotificationSeverity,
+      payload: payload.payload as NotificationPayload,
+      userId: payload.userId,
+      channelsSent: userPreferences.preferences[payload.type],
     };
     await this.notificationService.processNotification(dto);
   }
