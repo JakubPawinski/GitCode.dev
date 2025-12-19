@@ -1,4 +1,4 @@
-import { IsBoolean, IsEnum, IsString } from 'class-validator';
+import { IsEnum, IsString } from 'class-validator';
 import { themeEnum } from '@gitcode/types';
 import { privacyLevelEnum } from '@gitcode/types';
 import { ApiProperty } from '@nestjs/swagger';
@@ -15,13 +15,6 @@ export class GetPreferencesDto {
   @ApiProperty({ description: 'Preferred language', example: 'en' })
   @IsString()
   language: string;
-
-  @ApiProperty({
-    description: 'Enable or disable notifications',
-    example: true,
-  })
-  @IsBoolean()
-  notifications: boolean;
 
   @ApiProperty({
     enum: privacyLevelEnum,

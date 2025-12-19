@@ -8,9 +8,19 @@ import {
   FriendRequestDto,
   RespondFriendRequestDto,
 } from '../dtos';
+import { EventBus } from '@gitcode/messaging';
+import {
+  FriendshipAcceptedEvent,
+  FriendshipDeclinedEvent,
+  FriendshiprRequestedEvent,
+  SOCIAL_PATTERNS,
+} from '@gitcode/contracts';
 @Injectable()
 export class SocialService {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly eventBus: EventBus,
+  ) {}
 
   /*
    * Get all friends for a user
@@ -100,6 +110,12 @@ export class SocialService {
       },
     });
 
+    // Create event for friend request sent
+    this.eventBus.publish(
+      SOCIAL_PATTERNS.FRIENDSHIP_REQUESTED,
+      new FriendshiprRequestedEvent(friendRequest.id, senderId, addresseeId),
+    );
+
     const mappedFriendRequest: FriendRequestDto = {
       id: friendRequest.id,
       requester: {
@@ -161,6 +177,32 @@ export class SocialService {
         status: true,
       },
     });
+
+    // Create event for friend request response
+    switch (status) {
+      case FriendRequestStatus.ACCEPTED:
+        this.eventBus.publish(
+          SOCIAL_PATTERNS.FRIENDSHIP_ACCEPTED,
+          new FriendshipAcceptedEvent(
+            updatedFriendRequest.id,
+            updatedFriendRequest.requester.id,
+            updatedFriendRequest.addressee.id,
+          ),
+        );
+        break;
+      case FriendRequestStatus.REJECTED:
+        this.eventBus.publish(
+          SOCIAL_PATTERNS.FRIENDSHIP_DECLINED,
+          new FriendshipDeclinedEvent(
+            updatedFriendRequest.id,
+            updatedFriendRequest.requester.id,
+            updatedFriendRequest.addressee.id,
+          ),
+        );
+        break;
+      default:
+        break;
+    }
 
     const mappedFriendRequest: FriendRequestDto = {
       id: updatedFriendRequest.id,
