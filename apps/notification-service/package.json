@@ -72,9 +72,9 @@
         "executor": "@nx/js:node",
         "defaultConfiguration": "development",
         "dependsOn": [
-          "build",
           "prisma-generate",
-          "db-migrate"
+          "db-migrate",
+          "build"
         ],
         "options": {
           "buildTarget": "@gitcode/notification-service:build",
