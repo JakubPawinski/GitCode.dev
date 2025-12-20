@@ -1,3 +1,4 @@
 export * from './problem-solved.payload';
-export * from './friend-invite.payload';
+export * from './friendship.payload';
 export * from './generic.payload';
+export * from './user-banned.payload';

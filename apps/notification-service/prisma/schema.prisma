@@ -24,10 +24,11 @@ enum ChannelType {
 
 enum NotificationType {
   SECURITY
+  BILLING
   SYSTEM
+  SUPPORT
   SOCIAL
   MARKETING
-  PROBLEM
 }
 
 model NotificationPreference {

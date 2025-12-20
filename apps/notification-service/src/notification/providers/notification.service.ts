@@ -1,7 +1,10 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RealtimeService } from '../../realtime/realtime.service';
-import { ChannelType, NotificationType } from '@prisma/client-notification';
+import {
+  ChannelType,
+  NotificationType,
+} from '@prisma/client-notification';
 import { UUID } from '@gitcode/types';
 import {
   GetNotificationPreferencesDto,
@@ -10,6 +13,7 @@ import {
 import { PostNotificationDto, GetNotificationDto } from '../dtos/index';
 import { NotificationKind } from '../enums';
 import type { NotificationPayload } from '../types/index';
+import { NotifyParams } from '../interfaces';
 
 @Injectable()
 export class NotificationService {
@@ -33,22 +37,86 @@ export class NotificationService {
     const savedNotification = await this.saveNotificationToDb(dto);
 
     const promises = [];
-    const activeChannels = savedNotification.channelsSent;
+    const { channelsSent } = savedNotification;
 
-    if (activeChannels.includes(ChannelType.IN_APP)) {
+    if (channelsSent.includes(ChannelType.IN_APP)) {
       promises.push(this.sendInApp(savedNotification));
     }
-    if (activeChannels.includes(ChannelType.EMAIL)) {
+    if (channelsSent.includes(ChannelType.EMAIL)) {
+      this.logger.warn('[MOCK] Sending EMAIL notification');
       promises.push();
     }
-    if (activeChannels.includes(ChannelType.PUSH)) {
+    if (channelsSent.includes(ChannelType.PUSH)) {
+      this.logger.warn('[MOCK] Sending PUSH notification');
       promises.push();
     }
-    if (activeChannels.includes(ChannelType.SMS)) {
+    if (channelsSent.includes(ChannelType.SMS)) {
+      this.logger.warn('[MOCK] Sending SMS notification');
       promises.push();
     }
 
     await Promise.all(promises);
+  }
+
+  public async notify(params: NotifyParams): Promise<void> {
+    const { userId, type, kind, severity, payload } = params;
+
+    // Fetch user notification preferences
+    const userPreferences: GetNotificationPreferencesDto =
+      await this.getUserPreferences(userId);
+
+    // Get channels to send based on user preferences
+    const channelsToSend = userPreferences.preferences[type];
+
+    // Check if the notification is mandatory
+    if (this.isMandatoryNotification(type, kind)) {
+      this.logger.log(
+        `Notification of type ${type} and kind ${kind} is mandatory. Proceeding to send notification to user ${userId}.`,
+      );
+
+      // Ensure at least EMAIL channel is included for mandatory notifications
+      if (!channelsToSend.includes(ChannelType.EMAIL)) {
+        channelsToSend.push(ChannelType.EMAIL);
+      }
+    } else if (channelsToSend.length === 0) {
+      // User has no preferences set for this notification type, skip sending
+      this.logger.warn(
+        `User ${userId} has no preferences for notification type ${type}, skipping notification.`,
+      );
+      return;
+    }
+
+    // Build the notification DTO
+    const dto: PostNotificationDto = {
+      type,
+      kind,
+      severity,
+      payload,
+      userId,
+      channelsSent: channelsToSend,
+    };
+
+    // Process the notification
+    await this.processNotification(dto);
+  }
+
+  /*
+   * Determine if a notification is mandatory based on its type and kind
+   */
+  private isMandatoryNotification(
+    type: NotificationType,
+    kind: NotificationKind,
+  ): boolean {
+    if (type === NotificationType.SECURITY) {
+      return true;
+    }
+    if (
+      type === NotificationType.SYSTEM &&
+      kind === NotificationKind.USER_BANNED
+    ) {
+      return true;
+    }
+    return false;
   }
 
   /*
@@ -107,11 +175,16 @@ export class NotificationService {
     NotificationType,
     ChannelType[]
   > = {
-    [NotificationType.SOCIAL]: [ChannelType.IN_APP],
-    [NotificationType.PROBLEM]: [ChannelType.IN_APP],
-    [NotificationType.SYSTEM]: [ChannelType.IN_APP, ChannelType.EMAIL],
-    [NotificationType.MARKETING]: [ChannelType.PUSH, ChannelType.IN_APP],
     [NotificationType.SECURITY]: [ChannelType.PUSH, ChannelType.EMAIL],
+    [NotificationType.BILLING]: [
+      ChannelType.PUSH,
+      ChannelType.IN_APP,
+      ChannelType.EMAIL,
+    ],
+    [NotificationType.SYSTEM]: [ChannelType.IN_APP, ChannelType.EMAIL],
+    [NotificationType.SUPPORT]: [ChannelType.IN_APP, ChannelType.EMAIL],
+    [NotificationType.SOCIAL]: [ChannelType.IN_APP],
+    [NotificationType.MARKETING]: [ChannelType.PUSH, ChannelType.EMAIL],
   };
 
   /*

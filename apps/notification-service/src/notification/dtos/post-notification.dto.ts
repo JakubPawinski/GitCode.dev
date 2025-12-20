@@ -12,6 +12,7 @@ import {
   ProblemSolvedPayload,
   FriendInvitePayload,
   GenericNotificationPayload,
+  UserBannedPayload,
 } from './payloads/index.ts';
 import type { NotificationPayload } from '../types/notification-payload.type.ts';
 
@@ -56,6 +57,8 @@ export class PostNotificationDto {
           return ProblemSolvedPayload;
         case NotificationKind.FRIEND_INVITE:
           return FriendInvitePayload;
+        case NotificationKind.USER_BANNED:
+          return UserBannedPayload;
         default:
           return GenericNotificationPayload;
       }
