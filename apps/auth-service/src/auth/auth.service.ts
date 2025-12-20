@@ -63,6 +63,13 @@ export class AuthService {
       where: { keycloakId: userInfo.sub },
       select: { id: true },
     });
+
+    // Create or update user in database
+    const user = await this.upsertUser(
+      { ...userInfo, roles: appRoles, permissions: appPermissions },
+      tokens,
+    );
+
     if (!userExists) {
       this.logger.log(
         `Publishing UserCreatedEvent for new user ${userInfo.sub}\n With data: \n${userInfo.sub}, ${userInfo.email}, ${userInfo.given_name}, ${userInfo.family_name}`,
@@ -78,12 +85,6 @@ export class AuthService {
         ),
       );
     }
-
-    // Create or update user in database
-    const user = await this.upsertUser(
-      { ...userInfo, roles: appRoles, permissions: appPermissions },
-      tokens,
-    );
 
     // Generate our own JWT access token
     const accessToken = this.generateAccessToken(user);

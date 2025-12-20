@@ -1,1 +1,1 @@
-export * from './send-notification.command.ts'
+export * from './send-notification.command.ts';

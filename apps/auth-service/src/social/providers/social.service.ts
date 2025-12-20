@@ -12,7 +12,7 @@ import { EventBus } from '@gitcode/messaging';
 import {
   FriendshipAcceptedEvent,
   FriendshipDeclinedEvent,
-  FriendshiprRequestedEvent,
+  FriendshipRequestedEvent,
   SOCIAL_PATTERNS,
 } from '@gitcode/contracts';
 @Injectable()
@@ -113,7 +113,7 @@ export class SocialService {
     // Create event for friend request sent
     this.eventBus.publish(
       SOCIAL_PATTERNS.FRIENDSHIP_REQUESTED,
-      new FriendshiprRequestedEvent(
+      new FriendshipRequestedEvent(
         friendRequest.id,
         senderId,
         friendRequest.requester.username,

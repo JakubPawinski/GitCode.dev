@@ -4,7 +4,7 @@ import { GenericNotificationPayload } from './generic.payload';
 export class UserBannedPayload extends GenericNotificationPayload {
   @IsDate()
   @IsNotEmpty()
-  bannedAt: string;
+  bannedAt: Date;
 
   @IsOptional()
   @IsString()
