@@ -20,6 +20,7 @@ describe('AuthService', () => {
       user: {
         upsert: jest.fn(),
         findUnique: jest.fn(),
+        count: jest.fn(),
       },
       oAuthToken: {
         upsert: jest.fn(),

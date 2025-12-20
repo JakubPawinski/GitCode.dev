@@ -23,7 +23,7 @@ export class RealtimeService implements OnModuleInit, OnModuleDestroy {
   constructor(private readonly configService: ConfigService) {}
 
   /*
-   *Initialize Redis connections and subscribe to channels
+   *Initialize Redis connection and subscribe to channel
    */
   async onModuleInit() {
     this.logger.log('Initializing RealtimeService...');
