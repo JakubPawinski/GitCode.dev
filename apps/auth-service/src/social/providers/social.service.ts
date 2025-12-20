@@ -113,7 +113,13 @@ export class SocialService {
     // Create event for friend request sent
     this.eventBus.publish(
       SOCIAL_PATTERNS.FRIENDSHIP_REQUESTED,
-      new FriendshiprRequestedEvent(friendRequest.id, senderId, addresseeId),
+      new FriendshiprRequestedEvent(
+        friendRequest.id,
+        senderId,
+        friendRequest.requester.username,
+        addresseeId,
+        friendRequest.addressee.username,
+      ),
     );
 
     const mappedFriendRequest: FriendRequestDto = {
@@ -186,7 +192,9 @@ export class SocialService {
           new FriendshipAcceptedEvent(
             updatedFriendRequest.id,
             updatedFriendRequest.requester.id,
+            updatedFriendRequest.requester.username,
             updatedFriendRequest.addressee.id,
+            updatedFriendRequest.addressee.username,
           ),
         );
         break;
@@ -196,7 +204,9 @@ export class SocialService {
           new FriendshipDeclinedEvent(
             updatedFriendRequest.id,
             updatedFriendRequest.requester.id,
+            updatedFriendRequest.requester.username,
             updatedFriendRequest.addressee.id,
+            updatedFriendRequest.addressee.username,
           ),
         );
         break;

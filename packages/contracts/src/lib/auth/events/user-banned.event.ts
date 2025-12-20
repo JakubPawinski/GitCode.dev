@@ -7,8 +7,8 @@ export class UserBannedEvent extends UserBaseEvent {
 
   @IsString()
   reason?: string;
-  constructor(userId: string, reason?: string) {
-    super(userId);
+  constructor(userId: string, username: string, reason?: string) {
+    super(userId, username);
     this.bannedAt = new Date();
     this.reason = reason;
   }
