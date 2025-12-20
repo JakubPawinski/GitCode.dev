@@ -59,10 +59,9 @@ export class AuthService {
     this.logger.debug(`Mapped app roles: ${JSON.stringify(appRoles)}`);
 
     // Check if user exists, if not, publish UserCreatedEvent
-    const userExists = await this.prisma.user.findUnique({
+    const userExists = await this.prisma.user.count({
       where: { keycloakId: userInfo.sub },
-      select: { id: true },
-    });
+    }) > 0;
 
     // Create or update user in database
     const user = await this.upsertUser(
@@ -74,7 +73,7 @@ export class AuthService {
       this.logger.log(
         `Publishing UserCreatedEvent for new user ${userInfo.sub}\n With data: \n${userInfo.sub}, ${userInfo.email}, ${userInfo.given_name}, ${userInfo.family_name}`,
       );
-      this.eventBus.publish(
+      await this.eventBus.publish(
         AUTH_PATTERNS.USER_CREATED,
         new UserCreatedEvent(
           userInfo.sub,

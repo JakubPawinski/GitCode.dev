@@ -111,7 +111,7 @@ export class SocialService {
     });
 
     // Create event for friend request sent
-    this.eventBus.publish(
+    await this.eventBus.publish(
       SOCIAL_PATTERNS.FRIENDSHIP_REQUESTED,
       new FriendshipRequestedEvent(
         friendRequest.id,
@@ -187,7 +187,7 @@ export class SocialService {
     // Create event for friend request response
     switch (status) {
       case FriendRequestStatus.ACCEPTED:
-        this.eventBus.publish(
+        await this.eventBus.publish(
           SOCIAL_PATTERNS.FRIENDSHIP_ACCEPTED,
           new FriendshipAcceptedEvent(
             updatedFriendRequest.id,
@@ -199,7 +199,7 @@ export class SocialService {
         );
         break;
       case FriendRequestStatus.REJECTED:
-        this.eventBus.publish(
+        await this.eventBus.publish(
           SOCIAL_PATTERNS.FRIENDSHIP_DECLINED,
           new FriendshipDeclinedEvent(
             updatedFriendRequest.id,

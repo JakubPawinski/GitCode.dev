@@ -41,6 +41,6 @@ export class FriendshipDeclinedEnvelope extends WithEventPayload(
   FriendshipDeclinedEvent,
 ) {}
 
-export class FriendshiprRequestedEnvelope extends WithEventPayload(
+export class FriendshipRequestedEnvelope extends WithEventPayload(
   FriendshipRequestedEvent,
 ) {}

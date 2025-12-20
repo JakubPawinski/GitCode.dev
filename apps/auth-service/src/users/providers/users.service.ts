@@ -125,7 +125,7 @@ export class UsersService {
     });
 
     // Publish user profile updated event
-    this.eventBus.publish(
+    await this.eventBus.publish(
       AUTH_PATTERNS.USER_PROFILE_UPDATED,
       new UserProfileUpdatedEvent(userId, updatedUser.username),
     );
@@ -170,7 +170,7 @@ export class UsersService {
     });
 
     // Publish user soft deleted event
-    this.eventBus.publish(
+    await this.eventBus.publish(
       AUTH_PATTERNS.USER_SOFT_DELETED,
       new UserSoftDeletedEvent(userId, softDeletedUser.username),
     );
@@ -382,7 +382,7 @@ export class UsersService {
     await this.authService.revokeAllUserTokens(id);
 
     // Publish user banned event
-    this.eventBus.publish(
+    await this.eventBus.publish(
       AUTH_PATTERNS.USER_BANNED,
       new UserBannedEvent(id, userToBan.username),
     );

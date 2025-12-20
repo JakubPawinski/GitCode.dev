@@ -19,7 +19,7 @@ import {
 import {
   FriendshipAcceptedEnvelope,
   FriendshipDeclinedEnvelope,
-  FriendshiprRequestedEnvelope,
+  FriendshipRequestedEnvelope,
   SendNotificationCommandEnvelope,
   UserBannedEnvelope,
   UserCreatedEnvelope,
@@ -104,7 +104,7 @@ export class NotificationConsumer {
         title: 'Account Banned',
         message: `Your account has been banned for the following reason: ${event.payload.reason}`,
         reason: event.payload.reason,
-        bannedAt: event.payload.bannedAt.toISOString(),
+        bannedAt: event.payload.bannedAt,
       },
     };
     await this.notificationService.notify(payload);
@@ -272,7 +272,7 @@ export class NotificationConsumer {
     errorBehavior: MessageHandlerErrorBehavior.NACK,
   })
   public async handleFriendshipRequested(
-    @RabbitPayload() event: FriendshiprRequestedEnvelope,
+    @RabbitPayload() event: FriendshipRequestedEnvelope,
   ): Promise<void> {
     // Promise array to hold notification promises
     const promises = [];
