@@ -27,6 +27,7 @@ import {
   UserSoftDeletedEnvelope,
 } from './events/envelopes';
 import { NotifyParams } from './interfaces';
+import { RABBIT_CONFIG } from '../app/config/rabbitmq.config';
 
 @Controller()
 export class NotificationConsumer {
@@ -37,9 +38,9 @@ export class NotificationConsumer {
    * Handle create notification events
    */
   @RabbitSubscribe({
-    exchange: 'gitcode_exchange',
+    exchange: RABBIT_CONFIG.EXCHANGE,
     routingKey: NOTIFICATION_PATTERNS.SEND_NOTIFICATION_CMD,
-    queue: 'notification_queue',
+    queue: RABBIT_CONFIG.QUEUE,
     errorBehavior: MessageHandlerErrorBehavior.NACK,
   })
   public async handleCreateNotification(
@@ -59,9 +60,9 @@ export class NotificationConsumer {
    * Handle user created events to set default notification preferences
    */
   @RabbitSubscribe({
-    exchange: 'gitcode_exchange',
+    exchange: RABBIT_CONFIG.EXCHANGE,
     routingKey: AUTH_PATTERNS.USER_CREATED,
-    queue: 'notification_queue',
+    queue: RABBIT_CONFIG.QUEUE,
     errorBehavior: MessageHandlerErrorBehavior.NACK,
   })
   public async handleUserCreated(
@@ -83,9 +84,9 @@ export class NotificationConsumer {
    * Handle user banned events
    */
   @RabbitSubscribe({
-    exchange: 'gitcode_exchange',
+    exchange: RABBIT_CONFIG.EXCHANGE,
     routingKey: AUTH_PATTERNS.USER_BANNED,
-    queue: 'notification_queue',
+    queue: RABBIT_CONFIG.QUEUE,
     errorBehavior: MessageHandlerErrorBehavior.NACK,
   })
   public async handleUserBanned(
@@ -110,9 +111,9 @@ export class NotificationConsumer {
    * Handle user profile updated events
    */
   @RabbitSubscribe({
-    exchange: 'gitcode_exchange',
+    exchange: RABBIT_CONFIG.EXCHANGE,
     routingKey: AUTH_PATTERNS.USER_PROFILE_UPDATED,
-    queue: 'notification_queue',
+    queue: RABBIT_CONFIG.QUEUE,
     errorBehavior: MessageHandlerErrorBehavior.NACK,
   })
   public async handleUserProfileUpdated(
@@ -135,9 +136,9 @@ export class NotificationConsumer {
    * Handle user soft deleted events
    */
   @RabbitSubscribe({
-    exchange: 'gitcode_exchange',
+    exchange: RABBIT_CONFIG.EXCHANGE,
     routingKey: AUTH_PATTERNS.USER_SOFT_DELETED,
-    queue: 'notification_queue',
+    queue: RABBIT_CONFIG.QUEUE,
     errorBehavior: MessageHandlerErrorBehavior.NACK,
   })
   public async handleSoftDeleted(
@@ -160,9 +161,9 @@ export class NotificationConsumer {
    * Handle friendship accepted events
    */
   @RabbitSubscribe({
-    exchange: 'gitcode_exchange',
+    exchange: RABBIT_CONFIG.EXCHANGE,
     routingKey: SOCIAL_PATTERNS.FRIENDSHIP_ACCEPTED,
-    queue: 'notification_queue',
+    queue: RABBIT_CONFIG.QUEUE,
     errorBehavior: MessageHandlerErrorBehavior.NACK,
   })
   public async handleFriendshipAccepted(
@@ -208,9 +209,9 @@ export class NotificationConsumer {
    * Handle friendship declined events
    */
   @RabbitSubscribe({
-    exchange: 'gitcode_exchange',
+    exchange: RABBIT_CONFIG.EXCHANGE,
     routingKey: SOCIAL_PATTERNS.FRIENDSHIP_DECLINED,
-    queue: 'notification_queue',
+    queue: RABBIT_CONFIG.QUEUE,
     errorBehavior: MessageHandlerErrorBehavior.NACK,
   })
   public async handleFriendshipDeclined(
@@ -256,9 +257,9 @@ export class NotificationConsumer {
    * Handle friendship requested events
    */
   @RabbitSubscribe({
-    exchange: 'gitcode_exchange',
+    exchange: RABBIT_CONFIG.EXCHANGE,
     routingKey: SOCIAL_PATTERNS.FRIENDSHIP_REQUESTED,
-    queue: 'notification_queue',
+    queue: RABBIT_CONFIG.QUEUE,
     errorBehavior: MessageHandlerErrorBehavior.NACK,
   })
   public async handleFriendshipRequested(

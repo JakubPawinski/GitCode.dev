@@ -8,4 +8,5 @@ export default Joi.object({
   JWT_SECRET: Joi.string().required(),
   JWT_EXPIRES_IN: Joi.string().default('15m'),
   JWT_REFRESH_EXPIRES_IN: Joi.string().default('7d'),
+  EXCHANGE_NAME: Joi.string().default('gitcode_exchange'),
 });
