@@ -17,6 +17,7 @@ import { NotificationKind } from '../enums';
 import type { NotificationPayload } from '../types/index';
 import { NotifyParams } from '../interfaces';
 import { PaginationQueryDto } from '@gitcode/common';
+import { DEFAULT_NOTIFICATION_PREFERENCES } from '../../app/config/default-preferences.const';
 
 @Injectable()
 export class NotificationService implements OnModuleInit {
@@ -42,10 +43,13 @@ export class NotificationService implements OnModuleInit {
    * Refresh notification configuration cache
    */
   public async refreshConfigCache() {
+    // Load notification configurations from the database
     const configs = await this.prismaService.notificationConfig.findMany();
 
+    // Clear existing cache
     this.configCache.clear();
 
+    // Populate cache with latest configurations from the database
     configs.forEach((config) => {
       const key = `${config.type}:${config.kind}`;
       this.configCache.set(key, config.isMandatory);
@@ -60,14 +64,17 @@ export class NotificationService implements OnModuleInit {
     return { status: 'ok' };
   }
 
-  /*
+  /**
    * Process and send notification based on user preferences
+   * @param dto Notification data transfer object
    */
   private async processNotification(dto: PostNotificationDto) {
     this.logger.log(`Processing notification for user ${dto.userId}: ${dto}`);
 
+    // Save notification to the database
     const savedNotification = await this.saveNotificationToDb(dto);
 
+    // Send notification via selected channels
     const promises = [];
     const { channelsSent } = savedNotification;
 
@@ -135,8 +142,11 @@ export class NotificationService implements OnModuleInit {
     await this.processNotification(dto);
   }
 
-  /*
+  /**
    * Determine if a notification is mandatory based on its type and kind
+   * @param type Notification type
+   * @param kind Notification kind
+   * @returns boolean indicating if the notification is mandatory
    */
   private isMandatoryNotification(
     type: NotificationType,
@@ -157,12 +167,14 @@ export class NotificationService implements OnModuleInit {
     return false;
   }
 
-  /*
+  /**
    * Save notification to the database
+   * @param data Notification data transfer object
    */
   private async saveNotificationToDb(
     data: PostNotificationDto,
   ): Promise<GetNotificationDto> {
+    // Save notification record
     const notification = await this.prismaService.notification.create({
       data: {
         userId: data.userId,
@@ -176,6 +188,8 @@ export class NotificationService implements OnModuleInit {
     this.logger.log(
       `Saved notification ${notification.id} for user ${data.userId}`,
     );
+
+    // Map to GetNotificationDto
     const notificationDto: GetNotificationDto = {
       id: notification.id,
       userId: notification.userId,
@@ -191,8 +205,9 @@ export class NotificationService implements OnModuleInit {
     return notificationDto;
   }
 
-  /*
+  /**
    * Send in-app notification via realtime service
+   * @param dto Notification data transfer object
    */
   private async sendInApp(dto: GetNotificationDto) {
     this.logger.log(
@@ -209,22 +224,6 @@ export class NotificationService implements OnModuleInit {
     });
   }
 
-  private readonly DEFAULT_PREFERENCES: Record<
-    NotificationType,
-    ChannelType[]
-  > = {
-    [NotificationType.SECURITY]: [ChannelType.PUSH, ChannelType.EMAIL],
-    [NotificationType.BILLING]: [
-      ChannelType.PUSH,
-      ChannelType.IN_APP,
-      ChannelType.EMAIL,
-    ],
-    [NotificationType.SYSTEM]: [ChannelType.IN_APP, ChannelType.EMAIL],
-    [NotificationType.SUPPORT]: [ChannelType.IN_APP, ChannelType.EMAIL],
-    [NotificationType.SOCIAL]: [ChannelType.IN_APP],
-    [NotificationType.MARKETING]: [ChannelType.PUSH, ChannelType.EMAIL],
-  };
-
   /*
    * Get user notification preferences
    */
@@ -232,15 +231,19 @@ export class NotificationService implements OnModuleInit {
     userId: UUID,
   ): Promise<GetNotificationPreferencesDto> {
     this.logger.log(`Fetching notification preferences for user ${userId}`);
+
+    // Fetch preferences from the database
     const rows = await this.prismaService.notificationPreference.findMany({
       where: { userId },
     });
     const preferencesMap: Record<NotificationType, ChannelType[]> = {} as any;
 
+    // Map database rows to preferences map
     rows.forEach((row) => {
       preferencesMap[row.type] = row.channels;
     });
 
+    // Build the final preferences DTO
     const preferences: GetNotificationPreferencesDto = {
       preferences: Object.entries(preferencesMap).map(([type, channels]) => ({
         type: type as NotificationType,
@@ -260,6 +263,7 @@ export class NotificationService implements OnModuleInit {
     this.logger.log(
       `Creating default notification preferences for user ${userId}`,
     );
+    // Create default preferences in the database
     const defaultPreferences = Object.values(NotificationType).map((type) => {
       return this.prismaService.notificationPreference.upsert({
         where: {
@@ -271,14 +275,15 @@ export class NotificationService implements OnModuleInit {
         create: {
           userId,
           type: type as NotificationType,
-          channels: this.DEFAULT_PREFERENCES[type as NotificationType],
+          channels: DEFAULT_NOTIFICATION_PREFERENCES[type as NotificationType],
         },
         update: {
-          channels: this.DEFAULT_PREFERENCES[type],
+          channels: DEFAULT_NOTIFICATION_PREFERENCES[type as NotificationType],
         },
       });
     });
 
+    // Wait for all upserts to complete
     await Promise.all(defaultPreferences);
 
     return this.getUserPreferences(userId);
@@ -292,6 +297,8 @@ export class NotificationService implements OnModuleInit {
     preferences: UpdateNotificationPreferencesDto,
   ): Promise<GetNotificationPreferencesDto> {
     this.logger.log(`Updating notification preferences for user ${userId}`);
+
+    // Upsert each preference into the database
     const updates = Object.entries(preferences).map(([type, channels]) => {
       return this.prismaService.notificationPreference.upsert({
         where: {
@@ -311,6 +318,7 @@ export class NotificationService implements OnModuleInit {
       });
     });
 
+    // Wait for all upserts to complete
     await Promise.all(updates);
 
     return this.getUserPreferences(userId);
@@ -432,6 +440,7 @@ export class NotificationService implements OnModuleInit {
    */
   public async getUnreadNotificationCount(userId: UUID): Promise<number> {
     this.logger.log(`Counting unread notifications for user ${userId}`);
+    // Count unread notifications from the database
     return this.prismaService.notification.count({
       where: { userId, isRead: false },
     });
@@ -447,9 +456,12 @@ export class NotificationService implements OnModuleInit {
       where: { id: id, userId: userId },
     });
 
+    // If notification not found, throw error
     if (!notification) {
       throw new NotFoundException('Notification not found');
     }
+
+    // Update the notification to mark it as read
     await this.prismaService.notification.update({
       where: { id: notification.id },
       data: { isRead: true },
@@ -490,9 +502,13 @@ export class NotificationService implements OnModuleInit {
     id: UUID,
   ): Promise<GetNotificationDto> {
     this.logger.log(`Fetching notification ${id} for user ${userId}`);
+
+    // Fetch the notification from the database
     const notification = await this.prismaService.notification.findUnique({
       where: { id, userId },
     });
+
+    // If notification not found, throw error
     if (!notification) {
       throw new NotFoundException('Notification not found');
     }

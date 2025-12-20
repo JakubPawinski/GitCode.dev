@@ -46,6 +46,7 @@ export class NotificationConsumer {
   public async handleCreateNotification(
     @RabbitPayload() cmd: SendNotificationCommandEnvelope,
   ) {
+    // Map the command payload to NotifyParams
     const payload = {
       userId: cmd.payload.userId,
       type: cmd.payload.type as NotificationType,
@@ -69,6 +70,7 @@ export class NotificationConsumer {
     @RabbitPayload() event: UserCreatedEnvelope,
   ): Promise<void> {
     try {
+      // Set default notification preferences for the new user
       await this.notificationService.setDefaultPreferences(
         event.payload.userId,
       );
@@ -92,6 +94,7 @@ export class NotificationConsumer {
   public async handleUserBanned(
     @RabbitPayload() event: UserBannedEnvelope,
   ): Promise<void> {
+    // Create notification payload for user banned event
     const payload: NotifyParams = {
       userId: event.payload.userId,
       type: NotificationType.SYSTEM,
@@ -119,6 +122,7 @@ export class NotificationConsumer {
   public async handleUserProfileUpdated(
     @RabbitPayload() event: UserProfileUpdatedEnvelope,
   ): Promise<void> {
+    // Create notification payload for user profile updated event
     const payload: NotifyParams = {
       userId: event.payload.userId,
       type: NotificationType.SYSTEM,
@@ -144,6 +148,7 @@ export class NotificationConsumer {
   public async handleSoftDeleted(
     @RabbitPayload() event: UserSoftDeletedEnvelope,
   ): Promise<void> {
+    // Create notification payload for user soft deleted event
     const payload: NotifyParams = {
       userId: event.payload.userId,
       type: NotificationType.SYSTEM,
@@ -169,6 +174,7 @@ export class NotificationConsumer {
   public async handleFriendshipAccepted(
     @RabbitPayload() event: FriendshipAcceptedEnvelope,
   ): Promise<void> {
+    // Promise array to hold notification promises
     const promises = [];
 
     // Notify the addressee that their friend request was accepted
@@ -202,6 +208,7 @@ export class NotificationConsumer {
 
     promises.push(this.notificationService.notify(requesterPayload));
 
+    // Await all notification promises
     await Promise.all(promises);
   }
 
@@ -217,6 +224,7 @@ export class NotificationConsumer {
   public async handleFriendshipDeclined(
     @RabbitPayload() event: FriendshipDeclinedEnvelope,
   ): Promise<void> {
+    // Promise array to hold notification promises
     const promises = [];
 
     // Notify the addressee that their friend request was declined
@@ -250,6 +258,7 @@ export class NotificationConsumer {
 
     promises.push(this.notificationService.notify(requesterPayload));
 
+    // Await all notification promises
     await Promise.all(promises);
   }
 
@@ -265,6 +274,7 @@ export class NotificationConsumer {
   public async handleFriendshipRequested(
     @RabbitPayload() event: FriendshiprRequestedEnvelope,
   ): Promise<void> {
+    // Promise array to hold notification promises
     const promises = [];
 
     // Notify the addressee of the new friend request
@@ -300,6 +310,7 @@ export class NotificationConsumer {
 
     promises.push(this.notificationService.notify(requesterPayload));
 
+    // Await all notification promises
     await Promise.all(promises);
   }
 }

@@ -210,7 +210,10 @@ export class NotificationController {
       paginationQueryDto,
     );
   }
-
+  
+  /*
+   * Endpoint to get unread notifications for the user
+   */
   @Get('unread')
   @UseGuards(JwtAuthGuard, PermissionsGuards)
   @RequirePermissions(AppPermission.USER_READ_SELF)
