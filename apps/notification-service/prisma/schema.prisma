@@ -67,3 +67,14 @@ model Notification {
   @@unique([userId, id])
   @@map("notifications")
 }
+
+model NotificationConfig {
+  id          String   @id @default(uuid())
+  type        NotificationType
+  kind        String   @default("*")
+  isMandatory Boolean  @default(true) @map("is_mandatory")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@unique([type, kind])
+  @@map("notification_config")
+}

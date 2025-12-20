@@ -1,4 +1,9 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  OnModuleInit,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RealtimeService } from '../../realtime/realtime.service';
 import { ChannelType, NotificationType } from '@prisma/client-notification';
@@ -14,12 +19,41 @@ import { NotifyParams } from '../interfaces';
 import { PaginationQueryDto } from '@gitcode/common';
 
 @Injectable()
-export class NotificationService {
+export class NotificationService implements OnModuleInit {
   private readonly logger = new Logger(NotificationService.name);
+
+  // Cache for mandatory notification configuration
+  private configCache = new Map<string, boolean>();
+
   constructor(
     private readonly prismaService: PrismaService,
     private readonly realtimeService: RealtimeService,
   ) {}
+
+  /*
+   * Module initialization logic
+   */
+  async onModuleInit() {
+    this.logger.log('NotificationService module initialized');
+    await this.refreshConfigCache();
+  }
+
+  /*
+   * Refresh notification configuration cache
+   */
+  public async refreshConfigCache() {
+    const configs = await this.prismaService.notificationConfig.findMany();
+
+    this.configCache.clear();
+
+    configs.forEach((config) => {
+      const key = `${config.type}:${config.kind}`;
+      this.configCache.set(key, config.isMandatory);
+    });
+    this.logger.log(
+      `Loaded ${this.configCache.size} notification configs into cache`,
+    );
+  }
 
   // TODO - implement proper health check logic
   public getHealth() {
@@ -29,7 +63,7 @@ export class NotificationService {
   /*
    * Process and send notification based on user preferences
    */
-  public async processNotification(dto: PostNotificationDto) {
+  private async processNotification(dto: PostNotificationDto) {
     this.logger.log(`Processing notification for user ${dto.userId}: ${dto}`);
 
     const savedNotification = await this.saveNotificationToDb(dto);
@@ -56,6 +90,9 @@ export class NotificationService {
     await Promise.all(promises);
   }
 
+  /*
+   * Notify user with a notification
+   */
   public async notify(params: NotifyParams): Promise<void> {
     const { userId, type, kind, severity, payload } = params;
 
@@ -105,15 +142,18 @@ export class NotificationService {
     type: NotificationType,
     kind: NotificationKind,
   ): boolean {
-    if (type === NotificationType.SECURITY) {
-      return true;
+    // First, check specific type and kind
+    const specifyKey = `${type}:${kind}`;
+    if (this.configCache.has(specifyKey)) {
+      return this.configCache.get(specifyKey);
     }
-    if (
-      type === NotificationType.SYSTEM &&
-      kind === NotificationKind.USER_BANNED
-    ) {
-      return true;
+
+    // Next, check type with wildcard kind
+    const generalKey = `${type}:*`;
+    if (this.configCache.has(generalKey)) {
+      return this.configCache.get(generalKey);
     }
+
     return false;
   }
 
