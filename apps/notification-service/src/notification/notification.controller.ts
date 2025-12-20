@@ -4,6 +4,7 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Query,
   Sse,
   UseGuards,
   UseInterceptors,
@@ -22,9 +23,10 @@ import {
   AppPermission,
   type UUID,
   type AuthenticatedUser,
+  PaginatedResult,
 } from '@gitcode/types';
 import { GetNotificationDto, UpdateNotificationPreferencesDto } from './dtos';
-import { ResponseInterceptor } from '@gitcode/common';
+import { PaginationQueryDto, ResponseInterceptor } from '@gitcode/common';
 
 @Controller('notifications')
 @UseInterceptors(ResponseInterceptor)
@@ -96,9 +98,13 @@ export class NotificationController {
   @RequirePermissions(AppPermission.USER_READ_SELF)
   @ApiBearerAuth('Bearer Auth')
   public async getAllNotifications(
+    @Query() paginationQueryDto: PaginationQueryDto,
     @User() user: AuthenticatedUser,
-  ): Promise<GetNotificationDto[]> {
-    return await this.notificationService.getAllNotifications(user.id);
+  ): Promise<PaginatedResult<GetNotificationDto>> {
+    return await this.notificationService.getAllNotifications(
+      user.id,
+      paginationQueryDto,
+    );
   }
 
   @Get('unread')
@@ -107,7 +113,7 @@ export class NotificationController {
   @ApiBearerAuth('Bearer Auth')
   public async getUnreadNotifications(
     @User() user: AuthenticatedUser,
-  ): Promise<GetNotificationDto[]> {
+  ): Promise<PaginatedResult<GetNotificationDto>> {
     return this.notificationService.getUnreadNotifications(user.id);
   }
 

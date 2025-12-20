@@ -1,11 +1,8 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RealtimeService } from '../../realtime/realtime.service';
-import {
-  ChannelType,
-  NotificationType,
-} from '@prisma/client-notification';
-import { UUID } from '@gitcode/types';
+import { ChannelType, NotificationType } from '@prisma/client-notification';
+import { PaginatedResult, UUID } from '@gitcode/types';
 import {
   GetNotificationPreferencesDto,
   UpdateNotificationPreferencesDto,
@@ -14,6 +11,7 @@ import { PostNotificationDto, GetNotificationDto } from '../dtos/index';
 import { NotificationKind } from '../enums';
 import type { NotificationPayload } from '../types/index';
 import { NotifyParams } from '../interfaces';
+import { PaginationQueryDto } from '@gitcode/common';
 
 @Injectable()
 export class NotificationService {
@@ -283,31 +281,55 @@ export class NotificationService {
    */
   public async getAllNotifications(
     userId: UUID,
-  ): Promise<GetNotificationDto[]> {
+    paginationQueryDto?: PaginationQueryDto,
+  ): Promise<PaginatedResult<GetNotificationDto>> {
     this.logger.log(`Fetching all notifications for user ${userId}`);
 
-    // Fetch notifications from the database
-    const notifications = await this.prismaService.notification.findMany({
-      where: { userId },
-      orderBy: { createdAt: 'desc' },
-    });
-    this.logger.log(
-      `Fetched ${notifications.length} notifications for user ${userId}`,
-    );
+    // Calculate pagination parameters
+    const {
+      page = 1,
+      limit = 20,
+      sortBy = 'createdAt',
+      sortOrder = 'desc',
+    } = paginationQueryDto;
+    const skip = (page - 1) * limit;
 
-    // Map to GetNotificationDto
-    return notifications.map((notification) => ({
-      id: notification.id,
-      userId: notification.userId,
-      kind: notification.kind as NotificationKind,
-      type: notification.type,
-      severity: notification.severity,
-      payload: notification.payload as unknown as NotificationPayload,
-      channelsSent: notification.channelsSent,
-      createdAt: notification.createdAt,
-      updatedAt: notification.updatedAt,
-      isRead: notification.isRead,
-    }));
+    // Fetch notifications from the database
+    const [notifications, total] = await Promise.all([
+      this.prismaService.notification.findMany({
+        where: { userId },
+        orderBy: { [sortBy]: sortOrder },
+        skip,
+        take: limit,
+      }),
+      this.prismaService.notification.count({
+        where: { userId },
+      }),
+    ]);
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      data: notifications.map((notification) => ({
+        id: notification.id,
+        userId: notification.userId,
+        kind: notification.kind as NotificationKind,
+        type: notification.type,
+        severity: notification.severity,
+        payload: notification.payload as unknown as NotificationPayload,
+        channelsSent: notification.channelsSent,
+        createdAt: notification.createdAt,
+        updatedAt: notification.updatedAt,
+        isRead: notification.isRead,
+      })),
+      meta: {
+        totalItems: total,
+        totalPages,
+        currentPage: page,
+        pageSize: limit,
+        hasNextPage: page < totalPages,
+        hasPreviousPage: page > 1,
+      },
+    };
   }
 
   /*
@@ -315,31 +337,54 @@ export class NotificationService {
    */
   public async getUnreadNotifications(
     userId: UUID,
-  ): Promise<GetNotificationDto[]> {
+    paginationQueryDto?: PaginationQueryDto,
+  ): Promise<PaginatedResult<GetNotificationDto>> {
     this.logger.log(`Fetching unread notifications for user ${userId}`);
+    // Calculate pagination parameters
+    const {
+      page = 1,
+      limit = 20,
+      sortBy = 'createdAt',
+      sortOrder = 'desc',
+    } = paginationQueryDto;
+    const skip = (page - 1) * limit;
 
     // Fetch unread notifications from the database
-    const notifications = await this.prismaService.notification.findMany({
-      where: { userId, isRead: false },
-      orderBy: { createdAt: 'desc' },
-    });
-    this.logger.log(
-      `Fetched ${notifications.length} unread notifications for user ${userId}`,
-    );
+    const [notifications, total] = await Promise.all([
+      this.prismaService.notification.findMany({
+        where: { userId, isRead: false },
+        orderBy: { [sortBy]: sortOrder },
+        skip,
+        take: limit,
+      }),
+      this.prismaService.notification.count({
+        where: { userId, isRead: false },
+      }),
+    ]);
+    const totalPages = Math.ceil(total / limit);
 
-    // Map to GetNotificationDto
-    return notifications.map((notification) => ({
-      id: notification.id,
-      userId: notification.userId,
-      kind: notification.kind as NotificationKind,
-      type: notification.type,
-      severity: notification.severity,
-      payload: notification.payload as unknown as NotificationPayload,
-      channelsSent: notification.channelsSent,
-      createdAt: notification.createdAt,
-      updatedAt: notification.updatedAt,
-      isRead: notification.isRead,
-    }));
+    return {
+      data: notifications.map((notification) => ({
+        id: notification.id,
+        userId: notification.userId,
+        kind: notification.kind as NotificationKind,
+        type: notification.type,
+        severity: notification.severity,
+        payload: notification.payload as unknown as NotificationPayload,
+        channelsSent: notification.channelsSent,
+        createdAt: notification.createdAt,
+        updatedAt: notification.updatedAt,
+        isRead: notification.isRead,
+      })),
+      meta: {
+        totalItems: total,
+        totalPages,
+        currentPage: page,
+        pageSize: limit,
+        hasNextPage: page < totalPages,
+        hasPreviousPage: page > 1,
+      },
+    };
   }
 
   /*
