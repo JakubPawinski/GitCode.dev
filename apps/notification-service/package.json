@@ -5,6 +5,9 @@
   "nx": {
     "targets": {
       "build": {
+        "dependsOn": [
+          "prisma-generate"
+        ],
         "executor": "nx:run-commands",
         "options": {
           "command": "webpack-cli build",
