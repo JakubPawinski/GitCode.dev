@@ -40,7 +40,7 @@ export class NotificationConsumer {
   @RabbitSubscribe({
     exchange: RABBIT_CONFIG.EXCHANGE,
     routingKey: NOTIFICATION_PATTERNS.SEND_NOTIFICATION_CMD,
-    queue: RABBIT_CONFIG.QUEUE,
+    queue: `${RABBIT_CONFIG.QUEUE}_command`,
     errorBehavior: MessageHandlerErrorBehavior.NACK,
   })
   public async handleCreateNotification(
@@ -63,7 +63,7 @@ export class NotificationConsumer {
   @RabbitSubscribe({
     exchange: RABBIT_CONFIG.EXCHANGE,
     routingKey: AUTH_PATTERNS.USER_CREATED,
-    queue: RABBIT_CONFIG.QUEUE,
+    queue: `${RABBIT_CONFIG.QUEUE}_user_created`,
     errorBehavior: MessageHandlerErrorBehavior.NACK,
   })
   public async handleUserCreated(
@@ -88,7 +88,7 @@ export class NotificationConsumer {
   @RabbitSubscribe({
     exchange: RABBIT_CONFIG.EXCHANGE,
     routingKey: AUTH_PATTERNS.USER_BANNED,
-    queue: RABBIT_CONFIG.QUEUE,
+    queue: `${RABBIT_CONFIG.QUEUE}_user_banned`,
     errorBehavior: MessageHandlerErrorBehavior.NACK,
   })
   public async handleUserBanned(
@@ -116,7 +116,7 @@ export class NotificationConsumer {
   @RabbitSubscribe({
     exchange: RABBIT_CONFIG.EXCHANGE,
     routingKey: AUTH_PATTERNS.USER_PROFILE_UPDATED,
-    queue: RABBIT_CONFIG.QUEUE,
+    queue: `${RABBIT_CONFIG.QUEUE}_user_profile_updated`,
     errorBehavior: MessageHandlerErrorBehavior.NACK,
   })
   public async handleUserProfileUpdated(
@@ -142,7 +142,7 @@ export class NotificationConsumer {
   @RabbitSubscribe({
     exchange: RABBIT_CONFIG.EXCHANGE,
     routingKey: AUTH_PATTERNS.USER_SOFT_DELETED,
-    queue: RABBIT_CONFIG.QUEUE,
+    queue: `${RABBIT_CONFIG.QUEUE}_user_soft_deleted`,
     errorBehavior: MessageHandlerErrorBehavior.NACK,
   })
   public async handleSoftDeleted(
@@ -168,7 +168,7 @@ export class NotificationConsumer {
   @RabbitSubscribe({
     exchange: RABBIT_CONFIG.EXCHANGE,
     routingKey: SOCIAL_PATTERNS.FRIENDSHIP_ACCEPTED,
-    queue: RABBIT_CONFIG.QUEUE,
+    queue: `${RABBIT_CONFIG.QUEUE}_friendship`,
     errorBehavior: MessageHandlerErrorBehavior.NACK,
   })
   public async handleFriendshipAccepted(
@@ -218,7 +218,7 @@ export class NotificationConsumer {
   @RabbitSubscribe({
     exchange: RABBIT_CONFIG.EXCHANGE,
     routingKey: SOCIAL_PATTERNS.FRIENDSHIP_DECLINED,
-    queue: RABBIT_CONFIG.QUEUE,
+    queue: `${RABBIT_CONFIG.QUEUE}_friendship`,
     errorBehavior: MessageHandlerErrorBehavior.NACK,
   })
   public async handleFriendshipDeclined(
@@ -268,7 +268,7 @@ export class NotificationConsumer {
   @RabbitSubscribe({
     exchange: RABBIT_CONFIG.EXCHANGE,
     routingKey: SOCIAL_PATTERNS.FRIENDSHIP_REQUESTED,
-    queue: RABBIT_CONFIG.QUEUE,
+    queue: `${RABBIT_CONFIG.QUEUE}_friendship`,
     errorBehavior: MessageHandlerErrorBehavior.NACK,
   })
   public async handleFriendshipRequested(

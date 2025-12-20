@@ -5,6 +5,9 @@ import {
   UserBannedEvent,
   FriendshipAcceptedEvent,
   FriendshipDeclinedEvent,
+  UserProfileUpdatedEvent,
+  UserSoftDeletedEvent,
+  FriendshiprRequestedEvent,
 } from '@gitcode/contracts';
 
 // Envelope for UserCreatedEvent
@@ -20,12 +23,12 @@ export class UserBannedEnvelope extends WithEventPayload(UserBannedEvent) {}
 
 // Envelope for UserProfileUpdatedEvent
 export class UserProfileUpdatedEnvelope extends WithEventPayload(
-  UserCreatedEvent,
+  UserProfileUpdatedEvent,
 ) {}
 
 // Envelope for UserSoftDeletedEvent
 export class UserSoftDeletedEnvelope extends WithEventPayload(
-  UserCreatedEvent,
+  UserSoftDeletedEvent,
 ) {}
 
 // Envelope for FriendshipAcceptedEvent
@@ -39,5 +42,5 @@ export class FriendshipDeclinedEnvelope extends WithEventPayload(
 ) {}
 
 export class FriendshiprRequestedEnvelope extends WithEventPayload(
-  FriendshipDeclinedEvent,
+  FriendshiprRequestedEvent,
 ) {}

@@ -65,12 +65,13 @@ export class AuthService {
     });
     if (!userExists) {
       this.logger.log(
-        `Publishing UserCreatedEvent for new user ${userInfo.sub}`,
+        `Publishing UserCreatedEvent for new user ${userInfo.sub}\n With data: \n${userInfo.sub}, ${userInfo.email}, ${userInfo.given_name}, ${userInfo.family_name}`,
       );
       this.eventBus.publish(
         AUTH_PATTERNS.USER_CREATED,
         new UserCreatedEvent(
           userInfo.sub,
+          userInfo.preferred_username,
           userInfo.email,
           userInfo.given_name,
           userInfo.family_name,

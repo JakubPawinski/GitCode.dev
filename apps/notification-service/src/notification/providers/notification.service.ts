@@ -108,7 +108,12 @@ export class NotificationService implements OnModuleInit {
       await this.getUserPreferences(userId);
 
     // Get channels to send based on user preferences
-    const channelsToSend = userPreferences.preferences[type];
+    const specificPreference = userPreferences.preferences.find(
+      (p) => p.type === type,
+    );
+    const channelsToSend = specificPreference
+      ? [...specificPreference.channels]
+      : [];
 
     // Check if the notification is mandatory
     if (this.isMandatoryNotification(type, kind)) {
