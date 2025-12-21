@@ -62,6 +62,14 @@ http:
       middlewares:
         - strip-api
 
+    notification-route:
+      rule: PathPrefix(`/api/notifications`)
+      service: notification-service
+      entryPoints:
+        - gateway
+      middlewares:
+        - strip-api
+
   services:
     auth-service:
       loadBalancer:
@@ -85,6 +93,10 @@ http:
             sameSite: 'lax'
         servers:
           - url: 'http://host.docker.internal:4002'
+    notification-service:
+      loadBalancer:
+        servers:
+          - url: 'http://host.docker.internal:4003'
 
   middlewares:
     strip-api:

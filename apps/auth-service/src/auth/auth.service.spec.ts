@@ -6,6 +6,7 @@ import { AuthService } from './auth.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { RedisService } from '../redis/redis.service';
 import { AppRole, AppPermission } from '@gitcode/types';
+import { EventBus } from '@gitcode/messaging';
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -19,6 +20,7 @@ describe('AuthService', () => {
       user: {
         upsert: jest.fn(),
         findUnique: jest.fn(),
+        count: jest.fn(),
       },
       oAuthToken: {
         upsert: jest.fn(),
@@ -41,6 +43,10 @@ describe('AuthService', () => {
       get: jest.fn(),
     };
 
+    const mockEventBus = {
+      publish: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AuthService,
@@ -59,6 +65,10 @@ describe('AuthService', () => {
         {
           provide: ConfigService,
           useValue: mockConfigService,
+        },
+        {
+          provide: EventBus,
+          useValue: mockEventBus,
         },
       ],
     }).compile();

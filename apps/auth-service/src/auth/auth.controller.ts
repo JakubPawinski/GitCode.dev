@@ -123,8 +123,7 @@ export class AuthController {
       res.clearCookie('oauth_state');
 
       // Exchange code for tokens and create session
-      const {refreshToken } =
-        await this.authService.handleCallback(code);
+      const { refreshToken } = await this.authService.handleCallback(code);
 
       // Set refresh token in HTTP-only cookie
       res.cookie('gc_refresh', refreshToken, {

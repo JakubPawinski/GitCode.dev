@@ -17,6 +17,7 @@ import {
   privacyLevelEnum,
 } from '@gitcode/types';
 import { PaginationQueryDto } from '@gitcode/common';
+import { EventBus } from '@gitcode/messaging';
 
 describe('UsersService', () => {
   let service: UsersService;
@@ -46,6 +47,10 @@ describe('UsersService', () => {
       revokeAllUserTokens: jest.fn(),
     };
 
+    const mockEventBus = {
+      publish: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         UsersService,
@@ -56,6 +61,10 @@ describe('UsersService', () => {
         {
           provide: AuthService,
           useValue: mockAuthService,
+        },
+        {
+          provide: EventBus,
+          useValue: mockEventBus,
         },
       ],
     }).compile();
@@ -223,7 +232,6 @@ describe('UsersService', () => {
       const mockPrefs = {
         theme: themeEnum.LIGHT,
         language: 'en',
-        notifications: true,
         privacyLevel: privacyLevelEnum.PUBLIC,
       };
       (prismaService.userPreferences.findUnique as jest.Mock).mockResolvedValue(

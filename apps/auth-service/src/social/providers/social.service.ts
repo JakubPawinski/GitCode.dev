@@ -8,9 +8,19 @@ import {
   FriendRequestDto,
   RespondFriendRequestDto,
 } from '../dtos';
+import { EventBus } from '@gitcode/messaging';
+import {
+  FriendshipAcceptedEvent,
+  FriendshipDeclinedEvent,
+  FriendshipRequestedEvent,
+  SOCIAL_PATTERNS,
+} from '@gitcode/contracts';
 @Injectable()
 export class SocialService {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly eventBus: EventBus,
+  ) {}
 
   /*
    * Get all friends for a user
@@ -100,6 +110,18 @@ export class SocialService {
       },
     });
 
+    // Create event for friend request sent
+    await this.eventBus.publish(
+      SOCIAL_PATTERNS.FRIENDSHIP_REQUESTED,
+      new FriendshipRequestedEvent(
+        friendRequest.id,
+        senderId,
+        friendRequest.requester.username,
+        addresseeId,
+        friendRequest.addressee.username,
+      ),
+    );
+
     const mappedFriendRequest: FriendRequestDto = {
       id: friendRequest.id,
       requester: {
@@ -161,6 +183,36 @@ export class SocialService {
         status: true,
       },
     });
+
+    // Create event for friend request response
+    switch (status) {
+      case FriendRequestStatus.ACCEPTED:
+        await this.eventBus.publish(
+          SOCIAL_PATTERNS.FRIENDSHIP_ACCEPTED,
+          new FriendshipAcceptedEvent(
+            updatedFriendRequest.id,
+            updatedFriendRequest.requester.id,
+            updatedFriendRequest.requester.username,
+            updatedFriendRequest.addressee.id,
+            updatedFriendRequest.addressee.username,
+          ),
+        );
+        break;
+      case FriendRequestStatus.REJECTED:
+        await this.eventBus.publish(
+          SOCIAL_PATTERNS.FRIENDSHIP_DECLINED,
+          new FriendshipDeclinedEvent(
+            updatedFriendRequest.id,
+            updatedFriendRequest.requester.id,
+            updatedFriendRequest.requester.username,
+            updatedFriendRequest.addressee.id,
+            updatedFriendRequest.addressee.username,
+          ),
+        );
+        break;
+      default:
+        break;
+    }
 
     const mappedFriendRequest: FriendRequestDto = {
       id: updatedFriendRequest.id,

@@ -23,6 +23,10 @@ app.listen(config.port, '0.0.0.0', async () => {
     config.problemServiceHealthUrl,
     'Problem Service',
   );
+  await config.waitForService(
+    config.notificationServiceHealthUrl,
+    'Notification Service',
+  );
   console.log('\nAll services ready! Building Swagger specs...');
   await buildSwagger(config.apiGatewaySpec, config.services);
   console.log('Swagger documentation built successfully');

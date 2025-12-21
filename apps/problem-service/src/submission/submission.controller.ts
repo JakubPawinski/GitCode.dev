@@ -33,6 +33,7 @@ export class SubmissionController {
 
   @Post()
   @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('Bearer Auth')
   create(
     @Body() createSubmissionDto: CreateSubmissionDto,
     @User() user: AuthenticatedUser,
@@ -43,7 +44,7 @@ export class SubmissionController {
 
   @Get('user/history')
   @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
+  @ApiBearerAuth('Bearer Auth')
   @ApiOperation({ summary: 'Get user submission history' })
   @ApiResponse({
     status: 200,
@@ -62,6 +63,7 @@ export class SubmissionController {
 
   @Get('attempts/:attemptId')
   @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('Bearer Auth')
   async getAttemptDetails(
     @Param('attemptId') attemptId: string,
   ): Promise<AttemptDetailsDto> {
@@ -70,7 +72,7 @@ export class SubmissionController {
 
   @Get('stats')
   @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
+  @ApiBearerAuth('Bearer Auth')
   @ApiOperation({ summary: 'Get user submission statistics' })
   @ApiResponse({
     status: 200,
@@ -84,7 +86,7 @@ export class SubmissionController {
 
   @Get('recent')
   @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
+  @ApiBearerAuth('Bearer Auth')
   @ApiOperation({ summary: 'Get recent submissions (last N)' })
   @ApiResponse({
     status: 200,
@@ -100,7 +102,7 @@ export class SubmissionController {
 
   @Get(':submissionId')
   @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
+  @ApiBearerAuth('Bearer Auth')
   @ApiOperation({ summary: 'Get submission details by ID' })
   @ApiResponse({
     status: 200,
@@ -116,7 +118,7 @@ export class SubmissionController {
 
   @Delete(':submissionId')
   @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
+  @ApiBearerAuth('Bearer Auth')
   @ApiOperation({ summary: 'Delete a submission' })
   @ApiResponse({
     status: 200,
