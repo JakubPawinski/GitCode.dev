@@ -38,16 +38,19 @@ describe('SubmissionService', () => {
     id: mockSubmissionId,
     userId: mockUserId,
     problemId: mockProblemId,
-    status: 'in_progress',
+    isSolved: false,
     currentCode: 'def twoSum(nums, target): pass',
     currentLanguage: 'python',
     totalTestCases: 1,
     githubUrl: null,
     commitHash: null,
-    acceptedAt: null,
+    solvedAt: null,
     createdAt: new Date(),
     updatedAt: new Date(),
     submittedAt: new Date(),
+    firstAttemptAt: null,
+    lastAttemptId: null,
+    passedTestCases: 0,
   };
 
   const mockSolutionAttempt = {
@@ -379,6 +382,7 @@ describe('SubmissionService', () => {
       const mockSubmissions = [
         {
           userId: mockUserId,
+          isSolved: true,
           attempts: [
             {
               status: 'success',
@@ -394,6 +398,7 @@ describe('SubmissionService', () => {
         },
         {
           userId: mockUserId,
+          isSolved: true,
           attempts: [
             {
               status: 'success',
