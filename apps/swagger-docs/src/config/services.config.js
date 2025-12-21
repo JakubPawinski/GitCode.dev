@@ -22,6 +22,7 @@ module.exports = {
   waitForService,
   authServiceHealthUrl: `${process.env.AUTH_SERVICE_URL}/auth/health`,
   problemServiceHealthUrl: `${process.env.PROBLEM_SERVICE_URL}/problems/health`,
+  notificationServiceHealthUrl: `${process.env.NOTIFICATION_SERVICE_URL}/notifications/health`,
 
   apiGatewaySpec: {
     openapi: '3.0.0',
@@ -44,6 +45,11 @@ module.exports = {
     {
       name: 'Problem Service',
       url: `${process.env.PROBLEM_SERVICE_URL}/docs-json`,
+      pathPrefix: '/api',
+    },
+    {
+      name: 'Notification Service',
+      url: `${process.env.NOTIFICATION_SERVICE_URL}/docs-json`,
       pathPrefix: '/api',
     },
   ],

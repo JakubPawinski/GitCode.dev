@@ -1,11 +1,25 @@
-export interface TopicProps {
-  topic: string
-}
+'use client'
+import Link from 'next/link'
+import { useParams } from 'next/navigation'
 
-export const Topic = ({ topic }: TopicProps) => {
+export const Topic = ({ topic }: { topic: string }) => {
+  const { problem } = useParams()
+
+  const topicSlug = topic.replaceAll(' ', '-').toLowerCase()
+
+  if (problem) {
+    return (
+      <Link
+        href={`/tag/${topicSlug}`}
+        className={`bg-primary/10 text-foreground/80 hover:bg-primary/20 hover:text-foreground inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold transition-all duration-300`}
+      >
+        {topic}
+      </Link>
+    )
+  }
   return (
     <div
-      className={`inline-flex items-center rounded-full px-4 py-2 text-sm font-semibold transition-all duration-300`}
+      className={`bg-primary/10 text-foreground/80 hover:bg-primary/20 hover:text-foreground inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold transition-all duration-300`}
     >
       {topic}
     </div>

@@ -10,6 +10,7 @@ import { GitCodeCommonModule } from '@gitcode/common';
 import { PrismaModule } from './prisma/prisma.module';
 import { RedisModule } from './redis/redis.module';
 import { GitCodeAuthModule } from '@gitcode/auth';
+import { MessagingModule } from '@gitcode/messaging';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { GitCodeAuthModule } from '@gitcode/auth';
     SocialModule,
     GitCodeCommonModule,
     GitCodeAuthModule,
+    MessagingModule.forRoot([process.env.RABBITMQ_URL]),
   ],
   controllers: [AppController],
   providers: [AppService],

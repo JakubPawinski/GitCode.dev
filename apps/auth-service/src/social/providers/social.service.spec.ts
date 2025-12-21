@@ -9,6 +9,7 @@ import {
   FriendRequestDto,
   RespondFriendRequestDto,
 } from '../dtos';
+import { EventBus } from '@gitcode/messaging';
 describe('SocialService', () => {
   let service: SocialService;
   let prismaService: jest.Mocked<PrismaService>;
@@ -24,12 +25,20 @@ describe('SocialService', () => {
       },
     };
 
+    const mockEventBus = {
+      publish: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         SocialService,
         {
           provide: PrismaService,
           useValue: mockPrismaService,
+        },
+        {
+          provide: EventBus,
+          useValue: mockEventBus,
         },
       ],
     }).compile();

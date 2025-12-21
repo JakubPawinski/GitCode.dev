@@ -251,3 +251,4 @@ keycloak/
 .github/instructions/nx.instructions.md
 
 tmp/
+test-output

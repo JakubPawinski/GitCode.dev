@@ -22,12 +22,20 @@ import {
 import { PaginationQueryDto } from '@gitcode/common';
 import { Prisma } from '@prisma/client-auth';
 import { AuthService } from '../../auth/auth.service';
+import { EventBus } from '@gitcode/messaging';
+import {
+  AUTH_PATTERNS,
+  UserBannedEvent,
+  UserProfileUpdatedEvent,
+  UserSoftDeletedEvent,
+} from '@gitcode/contracts';
 
 @Injectable()
 export class UsersService {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly authService: AuthService,
+    private readonly eventBus: EventBus,
   ) {}
 
   /*
@@ -116,6 +124,12 @@ export class UsersService {
       },
     });
 
+    // Publish user profile updated event
+    await this.eventBus.publish(
+      AUTH_PATTERNS.USER_PROFILE_UPDATED,
+      new UserProfileUpdatedEvent(userId, updatedUser.username),
+    );
+
     // Map to GetProfileDto
     const profileDto: GetProfileDto = {
       id: updatedUser.id,
@@ -155,6 +169,12 @@ export class UsersService {
       },
     });
 
+    // Publish user soft deleted event
+    await this.eventBus.publish(
+      AUTH_PATTERNS.USER_SOFT_DELETED,
+      new UserSoftDeletedEvent(userId, softDeletedUser.username),
+    );
+
     // Map to GetProfileDto
     const profileDto: GetProfileDto = {
       id: softDeletedUser.id,
@@ -189,7 +209,6 @@ export class UsersService {
     const preferencesDto: GetPreferencesDto = {
       theme: userPreferences.theme as themeEnum,
       language: userPreferences.language,
-      notifications: userPreferences.notifications,
       privacyLevel: userPreferences.privacyLevel as privacyLevelEnum,
     };
     return preferencesDto;
@@ -224,7 +243,6 @@ export class UsersService {
     const preferencesDto: GetPreferencesDto = {
       theme: updatedPreferences.theme as themeEnum,
       language: updatedPreferences.language,
-      notifications: updatedPreferences.notifications,
       privacyLevel: updatedPreferences.privacyLevel as privacyLevelEnum,
     };
     return preferencesDto;
@@ -264,7 +282,6 @@ export class UsersService {
         ? {
             theme: user.preferences.theme as themeEnum,
             language: user.preferences.language,
-            notifications: user.preferences.notifications,
             privacyLevel: user.preferences.privacyLevel as privacyLevelEnum,
           }
         : null,
@@ -317,7 +334,6 @@ export class UsersService {
         ? {
             theme: user.preferences.theme as themeEnum,
             language: user.preferences.language,
-            notifications: user.preferences.notifications,
             privacyLevel: user.preferences.privacyLevel as privacyLevelEnum,
           }
         : null,
@@ -365,6 +381,12 @@ export class UsersService {
     // Revoke all tokens for the user
     await this.authService.revokeAllUserTokens(id);
 
+    // Publish user banned event
+    await this.eventBus.publish(
+      AUTH_PATTERNS.USER_BANNED,
+      new UserBannedEvent(id, userToBan.username),
+    );
+
     // Map to GetUserDto
     const userDto: GetUserDto = {
       id: bannedUser.id,
@@ -386,7 +408,6 @@ export class UsersService {
         ? {
             theme: bannedUser.preferences.theme as themeEnum,
             language: bannedUser.preferences.language,
-            notifications: bannedUser.preferences.notifications,
             privacyLevel: bannedUser.preferences
               .privacyLevel as privacyLevelEnum,
           }
@@ -529,7 +550,6 @@ export class UsersService {
         ? {
             theme: user.preferences.theme as themeEnum,
             language: user.preferences.language,
-            notifications: user.preferences.notifications,
             privacyLevel: user.preferences.privacyLevel as privacyLevelEnum,
           }
         : null,

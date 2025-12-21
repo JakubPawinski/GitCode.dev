@@ -1,0 +1,80 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../../../node_modules/@prisma/client-notification"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+
+enum NotificationSeverity {
+  INFO
+  WARNING
+  ERROR
+  SUCCESS
+}
+
+enum ChannelType {
+  EMAIL
+  SMS
+  PUSH
+  IN_APP
+}
+
+enum NotificationType {
+  SECURITY
+  BILLING
+  SYSTEM
+  SUPPORT
+  SOCIAL
+  MARKETING
+}
+
+model NotificationPreference {
+  id             String        @id @default(uuid())
+  userId         String        @map("user_id")
+
+  channels    ChannelType[]    @default([EMAIL, IN_APP])
+  type      NotificationType
+
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@unique([userId, type])
+  @@map("notification_preference")
+
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+
+  severity  NotificationSeverity
+  kind      String
+  type      NotificationType
+
+  payload   Json     @db.JsonB
+
+  channelsSent ChannelType[] @map("channels_sent")
+
+  isRead    Boolean  @default(false) @map("is_read")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@unique([userId, id])
+  @@map("notifications")
+}
+
+model NotificationConfig {
+  id          String   @id @default(uuid())
+  type        NotificationType
+  kind        String   @default("*")
+  isMandatory Boolean  @default(true) @map("is_mandatory")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@unique([type, kind])
+  @@map("notification_config")
+}

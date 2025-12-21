@@ -8,7 +8,9 @@
       "!{projectRoot}/tsconfig.spec.json",
       "!{projectRoot}/jest.config.[jt]s",
       "!{projectRoot}/src/test-setup.[jt]s",
-      "!{projectRoot}/test-setup.[jt]s"
+      "!{projectRoot}/test-setup.[jt]s",
+      "!{projectRoot}/.eslintrc.json",
+      "!{projectRoot}/eslint.config.mjs"
     ],
     "sharedGlobals": ["{workspaceRoot}/.github/workflows/ci.yml"]
   },
@@ -27,7 +29,11 @@
           "watchDepsName": "watch-deps"
         }
       },
-      "exclude": ["packages/auth/*", "packages/common/*"]
+      "exclude": [
+        "packages/auth/*",
+        "packages/common/*",
+        "packages/messaging/*"
+      ]
     },
     {
       "plugin": "@nx/webpack/plugin",
@@ -42,7 +48,11 @@
     },
     {
       "plugin": "@nx/js/typescript",
-      "include": ["packages/auth/*", "packages/common/*"],
+      "include": [
+        "packages/auth/*",
+        "packages/common/*",
+        "packages/messaging/*"
+      ],
       "options": {
         "typecheck": {
           "targetName": "typecheck"
@@ -53,6 +63,13 @@
       "plugin": "@nx/jest/plugin",
       "options": {
         "targetName": "test"
+      },
+      "exclude": ["apps/notification-service-e2e/**/*"]
+    },
+    {
+      "plugin": "@nx/eslint/plugin",
+      "options": {
+        "targetName": "lint"
       }
     }
   ],

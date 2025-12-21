@@ -10,6 +10,7 @@ import { ConfigModule } from '@nestjs/config';
 import configuration from './config/configuration';
 import { GitCodeCommonModule } from '@gitcode/common';
 import { GitCodeAuthModule } from '@gitcode/auth';
+import { MessagingModule } from '@gitcode/messaging';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { GitCodeAuthModule } from '@gitcode/auth';
     }),
     GitCodeCommonModule,
     GitCodeAuthModule,
+    MessagingModule.forRoot([process.env.RABBITMQ_URL])
   ],
   controllers: [AppController],
   providers: [AppService],
