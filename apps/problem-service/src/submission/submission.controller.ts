@@ -15,7 +15,13 @@ import {
 } from './dto/create-submission.dto';
 import { JwtAuthGuard, User } from '@gitcode/auth';
 import type { AuthenticatedUser } from '@gitcode/types';
-import { ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiExtraModels,
+  ApiOperation,
+  ApiResponse,
+  getSchemaPath,
+} from '@nestjs/swagger';
 import {
   AttemptDetailsDto,
   DeleteResponseDto,
@@ -24,16 +30,51 @@ import {
   SubmissionHistoryDto,
   SubmissionStatsDto,
 } from './dto';
-import { PaginationQueryDto } from '@gitcode/common';
+import {
+  ApiResponseDto,
+  PaginatedResponseDto,
+  PaginationQueryDto,
+} from '@gitcode/common';
 import { PaginatedResult } from '@gitcode/types';
 
 @Controller('submissions')
+@ApiExtraModels(
+  CreateSubmissionResponseDto,
+  SubmissionHistoryDto,
+  AttemptDetailsDto,
+  SubmissionStatsDto,
+  RecentSubmissionDto,
+  SubmissionDetailDto,
+  ApiResponseDto,
+  PaginatedResponseDto,
+  DeleteResponseDto,
+)
 export class SubmissionController {
   constructor(private readonly submissionService: SubmissionService) {}
 
   @Post()
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('Bearer Auth')
+  @ApiOperation({ summary: 'Create a new submission' })
+  @ApiResponse({
+    status: 201,
+    description: 'Submission created successfully',
+    schema: {
+      allOf: [
+        {
+          $ref: getSchemaPath(ApiResponseDto),
+        },
+        {
+          properties: {
+            data: {
+              $ref: getSchemaPath(CreateSubmissionResponseDto),
+              type: 'object',
+            },
+          },
+        },
+      ],
+    },
+  })
   create(
     @Body() createSubmissionDto: CreateSubmissionDto,
     @User() user: AuthenticatedUser,
@@ -49,6 +90,21 @@ export class SubmissionController {
   @ApiResponse({
     status: 200,
     description: 'All submissions for current user',
+    schema: {
+      allOf: [
+        {
+          $ref: getSchemaPath(PaginatedResponseDto),
+        },
+        {
+          properties: {
+            data: {
+              $ref: getSchemaPath(SubmissionHistoryDto),
+              type: 'array',
+            },
+          },
+        },
+      ],
+    },
   })
   getUserHistory(
     @User() user: AuthenticatedUser,
@@ -64,6 +120,24 @@ export class SubmissionController {
   @Get('attempts/:attemptId')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('Bearer Auth')
+  @ApiOperation({ summary: 'Get details of a specific submission attempt' })
+  @ApiResponse({
+    status: 200,
+    description: 'Details of the submission attempt',
+    schema: {
+      allOf: [
+        { $ref: getSchemaPath(ApiResponseDto) },
+        {
+          properties: {
+            data: {
+              $ref: getSchemaPath(AttemptDetailsDto),
+              type: 'object',
+            },
+          },
+        },
+      ],
+    },
+  })
   async getAttemptDetails(
     @Param('attemptId') attemptId: string,
   ): Promise<AttemptDetailsDto> {
@@ -77,7 +151,19 @@ export class SubmissionController {
   @ApiResponse({
     status: 200,
     description: 'User submission stats (total, solved, acceptance rate)',
-    type: SubmissionStatsDto,
+    schema: {
+      allOf: [
+        { $ref: getSchemaPath(ApiResponseDto) },
+        {
+          properties: {
+            data: {
+              $ref: getSchemaPath(SubmissionStatsDto),
+              type: 'object',
+            },
+          },
+        },
+      ],
+    },
   })
   getUserStats(@User() user: AuthenticatedUser): Promise<SubmissionStatsDto> {
     const userId = user.id;
@@ -91,6 +177,19 @@ export class SubmissionController {
   @ApiResponse({
     status: 200,
     description: 'Recent user submissions',
+    schema: {
+      allOf: [
+        { $ref: getSchemaPath(ApiResponseDto) },
+        {
+          properties: {
+            data: {
+              type: 'array',
+              items: { $ref: getSchemaPath(RecentSubmissionDto) },
+            },
+          },
+        },
+      ],
+    },
   })
   getRecentSubmissions(
     @User() user: AuthenticatedUser,
@@ -107,6 +206,19 @@ export class SubmissionController {
   @ApiResponse({
     status: 200,
     description: 'Full submission details with all attempts',
+    schema: {
+      allOf: [
+        { $ref: getSchemaPath(ApiResponseDto) },
+        {
+          properties: {
+            data: {
+              $ref: getSchemaPath(SubmissionDetailDto),
+              type: 'object',
+            },
+          },
+        },
+      ],
+    },
   })
   getSubmissionById(
     @Param('submissionId') submissionId: string,
@@ -123,6 +235,19 @@ export class SubmissionController {
   @ApiResponse({
     status: 200,
     description: 'Submission deleted successfully',
+    schema: {
+      allOf: [
+        { $ref: getSchemaPath(ApiResponseDto) },
+        {
+          properties: {
+            data: {
+              $ref: getSchemaPath(DeleteResponseDto),
+              type: 'object',
+            },
+          },
+        },
+      ],
+    },
   })
   deleteSubmission(
     @Param('submissionId') submissionId: string,

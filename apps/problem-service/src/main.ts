@@ -21,7 +21,6 @@ async function bootstrap() {
     .setDescription('API documentation for the Problem Service')
     .addServer(`http://localhost:${process.env.PORT ?? 4002}`, 'Local server')
     .setVersion('1.0')
-    .addBearerAuth()
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('docs', app, document);
