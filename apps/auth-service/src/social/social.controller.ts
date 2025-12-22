@@ -78,7 +78,11 @@ export class SocialController {
   @Get('/leaderboard')
   @RequirePermissions(AppPermission.SOCIAL_LEADERBOARD_VIEW)
   @ApiBearerAuth('Bearer Auth')
-  //   @ApiOperation({ summary: 'Get social leaderboard' })
+  @ApiOperation({ summary: 'Get social leaderboard' })
+  @ApiResponse({
+    status: 501,
+    description: 'Not implemented',
+  })
   public async getLeaderboard() {
     // TODO: implement leaderboard
   }
@@ -188,6 +192,26 @@ export class SocialController {
   @ApiResponse({
     status: 200,
     description: 'Friend removed successfully',
+    schema: {
+      allOf: [
+        { $ref: getSchemaPath(ApiResponseDto) },
+        {
+          properties: {
+            data: {
+              type: 'object',
+              properties: {
+                message: {
+                  type: 'string',
+                  example: 'Friend removed successfully',
+                },
+                success: { type: 'boolean', example: true },
+                removedUserId: { type: 'string', format: 'uuid' },
+              },
+            },
+          },
+        },
+      ],
+    },
   })
   public async removeFriend(
     @User() user: AuthenticatedUser,

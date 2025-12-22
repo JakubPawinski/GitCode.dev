@@ -16,6 +16,8 @@ import {
   ApiResponse,
   ApiBearerAuth,
   ApiSecurity,
+  getSchemaPath,
+  ApiExtraModels,
 } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import {
@@ -30,6 +32,7 @@ import { AppService } from '../app.service';
 
 @Controller('auth')
 @ApiTags('Authentication')
+@ApiExtraModels(ApiResponseDto, AuthResponseDto, UserDto, LogoutResponseDto)
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
@@ -44,8 +47,12 @@ export class AuthController {
   }
 
   @Get('login')
-  @ApiOperation({ summary: 'Initiate OAuth login flow' })
+  @ApiOperation({ summary: 'Initiate OAuth login flow via keycloak provider' })
   @ApiQuery({ name: 'provider', enum: ['keycloak', 'github'], required: false })
+  @ApiResponse({
+    status: 302,
+    description: 'Redirects to the OAuth provider login page',
+  })
   async login(
     @Query('provider') provider: string = 'keycloak',
     @Res() res: Response,
@@ -71,6 +78,11 @@ export class AuthController {
   @ApiQuery({ name: 'state', required: true })
   @ApiQuery({ name: 'error', required: false })
   @ApiQuery({ name: 'error_description', required: false })
+  @ApiResponse({
+    status: 302,
+    description:
+      'Redirects to frontend with success or error information in query params',
+  })
   async callback(
     @Query('code') code: string,
     @Query('state') state: string,
@@ -163,7 +175,19 @@ export class AuthController {
   @ApiResponse({
     status: 200,
     description: 'Token refreshed successfully',
-    type: AuthResponseDto,
+    schema: {
+      allOf: [
+        { $ref: getSchemaPath(ApiResponseDto) },
+        {
+          properties: {
+            data: {
+              type: 'object',
+              $ref: getSchemaPath(AuthResponseDto),
+            },
+          },
+        },
+      ],
+    },
   })
   @ApiResponse({
     status: 401,
@@ -238,7 +262,19 @@ export class AuthController {
   @ApiResponse({
     status: 200,
     description: 'Logged out successfully',
-    type: LogoutResponseDto,
+    schema: {
+      allOf: [
+        { $ref: getSchemaPath(ApiResponseDto) },
+        {
+          properties: {
+            data: {
+              type: 'object',
+              $ref: getSchemaPath(LogoutResponseDto),
+            },
+          },
+        },
+      ],
+    },
   })
   async logout(
     @Req() req: Request,
@@ -276,11 +312,28 @@ export class AuthController {
   @ApiResponse({
     status: 200,
     description: 'User profile retrieved successfully',
-    type: UserDto,
+    schema: {
+      allOf: [
+        { $ref: getSchemaPath(ApiResponseDto) },
+        {
+          properties: {
+            data: {
+              type: 'object',
+              $ref: getSchemaPath(UserDto),
+            },
+          },
+        },
+      ],
+    },
   })
   @ApiResponse({
     status: 401,
     description: 'Unauthorized - invalid or missing token',
+    schema: {
+      allOf: [
+        { $ref: getSchemaPath(ApiResponseDto) },
+      ],
+    },  
   })
   async getProfile(@Req() req: any): Promise<ApiResponseDto<UserDto>> {
     return {
@@ -297,6 +350,10 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('Bearer Auth')
   @ApiOperation({ summary: 'Initiate account update via Keycloak' })
+  @ApiResponse({
+    status: 302,
+    description: 'Redirects to Keycloak account management page',
+  })
   public async initiateAccountUpdate(@Res() res: Response) {
     const { accountUpdateUrl } = await this.authService.initiateAccountUpdate();
     return res.redirect(accountUpdateUrl);
@@ -305,6 +362,11 @@ export class AuthController {
   @Get('account/callback')
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Handle account update callback from Keycloak' })
+  @ApiResponse({
+    status: 302,
+    description:
+      'Redirects to frontend with account update result in query params',
+  })
   public async handleAccountUpdateCallback(
     @Req() req: any,
     @Res() res: Response,
