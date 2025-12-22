@@ -14,6 +14,8 @@ import {
   ApiResponse,
   ApiTags,
   ApiBearerAuth,
+  ApiExtraModels,
+  getSchemaPath,
 } from '@nestjs/swagger';
 import { ProblemService } from './problem.service';
 import { JwtAuthGuard, User } from '@gitcode/auth';
@@ -28,13 +30,25 @@ import {
   UserSubmissionDto,
   CreateProblemDto,
   UpdateProblemDto,
-  ProblemPaginationQueryDto
+  ProblemPaginationQueryDto,
 } from './dto';
 
 import { PaginatedResult } from '@gitcode/types';
+import { ApiResponseDto, PaginatedResponseDto } from '@gitcode/common';
 
 @ApiTags('Problems')
 @Controller('problems')
+@ApiExtraModels(
+  ProblemResponseDto,
+  ProblemDetailResponseDto,
+  ProblemStatsResponseDto,
+  UserProgressResponseDto,
+  TrendingResponseDto,
+  RecommendedResponseDto,
+  UserSubmissionDto,
+  PaginatedResponseDto,
+  ApiResponseDto,
+)
 export class ProblemController {
   constructor(private readonly problemService: ProblemService) {}
 
@@ -46,13 +60,24 @@ export class ProblemController {
 
   @Get()
   @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
+  @ApiBearerAuth('Bearer Auth')
   @ApiOperation({ summary: 'Get paginated problems list' })
   @ApiResponse({
     status: 200,
     description: 'List of problems with pagination',
-    type: ProblemResponseDto,
-    isArray: true,
+    schema: {
+      allOf: [
+        { $ref: getSchemaPath(PaginatedResponseDto) },
+        {
+          properties: {
+            data: {
+              $ref: getSchemaPath(ProblemResponseDto),
+              type: 'array',
+            },
+          },
+        },
+      ],
+    },
   })
   findAll(
     @Query() paginationDto: ProblemPaginationQueryDto,
@@ -62,12 +87,23 @@ export class ProblemController {
 
   @Get('user/progress')
   @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
+  @ApiBearerAuth('Bearer Auth')
   @ApiOperation({ summary: 'Get user progress on problems' })
   @ApiResponse({
     status: 200,
     description: 'User progress statistics',
-    type: UserProgressResponseDto,
+    schema: {
+      allOf: [
+        { $ref: getSchemaPath(ApiResponseDto) },
+        {
+          properties: {
+            data: {
+              $ref: getSchemaPath(UserProgressResponseDto),
+            },
+          },
+        },
+      ],
+    },
   })
   getUserProgress(
     @User() user: AuthenticatedUser,
@@ -78,12 +114,23 @@ export class ProblemController {
 
   @Get('recommendations')
   @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
+  @ApiBearerAuth('Bearer Auth')
   @ApiOperation({ summary: 'Get recommended problems for user' })
   @ApiResponse({
     status: 200,
     description: 'Recommended problems based on user topics',
-    type: RecommendedResponseDto,
+    schema: {
+      allOf: [
+        { $ref: getSchemaPath(ApiResponseDto) },
+        {
+          properties: {
+            data: {
+              $ref: getSchemaPath(RecommendedResponseDto),
+            },
+          },
+        },
+      ],
+    },
   })
   getRecommendedProblems(
     @User() user: AuthenticatedUser,
@@ -94,13 +141,24 @@ export class ProblemController {
 
   @Get('search')
   @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
+  @ApiBearerAuth('Bearer Auth')
   @ApiOperation({ summary: 'Search problems by query' })
   @ApiResponse({
     status: 200,
     description: 'Search results with pagination',
-    type: ProblemResponseDto,
-    isArray: true,
+    schema: {
+      allOf: [
+        { $ref: getSchemaPath(PaginatedResponseDto) },
+        {
+          properties: {
+            data: {
+              $ref: getSchemaPath(ProblemResponseDto),
+              type: 'array',
+            },
+          },
+        },
+      ],
+    },
   })
   @ApiResponse({
     status: 400,
@@ -118,7 +176,18 @@ export class ProblemController {
   @ApiResponse({
     status: 200,
     description: 'Top 10 trending problems',
-    type: TrendingResponseDto,
+    schema: {
+      allOf: [
+        { $ref: getSchemaPath(ApiResponseDto) },
+        {
+          properties: {
+            data: {
+              $ref: getSchemaPath(TrendingResponseDto),
+            },
+          },
+        },
+      ],
+    },
   })
   getTrending(): Promise<TrendingResponseDto> {
     return this.problemService.getTrending();
@@ -126,12 +195,23 @@ export class ProblemController {
 
   @Get(':slug')
   @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
+  @ApiBearerAuth('Bearer Auth')
   @ApiOperation({ summary: 'Get problem details by slug' })
   @ApiResponse({
     status: 200,
     description: 'Detailed problem information',
-    type: ProblemDetailResponseDto,
+    schema: {
+      allOf: [
+        { $ref: getSchemaPath(ApiResponseDto) },
+        {
+          properties: {
+            data: {
+              $ref: getSchemaPath(ProblemDetailResponseDto),
+            },
+          },
+        },
+      ],
+    },
   })
   @ApiResponse({
     status: 404,
@@ -143,12 +223,23 @@ export class ProblemController {
 
   @Get(':slug/stats')
   @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
+  @ApiBearerAuth('Bearer Auth')
   @ApiOperation({ summary: 'Get problem statistics' })
   @ApiResponse({
     status: 200,
     description: 'Problem submission and performance stats',
-    type: ProblemStatsResponseDto,
+    schema: {
+      allOf: [
+        { $ref: getSchemaPath(ApiResponseDto) },
+        {
+          properties: {
+            data: {
+              $ref: getSchemaPath(ProblemStatsResponseDto),
+            },
+          },
+        },
+      ],
+    },
   })
   @ApiResponse({
     status: 404,
@@ -160,12 +251,23 @@ export class ProblemController {
 
   @Get(':slug/submissions')
   @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
+  @ApiBearerAuth('Bearer Auth')
   @ApiOperation({ summary: 'Get user submissions for a problem' })
   @ApiResponse({
     status: 200,
     description: 'User submission history for problem',
-    type: UserSubmissionDto,
+    schema: {
+      allOf: [
+        { $ref: getSchemaPath(ApiResponseDto) },
+        {
+          properties: {
+            data: {
+              $ref: getSchemaPath(UserSubmissionDto),
+            },
+          },
+        },
+      ],
+    },
   })
   @ApiResponse({
     status: 404,
@@ -182,12 +284,23 @@ export class ProblemController {
   //TODO MAKE SURE USER HAS ROLE ADMIN
   @Post()
   @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
+  @ApiBearerAuth('Bearer Auth')
   @ApiOperation({ summary: 'Create new problem (Admin only)' })
   @ApiResponse({
     status: 201,
     description: 'Problem created successfully',
-    type: ProblemDetailResponseDto,
+    schema: {
+      allOf: [
+        { $ref: getSchemaPath(ApiResponseDto) },
+        {
+          properties: {
+            data: {
+              $ref: getSchemaPath(ProblemDetailResponseDto),
+            },
+          },
+        },
+      ],
+    },
   })
   @ApiResponse({
     status: 403,
@@ -201,12 +314,23 @@ export class ProblemController {
 
   @Patch(':id')
   @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
+  @ApiBearerAuth('Bearer Auth')
   @ApiOperation({ summary: 'Update problem (Admin only)' })
   @ApiResponse({
     status: 200,
     description: 'Problem updated successfully',
-    type: ProblemDetailResponseDto,
+    schema: {
+      allOf: [
+        { $ref: getSchemaPath(ApiResponseDto) },
+        {
+          properties: {
+            data: {
+              $ref: getSchemaPath(ProblemDetailResponseDto),
+            },
+          },
+        },
+      ],
+    },
   })
   @ApiResponse({
     status: 404,
@@ -225,11 +349,33 @@ export class ProblemController {
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
+  @ApiBearerAuth('Bearer Auth')
   @ApiOperation({ summary: 'Delete problem (Admin only)' })
   @ApiResponse({
     status: 200,
     description: 'Problem deleted successfully',
+    schema: {
+      allOf: [
+        { $ref: getSchemaPath(ApiResponseDto) },
+        {
+          properties: {
+            data: {
+              type: 'object',
+              properties: {
+                message: {
+                  type: 'string',
+                  example: 'Problem deleted successfully',
+                },
+                deletedId: {
+                  type: 'string',
+                  example: '123e4567-e89b-12d3-a456-426614174000',
+                },
+              },
+            },
+          },
+        },
+      ],
+    },
   })
   @ApiResponse({
     status: 404,
