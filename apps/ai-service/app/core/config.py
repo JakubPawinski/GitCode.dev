@@ -12,6 +12,9 @@ class Settings(BaseSettings):
 
     AI_PORT: int = 4006
 
+    JWT_SECRET: str
+    JWT_ALGORITHM: str = "HS256"
+
     model_config = SettingsConfigDict(
         env_file=str(ENV_FILE),
         env_file_encoding="utf-8",

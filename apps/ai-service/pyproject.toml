@@ -26,6 +26,7 @@ readme = 'README.md'
   uvicorn = "^0.40.0"
   datamodel-code-generator = {extras = ["ruff"], version = "^0.53.0"}
   pydantic-settings = "^2.12.0"
+  jwt = "^1.4.0"
 
 
 
