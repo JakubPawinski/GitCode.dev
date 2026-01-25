@@ -53,7 +53,7 @@
     "serve": {
       "executor": "@nxlv/python:run-commands",
       "options": {
-        "command": "poetry run uvicorn ai_service.main:app --reload --port 4006",
+        "command": "poetry run python -m app.main",
         "cwd": "apps/ai-service"
       }
     },
