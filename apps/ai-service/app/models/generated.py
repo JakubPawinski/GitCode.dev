@@ -11,6 +11,18 @@ class Model(RootModel[Any]):
     root: Any
 
 
+class AIPATTERNS(StrEnum):
+    ai_submission_analyzed = "ai.submission.analyzed"
+    ai_analysis_failed = "ai.analysis.failed"
+
+
+class AUTHPATTERNS(StrEnum):
+    auth_user_created = "auth.user.created"
+    auth_user_profile_updated = "auth.user.profile.updated"
+    auth_user_soft_deleted = "auth.user.soft_deleted"
+    auth_user_banned = "auth.user.banned"
+
+
 class Error(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
@@ -170,6 +182,22 @@ class RmqMetadataInterceptor(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
     )
+
+
+class SUBMISSIONPATTERNS(StrEnum):
+    submission_created = "submission.created"
+    submission_updated = "submission.updated"
+    submission_completed = "submission.completed"
+
+
+class SubmissionAnalyzedEvent(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+    analysisReport: str
+    problemId: str
+    submissionId: str
+    userId: str
 
 
 class SubmissionBaseEvent(BaseModel):

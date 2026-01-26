@@ -3,13 +3,34 @@ from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 from app.core.config import settings
 from app.api.routers import router as api_router
+from contextlib import asynccontextmanager
+from app.core.event_consumer import event_consumer
+from app.core.event_bus import event_bus
+import logging
+import sys
 
+logging.basicConfig(
+    stream=sys.stdout,
+    level=logging.DEBUG,
+    format='%(levelname)s - %(asctime)s - %(name)s - %(message)s'
+    )
 
+# Ensure event handlers are imported for register decorators
+import app.handler.submission_handler 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await event_consumer.connect()
+    await event_bus.connect()
+    yield
+    await event_consumer.close()
+    await event_bus.close()
 
 app = FastAPI(
     title="AI Service",
     description="AI Service for GitCode Platform",
     version="1.0.0",
+    lifespan=lifespan
 )
 
 app.add_middleware(

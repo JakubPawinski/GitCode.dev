@@ -27,6 +27,7 @@ readme = 'README.md'
   datamodel-code-generator = {extras = ["ruff"], version = "^0.53.0"}
   pydantic-settings = "^2.12.0"
   jwt = "^1.4.0"
+  aio-pika = "^9.5.8"
 
 
 

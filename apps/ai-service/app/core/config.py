@@ -15,6 +15,10 @@ class Settings(BaseSettings):
     JWT_SECRET: str
     JWT_ALGORITHM: str = "HS256"
 
+    RABBITMQ_URL: str
+    RABBITMQ_EXCHANGE_NAME: str
+    AI_QUEUE_NAME: str
+
     model_config = SettingsConfigDict(
         env_file=str(ENV_FILE),
         env_file_encoding="utf-8",
