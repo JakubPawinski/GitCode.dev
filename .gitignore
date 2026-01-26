@@ -271,7 +271,7 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
+apps/ai-service/lib/
 lib64/
 parts/
 sdist/
