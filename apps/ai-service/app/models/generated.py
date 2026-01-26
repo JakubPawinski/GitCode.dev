@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 from typing import Any
-from pydantic import BaseModel, ConfigDict, RootModel
+from pydantic import AwareDatetime, BaseModel, ConfigDict, RootModel
 from enum import StrEnum
 
 
@@ -92,6 +92,62 @@ class AuthenticatedUser(BaseModel):
     username: str
 
 
+class BaseFriendshipEvent(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+    addresseeId: str
+    addresseeUsername: str
+    requestId: str
+    requesterId: str
+    requesterUsername: str
+
+
+class EventBus(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+
+
+class FriendshipAcceptedEvent(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+    addresseeId: str
+    addresseeUsername: str
+    requestId: str
+    requesterId: str
+    requesterUsername: str
+
+
+class FriendshipDeclinedEvent(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+    addresseeId: str
+    addresseeUsername: str
+    requestId: str
+    requesterId: str
+    requesterUsername: str
+
+
+class FriendshipRequestedEvent(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+    addresseeId: str
+    addresseeUsername: str
+    requestId: str
+    requesterId: str
+    requesterUsername: str
+
+
+class MessagingModule(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+
+
 class PaginationMeta(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
@@ -104,6 +160,40 @@ class PaginationMeta(BaseModel):
     totalPages: float
 
 
+class RecordStringAny(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+
+
+class RmqMetadataInterceptor(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+
+
+class SubmissionBaseEvent(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+    code: str
+    language: str
+    problemId: str
+    submissionId: str
+    userId: str
+
+
+class SubmissionCompletedEvent(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+    code: str
+    language: str
+    problemId: str
+    submissionId: str
+    userId: str
+
+
 class T(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
@@ -114,6 +204,63 @@ class T1(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
     )
+
+
+class T2(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+
+
+class T3(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+
+
+class UserBannedEvent(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+    bannedAt: AwareDatetime
+    reason: str | None = None
+    userId: str
+    username: str
+
+
+class UserBaseEvent(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+    userId: str
+    username: str
+
+
+class UserCreatedEvent(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+    email: str
+    firstName: str | None = None
+    lastName: str | None = None
+    userId: str
+    username: str
+
+
+class UserProfileUpdatedEvent(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+    userId: str
+    username: str
+
+
+class UserSoftDeletedEvent(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+    userId: str
+    username: str
 
 
 class UserStatus(StrEnum):
@@ -134,6 +281,12 @@ class ThemeEnum(StrEnum):
     DARK = "DARK"
 
 
+class Record3Cstring2Cany3E(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+
+
 class ApiResponse(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
@@ -148,9 +301,42 @@ class ApiResponse(BaseModel):
     timestamp: str
 
 
+class EventEnvelopeDto(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+    correlationId: str | None = None
+    event: str
+    eventId: str
+    occurredOn: str
+    payload: T2
+
+
+class EventEnvelopeMixin(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+    correlationId: str | None = None
+    event: str
+    eventId: str
+    occurredOn: str
+    payload: T3
+
+
 class PaginatedResult(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
     )
     data: list[T]
     meta: PaginationMeta
+
+
+class SendNotificationCommand(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+    kind: str
+    payload: Record3Cstring2Cany3E | None = None
+    severity: str
+    type: str
+    userId: str

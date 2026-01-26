@@ -20,10 +20,20 @@ cat > tsconfig.temp.json <<EOF
     "emitDeclarationOnly": false,
     "esModuleInterop": true,
     "skipLibCheck": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
     "baseUrl": "."
   },
   "include": [
-    "packages/types/src/**/*.ts"
+    "packages/types/src/**/*.ts",
+    "packages/contracts/src/**/*.ts",
+    "packages/messaging/src/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/*.spec.ts",
+    "**/*.test.ts"
   ]
 }
 EOF
@@ -35,6 +45,10 @@ npx typescript-json-schema \
   "tsconfig.temp.json" "*" \
   --required \
   --noExtraProps \
+  --strictNullChecks false \
+  --ignoreErrors \
+  --excludePrivate \
+  --excludeProtected \
   --out temp_schema.json || {
     echo "❌ Error generating JSON Schema."
     rm tsconfig.temp.json

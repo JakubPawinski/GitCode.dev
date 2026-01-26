@@ -11,7 +11,7 @@ export function WithEventPayload<T>(
     @ApiProperty({ type: payloadDto })
     @ValidateNested()
     @ValidateType(() => payloadDto)
-    override payload!: T;
+    declare payload: T;
   }
 
   Object.defineProperty(EventEnvelopeMixin, 'name', {
