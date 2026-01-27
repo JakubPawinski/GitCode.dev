@@ -22,6 +22,7 @@ import { SubmissionGateway } from './submission.gateway';
 import { PaginationQueryDto } from '@gitcode/common';
 import { PaginatedResult } from '@gitcode/types';
 import { AttemptStatus } from './enum';
+import { SubmissionAnalyzedEvent } from '@gitcode/contracts';
 
 @Injectable()
 export class SubmissionService {
@@ -459,6 +460,50 @@ export class SubmissionService {
       message: 'Submission deleted successfully',
       deletedId: submissionId,
     };
+  }
+
+  /**
+   * Handle AI analysis result for a submission
+   * @param submissionId - ID of the submission
+   * @param payload - Analysis result payload
+   * @returns void
+   */
+  public async handleAiAnalysisResult(
+    submissionId: string,
+    payload: SubmissionAnalyzedEvent,
+  ) {
+    this.logger.log(
+      `Handling AI analysis result for submission ${submissionId}`,
+    );
+
+    const submission = await this.prisma.userSubmission.findUnique({
+      where: { id: submissionId },
+      select: { userId: true },
+    });
+
+    // Check if submission exists
+    if (!submission) {
+      this.logger.error(`Submission ${submissionId} not found for AI analysis`);
+      return;
+    }
+
+    // Store AI analysis feedback in database
+    await this.prisma.aIFeedback.create({
+      data: {
+        submissionId,
+        content: payload.analysisReport,
+        feedbackType: 'analysis',
+        severity: 'info',
+        createdAt: new Date(),
+      },
+    });
+
+    // Notify user via WebSocket
+    this.submissionGateway.notifySubmissionAnalyzed(
+      submission.userId,
+      submissionId,
+      payload.analysisReport,
+    );
   }
 
   private async getQueueStats(): Promise<QueueStatsDto> {

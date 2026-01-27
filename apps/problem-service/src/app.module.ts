@@ -11,6 +11,7 @@ import configuration from './config/configuration';
 import { GitCodeCommonModule } from '@gitcode/common';
 import { GitCodeAuthModule } from '@gitcode/auth';
 import { MessagingModule } from '@gitcode/messaging';
+import rabbitmqConfig from './config/rabbitmq.config';
 
 @Module({
   imports: [
@@ -19,7 +20,7 @@ import { MessagingModule } from '@gitcode/messaging';
     SubmissionModule,
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [configuration],
+      load: [configuration, rabbitmqConfig],
       envFilePath: '.env',
     }),
     BullModule.forRootAsync({
@@ -33,7 +34,7 @@ import { MessagingModule } from '@gitcode/messaging';
     }),
     GitCodeCommonModule,
     GitCodeAuthModule,
-    MessagingModule.forRoot([process.env.RABBITMQ_URL])
+    MessagingModule.forRoot([process.env.RABBITMQ_URL]),
   ],
   controllers: [AppController],
   providers: [AppService],
