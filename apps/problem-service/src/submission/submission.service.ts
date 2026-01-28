@@ -497,6 +497,9 @@ export class SubmissionService {
         createdAt: new Date(),
       },
     });
+    this.logger.log(
+      `Stored AI analysis feedback for submission ${submissionId} in database`,
+    );
 
     // Notify user via WebSocket
     this.submissionGateway.notifySubmissionAnalyzed(

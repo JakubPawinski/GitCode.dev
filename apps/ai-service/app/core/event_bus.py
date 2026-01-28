@@ -4,7 +4,7 @@ import uuid
 import json
 from datetime import datetime
 from typing import Optional, Dict, Any, Generic, TypeVar
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from app.core.config import settings
 
 T = TypeVar("T")
@@ -22,6 +22,8 @@ class EventEnvelope(BaseModel, Generic[T]):
         payload (T): The actual event data.
         metadata (Dict[str, Any]): Additional metadata for the event.
     """
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
     event: str
     eventId: str = Field(default_factory=lambda: str(uuid.uuid4()))
     occurredOn: str = Field(default_factory=lambda: datetime.utcnow().isoformat() + "Z")
@@ -81,8 +83,10 @@ class EventBus:
             metadata={**(metadata or {}), "source": "ai-service"}
         )
 
-        # Serialize the envelope to JSON
-        message_body = envelope.model_dump_json().encode()
+        envelope_dict = envelope.model_dump()
+        envelope_dict["payload"] = event_data.model_dump()
+        
+        message_body = json.dumps(envelope_dict).encode()
 
         # Create the message
         message = aio_pika.Message(
@@ -94,6 +98,8 @@ class EventBus:
                 "type": routing_key
             }
         )
+
+        logger.info(f"Publishing event: {routing_key} [message: {message_body.decode()}]")
 
         # Publish the message
         await self._exchange.publish(message, routing_key=routing_key)

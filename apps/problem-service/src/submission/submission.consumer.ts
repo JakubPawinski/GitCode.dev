@@ -34,7 +34,11 @@ export class SubmissionConsumer {
     @RabbitPayload() event: SubmissionAnalyzedEnvelope,
   ) {
     this.logger.log(
-      `Received SubmissionAnalyzedEvent for submissionId: ${event}`,
+      `Received SubmissionAnalyzedEvent for submissionId: ${JSON.stringify(
+        event,
+        null,
+        2,
+      )}`,
     );
 
     await this.submissionService.handleAiAnalysisResult(

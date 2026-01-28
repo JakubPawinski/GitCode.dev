@@ -33,7 +33,8 @@ async def handle_submission_completed(event: SubmissionCompletedEvent, metadata:
     )
 
     logger.info(f"Generated Analysis Report: {event_payload.analysisReport}")
-
+    logger.debug(f"Event payload: {event_payload.model_dump_json()}")
+    
     await event_bus.publish(
         routing_key=AIPATTERNS.ai_submission_analyzed,
         event_data=event_payload,

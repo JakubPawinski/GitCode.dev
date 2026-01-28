@@ -108,6 +108,9 @@ export class SubmissionGateway
     submissionId: string,
     analysisReport: string,
   ) {
+    this.logger.log(
+      `Notifying user ${userId} about analyzed submission ${submissionId}`,
+    );
     const sockets = this.userConnections.get(userId) || [];
 
     // No active connections for user
