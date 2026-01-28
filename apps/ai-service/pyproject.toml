@@ -28,6 +28,7 @@ readme = 'README.md'
   pydantic-settings = "^2.12.0"
   jwt = "^1.4.0"
   aio-pika = "^9.5.8"
+  google-genai = "^1.60.0"
 
 
 

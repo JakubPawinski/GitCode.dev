@@ -119,6 +119,14 @@ export class SubmissionProcessor extends WorkerHost {
         this.logger.log(
           `Sending 'submission-completed' event to user ${userId}`,
         );
+
+        const problemDescription: string = await this.prisma.problem
+          .findUnique({
+            where: { id: problemId },
+            select: { description: true },
+          })
+          .then((problem) => problem?.description || '');
+
         // Sending submission completed event
         await this.eventBus.publish(
           SUBMISSION_PATTERNS.SUBMISSION_COMPLETED,
@@ -128,6 +136,7 @@ export class SubmissionProcessor extends WorkerHost {
             code,
             language,
             problemId,
+            problemDescription,
           ),
         );
         this.logger.log(

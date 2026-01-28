@@ -15,5 +15,13 @@ export class SubmissionAnalyzedEvent {
 
   @IsNotEmpty()
   @IsString()
-  analysisReport: string;
+  content: string;
+
+  @IsNotEmpty()
+  @IsString()
+  feedbackType: string;
+
+  @IsNotEmpty()
+  @IsString()
+  severity: string;
 }

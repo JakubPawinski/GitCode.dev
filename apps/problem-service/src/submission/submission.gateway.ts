@@ -106,7 +106,7 @@ export class SubmissionGateway
   public notifySubmissionAnalyzed(
     userId: string,
     submissionId: string,
-    analysisReport: string,
+    analysisReport: { content: string; feedbackType: string; severity: string },
   ) {
     this.logger.log(
       `Notifying user ${userId} about analyzed submission ${submissionId}`,
@@ -119,11 +119,14 @@ export class SubmissionGateway
       return;
     }
 
+    const result = {
+      submissionId,
+      ...analysisReport,
+    };
+    this.logger.debug(`Emitting submission_analyzed event: ${JSON.stringify(result)}`);
+
     sockets.forEach((socketId) => {
-      this.server.to(socketId).emit('submission_analyzed', {
-        submissionId,
-        analysisReport,
-      });
+      this.server.to(socketId).emit('submission_analyzed', result);
     });
   }
 }

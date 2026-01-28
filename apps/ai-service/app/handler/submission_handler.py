@@ -1,8 +1,8 @@
 import logging
 from app.core.event_dispatcher import dispatcher
 from app.models.generated import SubmissionCompletedEvent, SUBMISSIONPATTERNS, SubmissionAnalyzedEvent,AIPATTERNS
-from app.services.llm_service import LLMService
 from app.core.event_bus import event_bus
+from app.services.llm.factory import get_llm_client
 
 logger = logging.getLogger(__name__)
 
@@ -19,22 +19,29 @@ async def handle_submission_completed(event: SubmissionCompletedEvent, metadata:
     """
 
     # Perform analysis using LLM service
-    llm_service = LLMService()
+    llm_client = get_llm_client()
     
     logger.info(f"Processing completed submission: {event.submissionId} for problem {event.problemId}")
+    logger.info(f"Event: {event}")
 
-    logger.debug(f"Submission details: User {event.userId}, event data: {event}")
+    analysis_result = await llm_client.analyze_code(
+        code=event.code,
+        problem_description=event.problemDescription
+        )
+    logger.info(f"Analysis Result: {analysis_result}")
 
     event_payload: SubmissionAnalyzedEvent = SubmissionAnalyzedEvent(
-        analysisReport="Test report",
+        content=analysis_result["content"],
+        feedbackType=analysis_result["feedback_type"],
+        severity=analysis_result["severity"],
         problemId=event.problemId,
         submissionId=event.submissionId,
         userId=event.userId
     )
 
-    logger.info(f"Generated Analysis Report: {event_payload.analysisReport}")
+    # logger.info(f"Generated Analysis Report: {event_payload}")
     logger.debug(f"Event payload: {event_payload.model_dump_json()}")
-    
+
     await event_bus.publish(
         routing_key=AIPATTERNS.ai_submission_analyzed,
         event_data=event_payload,

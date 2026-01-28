@@ -491,9 +491,9 @@ export class SubmissionService {
     await this.prisma.aIFeedback.create({
       data: {
         submissionId,
-        content: payload.analysisReport,
-        feedbackType: 'analysis',
-        severity: 'info',
+        content: payload.content,
+        feedbackType: payload.feedbackType,
+        severity: payload.severity,
         createdAt: new Date(),
       },
     });
@@ -505,7 +505,11 @@ export class SubmissionService {
     this.submissionGateway.notifySubmissionAnalyzed(
       submission.userId,
       submissionId,
-      payload.analysisReport,
+      {
+        content: payload.content,
+        feedbackType: payload.feedbackType,
+        severity: payload.severity,
+      },
     );
   }
 

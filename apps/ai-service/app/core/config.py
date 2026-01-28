@@ -1,13 +1,12 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 import os
 from pathlib import Path
+from typing import Literal
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent.parent.parent
 ENV_FILE = BASE_DIR / ".env"
 
 class Settings(BaseSettings):
-    API_KEY: str
-
     ENVIRONMENT: str = "development"
 
     AI_PORT: int = 4006
@@ -15,9 +14,17 @@ class Settings(BaseSettings):
     JWT_SECRET: str
     JWT_ALGORITHM: str = "HS256"
 
+    # RabbitMQ Settings
     RABBITMQ_URL: str
     RABBITMQ_EXCHANGE_NAME: str
     AI_QUEUE_NAME: str
+
+    # LLM Settings
+    LLM_PROVIDER: Literal["openai", "gemini"] = "gemini"
+    OPENAI_API_KEY: str | None = None
+    GEMINI_API_KEY: str | None = None
+    GEMINI_MODEL_NAME: str = "gemini-3-flash-preview"
+    OPENAI_MODEL_NAME: str = "gpt-4.1-nano"
 
     model_config = SettingsConfigDict(
         env_file=str(ENV_FILE),

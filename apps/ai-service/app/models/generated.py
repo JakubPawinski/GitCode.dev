@@ -194,8 +194,10 @@ class SubmissionAnalyzedEvent(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
     )
-    analysisReport: str
+    content: str
+    feedbackType: str
     problemId: str
+    severity: str
     submissionId: str
     userId: str
 
@@ -217,6 +219,7 @@ class SubmissionCompletedEvent(BaseModel):
     )
     code: str
     language: str
+    problemDescription: str
     problemId: str
     submissionId: str
     userId: str
