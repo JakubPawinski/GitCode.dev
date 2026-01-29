@@ -21,17 +21,23 @@ export class SubmissionBaseEvent {
   @IsNotEmpty()
   readonly problemId: string;
 
+  @IsNotEmpty()
+  @IsUUID()
+  readonly attemptId: string;
+
   constructor(
     userId: string,
     submissionId: string,
     code: string,
     language: string,
     problemId: string,
+    attemptId: string,
   ) {
     this.userId = userId;
     this.submissionId = submissionId;
     this.code = code;
     this.language = language;
     this.problemId = problemId;
+    this.attemptId = attemptId;
   }
 }

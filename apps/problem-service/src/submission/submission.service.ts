@@ -137,6 +137,7 @@ export class SubmissionService {
     const attempt = await this.prisma.solutionAttempt.findUnique({
       where: { id: attemptId },
       include: {
+        feedbacks: true,
         testResults: {
           orderBy: { testIndex: 'asc' },
           select: {
@@ -152,8 +153,9 @@ export class SubmissionService {
       },
     });
 
+    // Check if attempt exists
     if (!attempt) {
-      throw new Error('Attempt not found');
+      throw new NotFoundException(`Attempt ${attemptId} not found`);
     }
     const failedTests = attempt.testResults.filter((tr) => !tr.passed);
     return {
@@ -166,6 +168,7 @@ export class SubmissionService {
       memoryUsed: attempt.memoryUsed,
       createdAt: attempt.createdAt,
       completedAt: attempt.completedAt,
+      feedbacks: attempt.feedbacks.length > 0 ? attempt.feedbacks[0] : null,
       // Test details
       testResults: attempt.testResults.map((tr) => ({
         testIndex: tr.testIndex,
@@ -491,6 +494,7 @@ export class SubmissionService {
     await this.prisma.aIFeedback.create({
       data: {
         submissionId,
+        attemptId: payload.attemptId,
         content: payload.content,
         feedbackType: payload.feedbackType,
         severity: payload.severity,
@@ -510,6 +514,7 @@ export class SubmissionService {
         feedbackType: payload.feedbackType,
         severity: payload.severity,
       },
+      payload.attemptId,
     );
   }
 

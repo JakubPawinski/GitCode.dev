@@ -36,7 +36,8 @@ async def handle_submission_completed(event: SubmissionCompletedEvent, metadata:
         severity=analysis_result["severity"],
         problemId=event.problemId,
         submissionId=event.submissionId,
-        userId=event.userId
+        userId=event.userId,
+        attemptId=event.attemptId,
     )
 
     # logger.info(f"Generated Analysis Report: {event_payload}")

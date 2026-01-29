@@ -12,9 +12,10 @@ export class SubmissionCompletedEvent extends SubmissionBaseEvent {
     code: string,
     language: string,
     problemId: string,
+    attemptId: string,
     problemDescription: string,
   ) {
-    super(userId, submissionId, code, language, problemId);
+    super(userId, submissionId, code, language, problemId, attemptId);
     this.problemDescription = problemDescription;
   }
 }

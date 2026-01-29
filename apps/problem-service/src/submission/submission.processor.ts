@@ -136,6 +136,7 @@ export class SubmissionProcessor extends WorkerHost {
             code,
             language,
             problemId,
+            attemptId,
             problemDescription,
           ),
         );

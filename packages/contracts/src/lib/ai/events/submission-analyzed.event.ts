@@ -11,6 +11,10 @@ export class SubmissionAnalyzedEvent {
 
   @IsUUID()
   @IsNotEmpty()
+  attemptId: string;
+
+  @IsUUID()
+  @IsNotEmpty()
   problemId: string;
 
   @IsNotEmpty()
