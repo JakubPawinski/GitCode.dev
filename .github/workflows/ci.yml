@@ -40,6 +40,13 @@ jobs:
           curl -sSL https://install.python-poetry.org | python3 -
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
+      - name: Install Poetry Export Plugin
+        run: poetry self add poetry-plugin-export
+
+      - name: Install AI Service dependencies
+        working-directory: apps/ai-service
+        run: poetry install --no-interaction --no-root
+
       - run: npm ci
       - uses: nrwl/nx-set-shas@v4
 
