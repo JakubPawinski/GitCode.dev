@@ -6,7 +6,6 @@ import {
   RabbitPayload,
   RabbitSubscribe,
 } from '@golevelup/nestjs-rabbitmq';
-import { ConfigService } from '@nestjs/config';
 import { RABBIT_CONFIG } from '../config/rabbitmq.config';
 import { AI_PATTERNS } from '@gitcode/contracts';
 import { SubmissionAnalyzedEnvelope } from '../events/envelopes';
@@ -17,7 +16,6 @@ export class SubmissionConsumer {
 
   constructor(
     private readonly submissionService: SubmissionService,
-    private readonly configService: ConfigService,
   ) {}
 
   /**
