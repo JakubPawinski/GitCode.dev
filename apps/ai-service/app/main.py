@@ -9,6 +9,8 @@ from app.core.event_bus import event_bus
 from app.core.database import init_db
 import logging
 import sys
+import signal
+import asyncio
 
 logging.basicConfig(
     stream=sys.stdout,
@@ -48,9 +50,20 @@ app.include_router(api_router, prefix="/ai")
 
 
 if __name__ == "__main__":
-    uvicorn.run(
+    config = uvicorn.Config(
         "app.main:app",
         host="0.0.0.0",
         port=settings.AI_PORT,
-        reload=(settings.ENVIRONMENT == "development")
+        reload=(settings.ENVIRONMENT == "development"),
+        lifespan="on"
     )
+    server = uvicorn.Server(config)
+    
+    def handle_shutdown(signum, frame):
+        print("\nShutting down gracefully...")
+        sys.exit(0)
+    
+    signal.signal(signal.SIGINT, handle_shutdown)
+    signal.signal(signal.SIGTERM, handle_shutdown)
+    
+    asyncio.run(server.serve())
