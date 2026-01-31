@@ -30,6 +30,16 @@ jobs:
           node-version: 20
           cache: 'npm'
 
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.14'
+          cache: 'pip'
+
+      - name: Install Poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
       - run: npm ci
       - uses: nrwl/nx-set-shas@v4
 
