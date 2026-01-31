@@ -1,5 +1,4 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
-import os
 from pathlib import Path
 from typing import Literal
 
@@ -39,6 +38,3 @@ class Settings(BaseSettings):
     )
 
 settings = Settings()
-
-print(f"Loading .env from: {ENV_FILE}")
-print(f".env exists: {ENV_FILE.exists()}")

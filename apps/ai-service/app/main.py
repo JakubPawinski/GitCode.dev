@@ -60,7 +60,7 @@ if __name__ == "__main__":
     server = uvicorn.Server(config)
     
     def handle_shutdown(signum, frame):
-        print("\nShutting down gracefully...")
+        logging.info("Shutting down gracefully...")
         sys.exit(0)
     
     signal.signal(signal.SIGINT, handle_shutdown)

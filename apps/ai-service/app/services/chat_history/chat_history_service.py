@@ -1,12 +1,18 @@
-from sqlmodel import select, Session
+from sqlmodel import select
+from sqlmodel.ext.asyncio.session import AsyncSession
 from app.schemas.chat import ChatSession, ChatMessage
 from typing import List
 import logging
+from app.exceptions import (
+    SessionNotFoundError,
+    UnauthorizedSessionError,
+    MessageNotFoundError,
+)
 
 logger = logging.getLogger(__name__)
 
 class ChatHistoryService:
-    def __init__(self, db: Session):
+    def __init__(self, db: AsyncSession):
         self.db = db
 
     async def get_or_create_session(
@@ -15,21 +21,7 @@ class ChatHistoryService:
         problem_slug: str,
         attempt_id: str = None
     ) -> ChatSession:
-        """
-        Gets or creates a chat session.
-        
-        
-        :param self: Instance of the class
-        :param user_id: User identifier
-        :type user_id: str
-        :param problem_slug: Problem identifier
-        :type problem_slug: str
-        :param attempt_id: Attempt identifier
-        :type attempt_id: str
-        :return: Chat session instance
-        :rtype: ChatSession
-        """
-
+        """Gets or creates a chat session."""
         statement = select(ChatSession).where(
             ChatSession.user_id == user_id,
             ChatSession.problem_slug == problem_slug
@@ -56,19 +48,7 @@ class ChatHistoryService:
         role: str, 
         content: str
     ) -> ChatMessage:
-        """
-        Adds a message to a chat session.
-        :param self: Instance of the class
-        :param session_id: Chat session identifier
-        :type session_id: int
-        :param role: Role of the message sender (e.g., 'user', 'assistant')
-        :type role: str
-        :param content: Content of the message
-        :type content: str
-        :return: Chat message instance
-        :rtype: ChatMessage
-        """
-
+        """Adds a message to a chat session."""
         message = ChatMessage(
             session_id=session_id,
             role=role,
@@ -81,16 +61,7 @@ class ChatHistoryService:
         return message
 
     async def get_session_messages(self, session_id: int) -> List[ChatMessage]:
-        """
-        Retrieves all messages for a given chat session, ordered by creation time.
-
-        :param self: Instance of the class
-        :param session_id: Chat session identifier
-        :type session_id: int
-        :return: List of chat messages
-        :rtype: List[ChatMessage]
-        """
-
+        """Retrieves all messages for a given chat session, ordered by creation time."""
         statement = select(ChatMessage).where(
             ChatMessage.session_id == session_id
         ).order_by(ChatMessage.created_at.asc())
@@ -99,36 +70,17 @@ class ChatHistoryService:
         return result.all()
 
     def format_history_for_llm(self, messages: List[ChatMessage]) -> list[dict]:
-        """
-        Formats chat messages for LLM input.
-        :param self: Instance of the class
-        :param messages: List of chat messages
-        :type messages: List[ChatMessage]
-        :return: Formatted chat history
-        :rtype: list[dict]
-        """
-
-        formatted = []
-        for msg in messages:
-            role = "model" if msg.role == "assistant" else "user"
-            formatted.append({
-                "role": role,
+        """Formats chat messages for LLM input."""
+        return [
+            {
+                "role": "model" if msg.role == "assistant" else "user",
                 "content": msg.content
-            })
-        return formatted
+            }
+            for msg in messages
+        ]
 
     async def get_user_sessions(self, user_id: str, limit: int = 10) -> List[ChatSession]:
-        """
-        Retrieves all chat sessions for a given user, limited by the specified number.
-        :param self: Instance of the class
-        :param user_id: User identifier
-        :type user_id: str
-        :param limit: Maximum number of sessions to retrieve
-        :type limit: int
-        :return: List of chat sessions
-        :rtype: List[ChatSession]
-        """
-
+        """Retrieves all chat sessions for a given user."""
         statement = select(ChatSession).where(
             ChatSession.user_id == user_id
         ).order_by(ChatSession.created_at.desc()).limit(limit)
@@ -138,65 +90,73 @@ class ChatHistoryService:
 
     async def delete_session(self, session_id: int, user_id: str) -> None:
         """
-        Deletes a chat session and its messages.
+        Deletes a chat session and its related messages via cascade delete.
         
-        :param self: Instance of the class
+        The CASCADE DELETE constraint at the database level ensures all related
+        ChatMessage records are automatically deleted.
+        
         :param session_id: Chat session identifier
-        :type session_id: int
-        :param user_id: User identifier
-        :type user_id: str
+        :param user_id: User identifier for authorization check
+        :raises SessionNotFoundError: If session doesn't exist
+        :raises UnauthorizedSessionError: If user doesn't own the session
         """
-
+        # Fetch session to verify it exists and user owns it
         statement = select(ChatSession).where(
-            ChatSession.id == session_id,
-            ChatSession.user_id == user_id
+            ChatSession.id == session_id
         )
         result = await self.db.exec(statement)
         session = result.first()
         
         if not session:
-            raise ValueError("Session not found or unauthorized")
+            raise SessionNotFoundError(f"Session {session_id} not found")
+        
+        if session.user_id != user_id:
+            raise UnauthorizedSessionError(
+                f"User {user_id} is not authorized to delete session {session_id}"
+            )
 
-        message_statement = select(ChatMessage).where(ChatMessage.session_id == session_id)
-        messages = await self.db.exec(message_statement)
-        for msg in messages.all():
-            await self.db.delete(msg)
-
+        # Delete session - cascade will handle related messages
         await self.db.delete(session)
         await self.db.commit()
+        logger.info(f"Deleted session {session_id} (cascade delete handled related messages)")
 
     async def delete_message(self, message_id: int, session_id: int, user_id: str) -> None:
         """
         Deletes a specific message from a chat session.
         
-        :param self: Instance of the class
         :param message_id: Message identifier
-        :type message_id: int
-        :param session_id: Chat session identifier
-        :type session_id: int
-        :param user_id: User identifier
-        :type user_id: str
+        :param session_id: Chat session identifier for authorization check
+        :param user_id: User identifier for authorization check
+        :raises SessionNotFoundError: If session doesn't exist
+        :raises UnauthorizedSessionError: If user doesn't own the session
+        :raises MessageNotFoundError: If message doesn't exist
         """
-        
-        statement = select(ChatSession).where(
-            ChatSession.id == session_id,
-            ChatSession.user_id == user_id
+        # Verify session exists and user owns it
+        session_statement = select(ChatSession).where(
+            ChatSession.id == session_id
         )
-        result = await self.db.exec(statement)
-        session = result.first()
+        session_result = await self.db.exec(session_statement)
+        session = session_result.first()
         
         if not session:
-            raise ValueError("Session not found or unauthorized")
+            raise SessionNotFoundError(f"Session {session_id} not found")
+        
+        if session.user_id != user_id:
+            raise UnauthorizedSessionError(
+                f"User {user_id} is not authorized to access session {session_id}"
+            )
 
+        # Fetch and delete the specific message
         message_statement = select(ChatMessage).where(
             ChatMessage.id == message_id,
             ChatMessage.session_id == session_id
         )
-        msg_result = await self.db.exec(message_statement)
-        message = msg_result.first()
+        message_result = await self.db.exec(message_statement)
+        message = message_result.first()
         
         if not message:
-            raise ValueError("Message not found")
+            raise MessageNotFoundError(f"Message {message_id} not found in session {session_id}")
         
         await self.db.delete(message)
         await self.db.commit()
+        logger.info(f"Deleted message {message_id} from session {session_id}")

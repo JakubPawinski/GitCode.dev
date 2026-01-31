@@ -1,6 +1,5 @@
 from google import genai
 from google.genai import types
-import json
 from app.core.config import settings
 from app.services.llm.base import BaseLLMClient
 from app.models.ai_analysis import AnalysisResult
@@ -76,9 +75,9 @@ class GeminiClient(BaseLLMClient):
         except Exception as e:
             logger.error(f"Gemini Error: {e}")
             return {
-                "content": "Error during analysis.",
+                "content": "Error during analysis. Please try again later.",
                 "feedback_type": "INFO",
-                "severity": "INFO"
+                "severity": "ERROR"
             }
 
     async def stream_tutor_chat(self, code: str, problem_description: str, chat_history: list[dict], user_message: str) -> AsyncGenerator[str, None]:

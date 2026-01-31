@@ -4,10 +4,15 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from app.core.database import get_session
 from app.services.tutor.tutor_service import TutorService
 from app.models.tutor import TutorRequest
-from app.auth.deps import get_current_user, RequiredPermission
+from app.auth.deps import RequiredPermission
 from app.models.generated import AuthenticatedUser, AppPermission
 import json
 import logging
+from app.exceptions import (
+    SessionNotFoundError,
+    UnauthorizedSessionError,
+    MessageNotFoundError,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -110,10 +115,19 @@ async def delete_session(
 ):
     """Delete entire chat session"""
     tutor_service = TutorService(db)
-    await tutor_service.delete_session(session_id, user.id)
-    
-    return {"message": f"Session {session_id} deleted successfully"}
 
+    try:
+        await tutor_service.delete_session(session_id, user.id)
+        return {"message": f"Session {session_id} deleted successfully"}
+    except SessionNotFoundError as e:
+        logger.error(f"Error deleting session {session_id}: {str(e)}")
+        raise HTTPException(status_code=404, detail=str(e))
+    except UnauthorizedSessionError as e:
+        logger.error(f"Unauthorized attempt to delete session {session_id}: {str(e)}")
+        raise HTTPException(status_code=403, detail=str(e))
+    except Exception as e:
+        logger.error(f"Unexpected error deleting session {session_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.delete("/sessions/{session_id}/messages/{message_id}")
 async def delete_message(
@@ -124,6 +138,20 @@ async def delete_message(
 ):
     """Delete single message from session"""
     tutor_service = TutorService(db)
-    await tutor_service.delete_message(message_id, session_id, user.id)
+    try:
+        await tutor_service.delete_message(message_id, session_id, user.id)
+        return {"message": f"Message {message_id} deleted successfully"}
+    except SessionNotFoundError as e:
+        logger.error(f"Error deleting message {message_id} from session {session_id}: {str(e)}")
+        raise HTTPException(status_code=404, detail=str(e))
+    except UnauthorizedSessionError as e:
+        logger.error(f"Unauthorized attempt to delete message {message_id} from session {session_id}: {str(e)}")
+        raise HTTPException(status_code=403, detail=str(e))
+    except MessageNotFoundError as e:
+        logger.error(f"Message {message_id} not found in session {session_id}: {str(e)}")
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        logger.error(f"Unexpected error deleting message {message_id} from session {session_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
     
-    return {"message": f"Message {message_id} deleted successfully"}
+    

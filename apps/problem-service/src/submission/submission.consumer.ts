@@ -28,7 +28,7 @@ export class SubmissionConsumer {
     queue: `${RABBIT_CONFIG.QUEUE}_submission_analyzed`,
     errorBehavior: MessageHandlerErrorBehavior.NACK,
   })
-  public async handleSubmissionCompletedEvent(
+  public async handleSubmissionAnalyzedEvent(
     @RabbitPayload() event: SubmissionAnalyzedEnvelope,
   ) {
     this.logger.log(

@@ -1,4 +1,5 @@
 from sqlmodel import SQLModel, Field, Relationship
+from sqlalchemy.orm import RelationshipProperty
 from datetime import datetime
 from typing import Optional, List
 
@@ -11,7 +12,13 @@ class ChatSession(ChatSessionBase, table=True):
     __tablename__ = "chat_sessions"
     
     id: Optional[int] = Field(default=None, primary_key=True)
-    messages: List["ChatMessage"] = Relationship(back_populates="session", cascade_delete=True)
+    messages: List["ChatMessage"] = Relationship(
+        back_populates="session",
+        sa_relationship_kwargs={
+            "cascade": "all, delete-orphan",
+            "lazy": "selectin",
+        }
+    )
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
@@ -23,6 +30,10 @@ class ChatMessage(ChatMessageBase, table=True):
     __tablename__ = "chat_messages"
     
     id: Optional[int] = Field(default=None, primary_key=True)
-    session_id: int = Field(foreign_key="chat_sessions.id", index=True)
+    session_id: int = Field(
+        foreign_key="chat_sessions.id", 
+        index=True,
+        ondelete="CASCADE"
+    )
     session: ChatSession = Relationship(back_populates="messages")
     created_at: datetime = Field(default_factory=datetime.utcnow)
