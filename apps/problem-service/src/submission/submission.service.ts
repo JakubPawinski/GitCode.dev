@@ -22,6 +22,7 @@ import { SubmissionGateway } from './submission.gateway';
 import { PaginationQueryDto } from '@gitcode/common';
 import { PaginatedResult } from '@gitcode/types';
 import { AttemptStatus } from './enum';
+import { SubmissionAnalyzedEvent } from '@gitcode/contracts';
 
 @Injectable()
 export class SubmissionService {
@@ -136,6 +137,7 @@ export class SubmissionService {
     const attempt = await this.prisma.solutionAttempt.findUnique({
       where: { id: attemptId },
       include: {
+        feedbacks: true,
         testResults: {
           orderBy: { testIndex: 'asc' },
           select: {
@@ -151,8 +153,9 @@ export class SubmissionService {
       },
     });
 
+    // Check if attempt exists
     if (!attempt) {
-      throw new Error('Attempt not found');
+      throw new NotFoundException(`Attempt ${attemptId} not found`);
     }
     const failedTests = attempt.testResults.filter((tr) => !tr.passed);
     return {
@@ -165,6 +168,7 @@ export class SubmissionService {
       memoryUsed: attempt.memoryUsed,
       createdAt: attempt.createdAt,
       completedAt: attempt.completedAt,
+      feedbacks: attempt.feedbacks.length > 0 ? attempt.feedbacks[0] : null,
       // Test details
       testResults: attempt.testResults.map((tr) => ({
         testIndex: tr.testIndex,
@@ -459,6 +463,59 @@ export class SubmissionService {
       message: 'Submission deleted successfully',
       deletedId: submissionId,
     };
+  }
+
+  /**
+   * Handle AI analysis result for a submission
+   * @param submissionId - ID of the submission
+   * @param payload - Analysis result payload
+   * @returns void
+   */
+  public async handleAiAnalysisResult(
+    submissionId: string,
+    payload: SubmissionAnalyzedEvent,
+  ) {
+    this.logger.log(
+      `Handling AI analysis result for submission ${submissionId}`,
+    );
+
+    const submission = await this.prisma.userSubmission.findUnique({
+      where: { id: submissionId },
+      select: { userId: true },
+    });
+
+    // Check if submission exists
+    if (!submission) {
+      this.logger.error(`Submission ${submissionId} not found for AI analysis`);
+      return;
+    }
+
+    // Store AI analysis feedback in database
+    await this.prisma.aIFeedback.create({
+      data: {
+        submissionId,
+        attemptId: payload.attemptId,
+        content: payload.content,
+        feedbackType: payload.feedbackType,
+        severity: payload.severity,
+        createdAt: new Date(),
+      },
+    });
+    this.logger.log(
+      `Stored AI analysis feedback for submission ${submissionId} in database`,
+    );
+
+    // Notify user via WebSocket
+    this.submissionGateway.notifySubmissionAnalyzed(
+      submission.userId,
+      submissionId,
+      {
+        content: payload.content,
+        feedbackType: payload.feedbackType,
+        severity: payload.severity,
+      },
+      payload.attemptId,
+    );
   }
 
   private async getQueueStats(): Promise<QueueStatsDto> {

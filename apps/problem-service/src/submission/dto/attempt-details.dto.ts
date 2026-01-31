@@ -20,6 +20,26 @@ export class TestDetailDto {
   errorMessage: string | null;
 }
 
+export class AiFeedbackDto {
+  @ApiProperty({ example: '123e4567-e89b-12d3-a456-426614174000' })
+  id: string;
+
+  @ApiProperty({
+    example: 'optimization',
+    description: 'Type of feedback: style, optimization, hint, explanation',
+  })
+  feedbackType: string;
+
+  @ApiProperty({ example: 'You can combine the loops to improve performance.' })
+  content: string;
+
+  @ApiProperty({ example: 'info', nullable: true })
+  severity: string | null;
+
+  @ApiProperty()
+  createdAt: Date;
+}
+
 export class AttemptDetailsDto {
   @ApiProperty()
   id: string;
@@ -44,6 +64,13 @@ export class AttemptDetailsDto {
 
   @ApiProperty()
   createdAt: Date;
+
+  @ApiProperty({
+    type: AiFeedbackDto,
+    nullable: true,
+    description: 'AI Feedback associated with this specific attempt',
+  })
+  feedbacks: AiFeedbackDto | null;
 
   @ApiProperty({ nullable: true })
   completedAt: Date | null;

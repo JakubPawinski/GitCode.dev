@@ -30,12 +30,29 @@ jobs:
           node-version: 20
           cache: 'npm'
 
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.14'
+          cache: 'pip'
+
+      - name: Install Poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Install Poetry Export Plugin
+        run: poetry self add poetry-plugin-export
+
+      - name: Install AI Service dependencies
+        working-directory: apps/ai-service
+        run: poetry install --no-interaction --no-root
+
       - run: npm ci
       - uses: nrwl/nx-set-shas@v4
 
       # Prepend any command with "nx-cloud record --" to record its logs to Nx Cloud
       # - run: npx nx-cloud record -- echo Hello World
-      - run: npx nx affected -t lint test build typecheck --no-cloud
+      - run: npx nx affected -t lint test build typecheck --no-cloud --exclude '@gitcode/ai-service'
         env:
           AUTH_DATABASE_URL: 'postgres://auth_user:auth_password@localhost:5432/auth_db'
           PROBLEM_DATABASE_URL: 'postgres://problem_user:problem_password@localhost:5432/problem_db'

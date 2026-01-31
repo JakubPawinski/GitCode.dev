@@ -224,6 +224,7 @@ describe('SubmissionService', () => {
         status: 'success',
         passedTests: 1,
         failedTests: 0,
+        feedbacks: [],
         testResults: [
           {
             id: 'tr-1',
@@ -264,6 +265,7 @@ describe('SubmissionService', () => {
         status: 'failed',
         passedTests: 1,
         failedTests: 1,
+        feedbacks: [],
         testResults: [
           {
             id: 'tr-1',

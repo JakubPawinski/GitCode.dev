@@ -3,6 +3,7 @@ import {
   NOTIFICATION_PATTERNS,
   AUTH_PATTERNS,
   SOCIAL_PATTERNS,
+  AI_PATTERNS,
 } from '@gitcode/contracts';
 import { NotificationService } from './providers/notification.service';
 import {
@@ -21,6 +22,7 @@ import {
   FriendshipDeclinedEnvelope,
   FriendshipRequestedEnvelope,
   SendNotificationCommandEnvelope,
+  SubmissionAnalyzedEnvelope,
   UserBannedEnvelope,
   UserCreatedEnvelope,
   UserProfileUpdatedEnvelope,
@@ -312,5 +314,32 @@ export class NotificationConsumer {
 
     // Await all notification promises
     await Promise.all(promises);
+  }
+
+  /*
+   * Handle user soft deleted events
+   */
+  @RabbitSubscribe({
+    exchange: RABBIT_CONFIG.EXCHANGE,
+    routingKey: AI_PATTERNS.SUBMISSION_ANALYZED,
+    queue: `${RABBIT_CONFIG.QUEUE}_submission_analyzed`,
+    errorBehavior: MessageHandlerErrorBehavior.NACK,
+  })
+  public async handleSubmissionAnalyzed(
+    @RabbitPayload() event: SubmissionAnalyzedEnvelope,
+  ): Promise<void> {
+    // Create notification payload for submission analyzed event
+    const payload: NotifyParams = {
+      userId: event.payload.userId,
+      type: NotificationType.SYSTEM,
+      kind: NotificationKind.SUBMISSION_ANALYZED,
+      severity: NotificationSeverity.INFO,
+      payload: {
+        title: 'Submission Analyzed',
+        message: 'Your submission has been analyzed.',
+        attemptId: event.payload.attemptId,
+      },
+    };
+    await this.notificationService.notify(payload);
   }
 }

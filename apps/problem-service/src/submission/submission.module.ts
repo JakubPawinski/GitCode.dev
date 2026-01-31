@@ -6,6 +6,7 @@ import { SubmissionController } from './submission.controller';
 import { SubmissionProcessor } from './submission.processor';
 import { DockerExecutorService } from './docker-executor.service';
 import { SubmissionGateway } from './submission.gateway';
+import { SubmissionConsumer } from './submission.consumer';
 
 @Module({
   imports: [
@@ -23,7 +24,7 @@ import { SubmissionGateway } from './submission.gateway';
       },
     }),
   ],
-  controllers: [SubmissionController],
+  controllers: [SubmissionController, SubmissionConsumer],
   providers: [
     SubmissionService,
     SubmissionProcessor,

@@ -59,7 +59,12 @@ export default function ProblemLayout({
     }
   }, [authData?.user.id])
 
-  const rooms = ['attempt_update', 'test_result', 'submission_complete']
+  const rooms = [
+    'attempt_update',
+    'test_result',
+    'submission_complete',
+    'submission_analyzed',
+  ]
 
   const { problem } = useParams()
 

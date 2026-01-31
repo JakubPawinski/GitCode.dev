@@ -8,6 +8,7 @@ import {
   UserProfileUpdatedEvent,
   UserSoftDeletedEvent,
   FriendshipRequestedEvent,
+  SubmissionAnalyzedEvent,
 } from '@gitcode/contracts';
 
 // Envelope for UserCreatedEvent
@@ -43,4 +44,8 @@ export class FriendshipDeclinedEnvelope extends WithEventPayload(
 
 export class FriendshipRequestedEnvelope extends WithEventPayload(
   FriendshipRequestedEvent,
+) {}
+
+export class SubmissionAnalyzedEnvelope extends WithEventPayload(
+  SubmissionAnalyzedEvent,
 ) {}
