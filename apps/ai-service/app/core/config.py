@@ -26,6 +26,11 @@ class Settings(BaseSettings):
     GEMINI_MODEL_NAME: str = "gemini-3-flash-preview"
     OPENAI_MODEL_NAME: str = "gpt-4.1-nano"
 
+    AI_DB_USER: str
+    AI_DB_PASSWORD: str
+    AI_DB_NAME: str
+    AI_DATABASE_URL: str
+
     model_config = SettingsConfigDict(
         env_file=str(ENV_FILE),
         env_file_encoding="utf-8",

@@ -6,6 +6,7 @@ from app.api.routers import router as api_router
 from contextlib import asynccontextmanager
 from app.core.event_consumer import event_consumer
 from app.core.event_bus import event_bus
+from app.core.database import init_db
 import logging
 import sys
 
@@ -22,6 +23,7 @@ import app.handler.submission_handler
 async def lifespan(app: FastAPI):
     await event_consumer.connect()
     await event_bus.connect()
+    await init_db()
     yield
     await event_consumer.close()
     await event_bus.close()
@@ -42,7 +44,7 @@ app.add_middleware(
 )
 
 """Include API routers"""
-app.include_router(api_router, prefix="/api/v1")
+app.include_router(api_router, prefix="/ai")
 
 
 if __name__ == "__main__":
