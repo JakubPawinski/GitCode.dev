@@ -20,6 +20,7 @@ logging.basicConfig(
 
 # Ensure event handlers are imported for register decorators
 import app.handler.submission_handler 
+import app.handler.readme_handler
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

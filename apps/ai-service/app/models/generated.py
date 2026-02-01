@@ -14,6 +14,8 @@ class Model(RootModel[Any]):
 class AIPATTERNS(StrEnum):
     ai_submission_analyzed = "ai.submission.analyzed"
     ai_analysis_failed = "ai.analysis.failed"
+    ai_readme_generated = "ai.readme.generated"
+    ai_readme_generate = "ai.readme.generate"
 
 
 class AUTHPATTERNS(StrEnum):
@@ -155,6 +157,13 @@ class FriendshipRequestedEvent(BaseModel):
     requesterUsername: str
 
 
+class GenerateReadmeCommand(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+    userId: str
+
+
 class MessagingModule(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
@@ -171,6 +180,14 @@ class PaginationMeta(BaseModel):
     pageSize: float
     totalItems: float
     totalPages: float
+
+
+class ReadmeGeneratedEvent(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+    readmeContent: str
+    userId: str
 
 
 class RecordStringAny(BaseModel):
@@ -296,13 +313,6 @@ class UserSoftDeletedEvent(BaseModel):
     )
     userId: str
     username: str
-
-
-class UserStatus(StrEnum):
-    ACTIVE = "ACTIVE"
-    INACTIVE = "INACTIVE"
-    BANNED = "BANNED"
-    DELETED = "DELETED"
 
 
 class PrivacyLevelEnum(StrEnum):

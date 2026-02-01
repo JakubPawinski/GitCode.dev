@@ -31,6 +31,7 @@ class Settings(BaseSettings):
     AI_DATABASE_URL: str
 
     PROBLEM_SERVICE_URL: str = "http://problem-service:4003"
+    AUTH_SERVICE_URL: str = "http://auth-service:4001"
 
     INTERNAL_API_KEY: str
 
