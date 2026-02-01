@@ -14,7 +14,7 @@ import {
   CreateSubmissionDto,
   CreateSubmissionResponseDto,
 } from './dto/create-submission.dto';
-import { JwtAuthGuard, User } from '@gitcode/auth';
+import { InternalService, JwtAuthGuard, User } from '@gitcode/auth';
 import type { AuthenticatedUser } from '@gitcode/types';
 import {
   ApiBearerAuth,
@@ -180,6 +180,7 @@ export class SubmissionController {
   // TODO: Protect this endpoint with an API key or internal auth mechanism
   @Get('stats/extended/:userId')
   @ApiBearerAuth('Bearer Auth')
+  @InternalService()
   @ApiOperation({
     summary: 'Get extended user statistics for README generation and charts',
   })
