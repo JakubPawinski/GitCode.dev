@@ -59,9 +59,10 @@ export class AuthService {
     this.logger.debug(`Mapped app roles: ${JSON.stringify(appRoles)}`);
 
     // Check if user exists, if not, publish UserCreatedEvent
-    const userExists = await this.prisma.user.count({
-      where: { keycloakId: userInfo.sub },
-    }) > 0;
+    const userExists =
+      (await this.prisma.user.count({
+        where: { keycloakId: userInfo.sub },
+      })) > 0;
 
     // Create or update user in database
     const user = await this.upsertUser(
@@ -468,5 +469,25 @@ export class AuthService {
       this.logger.error('Account update callback error:', error);
       return { message: 'Failed to update profile', success: false };
     }
+  }
+
+  async getOAuthTokenForGithub(userId: string): Promise<any> {
+    const oauthToken = await this.prisma.oAuthToken.findUnique({
+      where: { userId_provider: { userId, provider: 'github' } },
+    });
+
+    if (!oauthToken) {
+      throw new UnauthorizedException(
+        'GitHub account not connected for this user',
+      );
+    }
+
+    return {
+      accessToken: oauthToken.accessToken,
+      refreshToken: oauthToken.refreshToken,
+      expiresAt: oauthToken.expiresAt,
+      scope: oauthToken.scope,
+      tokenType: oauthToken.tokenType,
+    };
   }
 }

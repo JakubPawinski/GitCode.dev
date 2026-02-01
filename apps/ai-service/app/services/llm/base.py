@@ -18,24 +18,30 @@ class BaseLLMClient(ABC):
         pass
 
     @abstractmethod
-    async def generate_readme(self, code: str, problem_description: str) -> str:
+    async def generate_readme_content(self, stats: dict) -> Any:
         """
-        Generates a README.md content based on the provided code and problem description.
+        Generates personalized README content based on user statistics.
 
         :param self: Instance of the class
-        :param code: The source code for which to generate the README
-        :type code: str
-        :param problem_description: Description of the problem the code solves
-        :type problem_description: str
-        :return: README content as a string
-        :rtype: str
+        :param stats: Extended user statistics dictionary containing metrics like
+                      problemsSolved, successRate, topicStats, streak, etc.
+        :type stats: dict
+        :return: AIReadmeContent object with generated content
+        :rtype: Any (AIReadmeContent)
         """
         pass
 
     @abstractmethod
-    async def stream_tutor_chat(self, code: str, problem_description: str, chat_history: list[dict], user_message: str) -> AsyncGenerator[str, None]:
+    async def stream_tutor_chat(
+        self, 
+        code: str, 
+        problem_description: str, 
+        chat_history: list[dict], 
+        user_message: str
+    ) -> AsyncGenerator[str, None]:
         """
-        Streams a tutor chat response based on the provided code, problem description, chat history, and user message.
+        Streams a tutor chat response based on the provided code, problem description, 
+        chat history, and user message.
         
         :param self: Instance of the class
         :param code: The source code related to the chat
