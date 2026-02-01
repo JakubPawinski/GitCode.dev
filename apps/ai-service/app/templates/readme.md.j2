@@ -1,0 +1,371 @@
+# 🚀 {{ user.username }}'s Developer Profile
+
+<div align="center">
+
+[![Profile Views](https://komarev.com/ghpvc/?username={{ user.githubUsername }}&color=blueviolet&style=flat-square)](https://github.com/{{ user.githubUsername }})
+[![GitCode Profile](https://img.shields.io/badge/GitCode-Profile-blue?style=flat-square&logo=github)](https://gitcode.dev/u/{{ user.username }})
+[![Problems Solved](https://img.shields.io/badge/Problems%20Solved-{{ stats.problemsSolved }}-success?style=flat-square)](https://gitcode.dev/u/{{ user.username }})
+[![Current Streak](https://img.shields.io/badge/🔥%20Streak-{{ stats.streak.currentStreak }}%20days-orange?style=flat-square)](https://gitcode.dev/u/{{ user.username }})
+
+</div>
+
+> **{{ ai.headline }}**
+
+{{ ai.bio }}
+
+---
+
+## 🧠 AI-Powered Insights
+
+<table>
+<tr>
+<td width="33%" valign="top">
+
+### ✅ Key Strengths
+{% for strength in ai.keyStrengths %}
+- {{ strength }}
+{% endfor %}
+
+</td>
+<td width="33%" valign="top">
+
+### 💡 Growth Areas
+{% for area in ai.growthAreas %}
+- {{ area }}
+{% endfor %}
+
+</td>
+<td width="33%" valign="top">
+
+### 🎯 Recommended Focus
+{% for focus in ai.recommendedFocus %}
+- {{ focus }}
+{% endfor %}
+
+</td>
+</tr>
+</table>
+
+> *"{{ ai.motivationalQuote }}"*
+
+---
+
+## 📊 Problem Solving Statistics
+
+<table>
+<tr>
+<td width="50%">
+
+### Overall Performance
+| Metric | Value |
+|:-------|------:|
+| 🧩 Problems Attempted | **{{ stats.problemsAttempted }}** |
+| ✅ Problems Solved | **{{ stats.problemsSolved }}** |
+| 📝 Total Submissions | **{{ stats.totalSubmissions }}** |
+| 🎯 Success Rate | **{{ stats.successRate }}%** |
+| ⚡ Avg Execution Time | **{{ stats.performanceMetrics.avgExecutionTime | default('N/A', true) }} ms** |
+{% if stats.performanceMetrics.avgMemoryUsed %}
+| 💾 Avg Memory Usage | **{{ stats.performanceMetrics.avgMemoryUsed }} MB** |
+{% endif %}
+
+</td>
+<td width="50%">
+
+### Difficulty Breakdown
+{% set has_difficulty_data = stats.difficultyBreakdown.easy > 0 or stats.difficultyBreakdown.medium > 0 or stats.difficultyBreakdown.hard > 0 %}
+{% if has_difficulty_data %}
+```mermaid
+pie showData
+    title Problems by Difficulty
+{% if stats.difficultyBreakdown.easy > 0 %}
+    "Easy" : {{ stats.difficultyBreakdown.easy }}
+{% endif %}
+{% if stats.difficultyBreakdown.medium > 0 %}
+    "Medium" : {{ stats.difficultyBreakdown.medium }}
+{% endif %}
+{% if stats.difficultyBreakdown.hard > 0 %}
+    "Hard" : {{ stats.difficultyBreakdown.hard }}
+{% endif %}
+```
+{% else %}
+| Difficulty | Count |
+|:-----------|------:|
+| 🟢 Easy | {{ stats.difficultyBreakdown.easy }} |
+| 🟡 Medium | {{ stats.difficultyBreakdown.medium }} |
+| 🔴 Hard | {{ stats.difficultyBreakdown.hard }} |
+{% endif %}
+
+</td>
+</tr>
+</table>
+
+---
+
+## 🔥 Activity & Streaks
+
+### Streak Stats
+
+| 🔥 Current Streak | 🏆 Longest Streak | 📅 Last Activity | ✨ Active Today |
+|:-----------------:|:-----------------:|:----------------:|:---------------:|
+| **{{ stats.streak.currentStreak }} days** | **{{ stats.streak.longestStreak }} days** | **{{ stats.streak.lastActivityDate | default('N/A', true) }}** | **{{ '✅ Yes' if stats.streak.activeToday else '❌ No' }}** |
+
+### 📅 Weekly Activity Pattern
+
+{% set max_submissions = stats.weeklyActivity | map(attribute='totalSubmissions') | max | default(0, true) %}
+{% if max_submissions > 0 %}
+| Day | Sun | Mon | Tue | Wed | Thu | Fri | Sat |
+|:----|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| **Submissions** | {{ stats.weeklyActivity[0].totalSubmissions }} | {{ stats.weeklyActivity[1].totalSubmissions }} | {{ stats.weeklyActivity[2].totalSubmissions }} | {{ stats.weeklyActivity[3].totalSubmissions }} | {{ stats.weeklyActivity[4].totalSubmissions }} | {{ stats.weeklyActivity[5].totalSubmissions }} | {{ stats.weeklyActivity[6].totalSubmissions }} |
+| **Success** | {{ stats.weeklyActivity[0].successfulSubmissions }} | {{ stats.weeklyActivity[1].successfulSubmissions }} | {{ stats.weeklyActivity[2].successfulSubmissions }} | {{ stats.weeklyActivity[3].successfulSubmissions }} | {{ stats.weeklyActivity[4].successfulSubmissions }} | {{ stats.weeklyActivity[5].successfulSubmissions }} | {{ stats.weeklyActivity[6].successfulSubmissions }} |
+
+```text
+Weekly Activity Distribution
+{% for day in stats.weeklyActivity %}
+{{ day.dayName[:3] }} │{{ '█' * ((day.totalSubmissions * 30) // (max_submissions if max_submissions > 0 else 1)) }}{% for _ in range(30 - ((day.totalSubmissions * 30) // (max_submissions if max_submissions > 0 else 1))) %}░{% endfor %}│ {{ day.totalSubmissions }}
+{% endfor %}
+```
+{% else %}
+*No weekly activity data available yet.*
+{% endif %}
+
+{% if stats.activityHeatmap and stats.activityHeatmap | length > 0 %}
+### 📆 Contribution Heatmap (Last 30 Days)
+
+{% set recent_heatmap = stats.activityHeatmap[-30:] %}
+```text
+Contribution Activity ({{ recent_heatmap[0].date if recent_heatmap else 'N/A' }} to {{ recent_heatmap[-1].date if recent_heatmap else 'N/A' }})
+{% for day in recent_heatmap %}
+{{ day.date }} │{% if day.submissions == 0 %}░░{% elif day.submissions <= 2 %}▒▒{% elif day.submissions <= 5 %}▓▓{% else %}██{% endif %}│ {{ day.submissions }} submissions ({{ day.solved }} solved)
+{% endfor %}
+```
+
+**Legend:** `░░` No activity | `▒▒` 1-2 submissions | `▓▓` 3-5 submissions | `██` 6+ submissions
+{% endif %}
+
+---
+
+## 💻 Language Proficiency
+
+{% if stats.languageStats and stats.languageStats | length > 0 %}
+{% set total_lang_submissions = stats.languageStats | map(attribute='submissions') | sum %}
+{% if total_lang_submissions > 0 %}
+```mermaid
+pie showData
+    title Languages Used
+{% for lang in stats.languageStats[:5] %}
+{% if lang.submissions > 0 %}
+    "{{ lang.language | capitalize }}" : {{ lang.submissions }}
+{% endif %}
+{% endfor %}
+```
+{% endif %}
+
+| Language | Submissions | Success Rate | Avg Time |
+|:---------|------------:|-------------:|---------:|
+{% for lang in stats.languageStats[:5] %}
+| {{ lang.language | capitalize }} | {{ lang.submissions }} | {{ lang.successRate }}% | {{ lang.avgExecutionTime | default('N/A', true) }} ms |
+{% endfor %}
+{% else %}
+*No language statistics available yet.*
+{% endif %}
+
+---
+
+## 🎯 Topic Mastery
+
+{% if stats.topicStats and stats.topicStats | length > 0 %}
+{% set topics_with_data = stats.topicStats | selectattr('attempted', 'gt', 0) | list %}
+{% if topics_with_data | length > 0 %}
+```mermaid
+pie showData
+    title Problems by Topic
+{% for topic in topics_with_data[:6] %}
+    "{{ topic.topic }}" : {{ topic.solved }}
+{% endfor %}
+```
+{% endif %}
+
+<details>
+<summary>📋 Detailed Topic Statistics</summary>
+
+| Topic | Solved | Attempted | Success Rate | Avg Time |
+|:------|-------:|----------:|-------------:|---------:|
+{% for topic in stats.topicStats %}
+| {{ topic.topic }} | {{ topic.solved }} | {{ topic.attempted }} | {{ topic.successRate }}% | {{ topic.avgExecutionTime | default('N/A', true) }} ms |
+{% endfor %}
+
+</details>
+{% else %}
+*No topic statistics available yet.*
+{% endif %}
+
+---
+
+## 🤖 AI Code Review Insights
+
+{% if stats.aiFeedbackByType and stats.aiFeedbackByType.total > 0 %}
+<table>
+<tr>
+<td width="50%">
+
+### Feedback by Type
+```mermaid
+pie showData
+    title AI Feedback Types
+{% if stats.aiFeedbackByType.bug > 0 %}
+    "Bug" : {{ stats.aiFeedbackByType.bug }}
+{% endif %}
+{% if stats.aiFeedbackByType.performance > 0 %}
+    "Performance" : {{ stats.aiFeedbackByType.performance }}
+{% endif %}
+{% if stats.aiFeedbackByType.security > 0 %}
+    "Security" : {{ stats.aiFeedbackByType.security }}
+{% endif %}
+{% if stats.aiFeedbackByType.cleanCode > 0 %}
+    "Clean Code" : {{ stats.aiFeedbackByType.cleanCode }}
+{% endif %}
+{% if stats.aiFeedbackByType.logic > 0 %}
+    "Logic" : {{ stats.aiFeedbackByType.logic }}
+{% endif %}
+{% if stats.aiFeedbackByType.bestPractices > 0 %}
+    "Best Practices" : {{ stats.aiFeedbackByType.bestPractices }}
+{% endif %}
+```
+
+</td>
+<td width="50%">
+
+### Feedback by Severity
+{% set has_severity_data = stats.aiFeedbackBySeverity.info > 0 or stats.aiFeedbackBySeverity.warning > 0 or stats.aiFeedbackBySeverity.critical > 0 %}
+{% if has_severity_data %}
+```mermaid
+pie showData
+    title Feedback Severity
+{% if stats.aiFeedbackBySeverity.info > 0 %}
+    "Info" : {{ stats.aiFeedbackBySeverity.info }}
+{% endif %}
+{% if stats.aiFeedbackBySeverity.warning > 0 %}
+    "Warning" : {{ stats.aiFeedbackBySeverity.warning }}
+{% endif %}
+{% if stats.aiFeedbackBySeverity.critical > 0 %}
+    "Critical" : {{ stats.aiFeedbackBySeverity.critical }}
+{% endif %}
+```
+{% endif %}
+
+| Severity | Count | Percentage |
+|:---------|------:|-----------:|
+| ℹ️ Info | {{ stats.aiFeedbackBySeverity.info }} | {{ ((stats.aiFeedbackBySeverity.info / stats.aiFeedbackByType.total) * 100) | round(1) }}% |
+| ⚠️ Warning | {{ stats.aiFeedbackBySeverity.warning }} | {{ ((stats.aiFeedbackBySeverity.warning / stats.aiFeedbackByType.total) * 100) | round(1) }}% |
+| 🚨 Critical | {{ stats.aiFeedbackBySeverity.critical }} | {{ ((stats.aiFeedbackBySeverity.critical / stats.aiFeedbackByType.total) * 100) | round(1) }}% |
+
+**Total Reviews:** {{ stats.aiFeedbackByType.total }}
+
+</td>
+</tr>
+</table>
+
+### 📈 Code Quality Trend
+
+{{ ai.codeQualityAnalysis }}
+{% else %}
+*No AI feedback statistics available yet. Submit some code to get AI-powered reviews!*
+{% endif %}
+
+---
+
+## 📈 Progress Over Time
+
+{% if stats.progressOverTime and stats.progressOverTime | length > 0 %}
+{% set months_with_data = stats.progressOverTime | selectattr('problemsSolved', 'gt', 0) | list %}
+{% if months_with_data | length > 0 %}
+```mermaid
+pie showData
+    title Problems Solved by Month
+{% for month in months_with_data[-6:] %}
+    "{{ month.month }}" : {{ month.problemsSolved }}
+{% endfor %}
+```
+{% endif %}
+
+| Month | Problems Solved | Submissions | Success Rate |
+|:------|----------------:|------------:|-------------:|
+{% for month in stats.progressOverTime[-6:] %}
+| {{ month.month }} | {{ month.problemsSolved }} | {{ month.submissions }} | {{ month.successRate }}% |
+{% endfor %}
+{% else %}
+*No progress data available yet.*
+{% endif %}
+
+---
+
+## 🏆 Achievements & Milestones
+
+{% if stats.milestones and stats.milestones | length > 0 %}
+| Achievement | Description | Progress | Status |
+|:------------|:------------|:--------:|:------:|
+{% for milestone in stats.milestones %}
+| **{{ milestone.name }}** {{ '🏆' if milestone.achieved else '🔒' }} | {{ milestone.description }} | `{{ milestone.progress }}/{{ milestone.target }}` | {{ '✅ Achieved' if milestone.achieved else '🔄 In Progress' }} |
+{% endfor %}
+{% else %}
+*Start solving problems to unlock achievements!*
+{% endif %}
+
+---
+
+## 📊 Performance Metrics
+
+| ⚡ Avg Execution Time | 🚀 Best Execution Time | 💾 Avg Memory | 🎯 Best Memory |
+|:---------------------:|:----------------------:|:-------------:|:--------------:|
+| **{{ stats.performanceMetrics.avgExecutionTime | default('N/A', true) }} ms** | **{{ stats.performanceMetrics.bestExecutionTime | default('N/A', true) }} ms** | **{{ stats.performanceMetrics.avgMemoryUsed | default('N/A', true) }} MB** | **{{ stats.performanceMetrics.bestMemoryUsed | default('N/A', true) }} MB** |
+
+---
+
+{% if stats.recentActivity and stats.recentActivity | length > 0 %}
+{% set valid_activities = stats.recentActivity | selectattr('problemTitle', 'ne', 'Unknown') | list %}
+{% if valid_activities | length > 0 %}
+## 🕐 Recent Activity
+
+| Problem | Difficulty | Status | Time |
+|:--------|:-----------|:------:|-----:|
+{% for activity in valid_activities[:10] %}
+| [{{ activity.problemTitle }}](https://gitcode.dev/problems/{{ activity.problemSlug }}) | {{ '🟢' if activity.difficulty == 'EASY' else ('🟡' if activity.difficulty == 'MEDIUM' else '🔴') }} {{ activity.difficulty }} | {{ '✅' if activity.status == 'success' or activity.status == 'SUCCESS' else '❌' }} | {{ activity.timestamp[:10] }} |
+{% endfor %}
+
+---
+{% endif %}
+{% endif %}
+
+## 📉 Computed Metrics
+
+| Metric | Value | Description |
+|:-------|:-----:|:------------|
+| 🎯 Avg Difficulty Score | **{{ stats.averageDifficultyScore }}/3.0** | Average difficulty of solved problems |
+| 📈 Consistency Score | **{{ stats.consistencyScore }}/100** | Based on activity frequency and streaks |
+| 🚀 Growth Rate | **{{ '+' if stats.growthRate > 0 else '' }}{{ stats.growthRate }}%** | Month-over-month improvement |
+
+---
+
+## 💡 Personalized Recommendations
+
+{{ ai.personalizedRecommendations }}
+
+---
+
+<div align="center">
+
+### 🌟 Summary
+
+{{ ai.summary }}
+
+---
+
+**Generated by [GitCode.dev](https://gitcode.dev)** | Last updated: {{ stats.generatedAt[:19] | replace('T', ' ') }} UTC
+
+<sub>
+🔥 Current Streak: {{ stats.streak.currentStreak }} days |
+✅ Problems Solved: {{ stats.problemsSolved }} |
+🎯 Success Rate: {{ stats.successRate }}%
+</sub>
+
+</div>

@@ -38,6 +38,7 @@ class AppPermission(StrEnum):
     ai_interview_participate = "ai:interview:participate"
     ai_review_request = "ai:review:request"
     ai_tutor_chat = "ai:tutor:chat"
+    ai_readme_generation = "ai:readme:generation"
     github_connect = "github:connect"
     github_disconnect = "github:disconnect"
     github_push = "github:push"
