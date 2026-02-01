@@ -64,7 +64,10 @@
       "options": {
         "targetName": "test"
       },
-      "exclude": ["apps/notification-service-e2e/**/*"]
+      "exclude": [
+        "apps/notification-service-e2e/**/*",
+        "apps/github-service-e2e/**/*"
+      ]
     },
     {
       "plugin": "@nx/eslint/plugin",

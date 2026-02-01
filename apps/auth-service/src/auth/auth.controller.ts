@@ -7,6 +7,7 @@ import {
   Req,
   UseGuards,
   HttpStatus,
+  Param,
 } from '@nestjs/common';
 import type { Response, Request } from 'express';
 import {
@@ -26,7 +27,7 @@ import {
   LogoutResponseDto,
 } from './dto/auth-response.dto';
 import { ApiResponseDto } from '@gitcode/common';
-import { JwtAuthGuard } from '@gitcode/auth';
+import { JwtAuthGuard, InternalService } from '@gitcode/auth';
 import { RedisService } from '../redis/redis.service';
 import { AppService } from '../app.service';
 
@@ -330,10 +331,8 @@ export class AuthController {
     status: 401,
     description: 'Unauthorized - invalid or missing token',
     schema: {
-      allOf: [
-        { $ref: getSchemaPath(ApiResponseDto) },
-      ],
-    },  
+      allOf: [{ $ref: getSchemaPath(ApiResponseDto) }],
+    },
   })
   async getProfile(@Req() req: any): Promise<ApiResponseDto<UserDto>> {
     return {
@@ -382,5 +381,37 @@ export class AuthController {
         result.success ? 'success' : 'failure'
       }`,
     );
+  }
+  @Get('internal/oauth-token/:userId/github')
+  @InternalService()
+  @ApiOperation({
+    summary: 'Get GitHub OAuth token for a user (internal service use only)',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'GitHub OAuth token retrieved successfully',
+    schema: {
+      allOf: [
+        { $ref: getSchemaPath(ApiResponseDto) },
+        {
+          properties: {
+            data: {
+              type: 'object',
+              properties: {
+                accessToken: { type: 'string' },
+              },
+            },
+          },
+        },
+      ],
+    },
+  })
+  @ApiResponse({
+    status: 401,
+    description:
+      'Unauthorized - missing/invalid internal API key or user not connected',
+  })
+  async getGitHubTokenForUser(@Param('userId') userId: string): Promise<any> {
+    return this.authService.getOAuthTokenForGithub(userId);
   }
 }
