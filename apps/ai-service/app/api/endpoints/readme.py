@@ -1,9 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import JSONResponse
 from app.auth.deps import RequiredPermission
 from app.models.generated import AuthenticatedUser, AppPermission, GenerateReadmeCommand
 from app.core.event_bus import event_bus
-from app.core.config import settings
 import logging
 
 logger = logging.getLogger(__name__)

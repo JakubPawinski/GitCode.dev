@@ -177,7 +177,6 @@ export class SubmissionController {
    * @param userId - ID of the user
    * @returns - Extended user statistics with all metrics
    */
-  // TODO: Protect this endpoint with an API key or internal auth mechanism
   @Get('stats/extended/:userId')
   @ApiBearerAuth('Bearer Auth')
   @InternalService()

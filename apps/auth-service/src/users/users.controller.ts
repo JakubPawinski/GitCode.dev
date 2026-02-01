@@ -460,7 +460,6 @@ export class UsersController {
   }
 
   @Get(':id/internal')
-  @ApiBearerAuth('Bearer Auth')
   @InternalService()
   @ApiOperation({ summary: 'Get user by ID - internal service endpoint' })
   @ApiParam({
