@@ -32,6 +32,16 @@ export class RepositoryService {
     const repoName = this.DEFAULT_REPO_NAME;
 
     try {
+      // Find user in github-service database by userId from auth-service
+      const dbUser = await this.prisma.user.findUnique({
+        where: { userId },
+      });
+
+      if (!dbUser) {
+        throw new BadRequestException(
+          'User not found in github-service database. Please sync user first.',
+        );
+      }
       // Get authenticated user
       const { data: user } = await octokit.users.getAuthenticated();
       this.logger.debug(`Creating/getting repo for user: ${user.login}`);

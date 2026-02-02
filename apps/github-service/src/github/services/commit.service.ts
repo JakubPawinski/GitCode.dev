@@ -9,12 +9,17 @@ import { PrismaService } from '../../prisma/prisma.service';
 @Injectable()
 export class CommitService {
   private readonly logger = new Logger(CommitService.name);
-
+  private readonly DEFAULT_REPO_NAME: string;
   constructor(
     private readonly tokenService: GithubTokenService,
     private readonly configService: ConfigService,
     private readonly prisma: PrismaService,
-  ) {}
+  ) {
+    this.DEFAULT_REPO_NAME = this.configService.get<string>(
+      'GITHUB_DEFAULT_REPO_NAME',
+      'gitcode-solutions', // fallback value
+    );
+  }
 
   async commitAndPushFiles(
     userId: string,
@@ -24,7 +29,7 @@ export class CommitService {
   ): Promise<CommitResponseDto> {
     const token = await this.tokenService.getGitHubTokenForUser(userId);
     const octokit = new Octokit({ auth: token });
-    const repoName = this.configService.get<string>('github.defaultRepoName');
+    const repoName = this.DEFAULT_REPO_NAME;
 
     try {
       // Get authenticated user
@@ -165,7 +170,7 @@ export class CommitService {
   private async checkReadmeLimit(userId: string): Promise<void> {
     // Get user tier
     const user = await this.prisma.user.findUnique({
-      where: { id: userId },
+      where: { userId },
       select: { tier: true },
     });
 
