@@ -616,14 +616,7 @@ describe('AuthController', () => {
       expect(authService.getOAuthTokenForGithub).toHaveBeenCalledWith(
         'user-123',
       );
-      expect(result).toEqual({
-        success: true,
-        statusCode: 200,
-        message: 'GitHub token retrieved',
-        data: mockToken,
-        timestamp: expect.any(String),
-        path: expect.any(String),
-      });
+      expect(result).toEqual(mockToken);
     });
 
     it('should handle missing GitHub token', async () => {
