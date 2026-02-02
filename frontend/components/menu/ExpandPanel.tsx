@@ -10,7 +10,6 @@ export interface ExpandPanelProps {
 export const ExpandPanel = ({ isOpen, onClose }: ExpandPanelProps) => {
   const { similarProblems } = useProblemContext()
 
-  console.log(similarProblems)
   return (
     <div>
       <div
