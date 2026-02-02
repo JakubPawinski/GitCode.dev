@@ -183,7 +183,7 @@ export class SubmissionController {
    * @param userId - ID of the user
    * @returns - Extended user statistics with all metrics
    */
-  @Get('stats/extended/internal/:userId')
+  @Get('internal/stats/extended/:userId')
   @ApiBearerAuth('Bearer Auth')
   @InternalService()
   @ApiOperation({
