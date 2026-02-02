@@ -3,6 +3,7 @@ import {
   NestInterceptor,
   ExecutionContext,
   CallHandler,
+  HttpStatus,
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -18,18 +19,25 @@ export class ResponseInterceptor<T> implements NestInterceptor<
     next: CallHandler,
   ): Observable<ApiResponseDto<T>> {
     const request = context.switchToHttp().getRequest();
-    const statusCode = context.switchToHttp().getResponse().statusCode;
+    const response = context.switchToHttp().getResponse();
 
     return next.handle().pipe(
-      map((data) => ({
-        success: true,
-        statusCode,
-        message: data?.message || 'Operation successful',
-        data: data?.data !== undefined ? data.data : data,
-        meta: data?.meta,
-        timestamp: new Date().toISOString(),
-        path: request.url,
-      })),
+      map((data) => {
+        if (data === null || data === undefined) {
+          response.status(HttpStatus.NO_CONTENT);
+          return null as any;
+        }
+
+        return {
+          success: true,
+          statusCode: response.statusCode,
+          message: data?.message || 'Operation successful',
+          data: data?.data !== undefined ? data.data : data,
+          meta: data?.meta,
+          timestamp: new Date().toISOString(),
+          path: request.url,
+        };
+      }),
     );
   }
 }

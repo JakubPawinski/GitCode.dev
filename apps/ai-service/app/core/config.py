@@ -30,6 +30,11 @@ class Settings(BaseSettings):
     AI_DB_NAME: str
     AI_DATABASE_URL: str
 
+    PROBLEM_SERVICE_URL: str = "http://problem-service:4003"
+    AUTH_SERVICE_URL: str = "http://auth-service:4001"
+
+    INTERNAL_API_KEY: str
+
     model_config = SettingsConfigDict(
         env_file=str(ENV_FILE),
         env_file_encoding="utf-8",

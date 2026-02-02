@@ -32,6 +32,12 @@
     },
     {
       "path": "./packages/messaging"
+    },
+    {
+      "path": "./apps/github-service-e2e"
+    },
+    {
+      "path": "./apps/github-service"
     }
   ]
 }

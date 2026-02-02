@@ -26,6 +26,7 @@ import {
   RequirePermissions,
   User,
   PermissionsGuards,
+  InternalService,
 } from '@gitcode/auth';
 import { AppPermission, PaginatedResult } from '@gitcode/types';
 import type { AuthenticatedUser, UUID } from '@gitcode/types';
@@ -52,7 +53,6 @@ import { PaginationQueryDto } from '@gitcode/common';
   GetPublicProfileDto,
   GetUserDto,
 )
-@UseGuards(JwtAuthGuard, PermissionsGuards)
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
@@ -60,6 +60,7 @@ export class UsersController {
    * Get current user's profile
    */
   @Get('/me')
+  @UseGuards(JwtAuthGuard, PermissionsGuards)
   @RequirePermissions(AppPermission.USER_READ_SELF)
   @ApiBearerAuth('Bearer Auth')
   @ApiOperation({ summary: "Get current user's profile" })
@@ -87,6 +88,7 @@ export class UsersController {
    * Update current user's profile
    */
   @Patch('/me')
+  @UseGuards(JwtAuthGuard, PermissionsGuards)
   @RequirePermissions(AppPermission.USER_UPDATE_SELF)
   @ApiBearerAuth('Bearer Auth')
   @ApiOperation({ summary: "Update current user's profile" })
@@ -129,6 +131,7 @@ export class UsersController {
    * Delete current user's account
    */
   @Delete('/me')
+  @UseGuards(JwtAuthGuard, PermissionsGuards)
   @RequirePermissions(AppPermission.USER_DELETE_SELF)
   @ApiBearerAuth('Bearer Auth')
   @ApiOperation({ summary: "Soft delete current user's account" })
@@ -157,6 +160,7 @@ export class UsersController {
    * Get current user's preferences
    */
   @Get('/me/preferences')
+  @UseGuards(JwtAuthGuard, PermissionsGuards)
   @RequirePermissions(AppPermission.USER_PREFERENCE_READ)
   @ApiBearerAuth('Bearer Auth')
   @ApiOperation({ summary: "Get current user's preferences" })
@@ -186,6 +190,7 @@ export class UsersController {
    * Update current user's preferences
    */
   @Patch('/me/preferences')
+  @UseGuards(JwtAuthGuard, PermissionsGuards)
   @RequirePermissions(AppPermission.USER_PREFERENCE_UPDATE)
   @ApiBearerAuth('Bearer Auth')
   @ApiOperation({ summary: "Update current user's preferences" })
@@ -219,6 +224,7 @@ export class UsersController {
    * Get all users
    */
   @Get()
+  @UseGuards(JwtAuthGuard, PermissionsGuards)
   @RequirePermissions(AppPermission.USER_MANAGE) // Require admin-level permission
   @ApiBearerAuth('Bearer Auth')
   @ApiOperation({ summary: 'Get all users' })
@@ -249,6 +255,7 @@ export class UsersController {
    * Search users by username
    */
   @Get('/search')
+  @UseGuards(JwtAuthGuard, PermissionsGuards)
   @RequirePermissions(AppPermission.USER_READ_PUBLIC)
   @ApiBearerAuth('Bearer Auth')
   @ApiOperation({ summary: 'Search users by username' })
@@ -279,6 +286,7 @@ export class UsersController {
    * Admin search users with more detailed info
    */
   @Get('/search/admin')
+  @UseGuards(JwtAuthGuard, PermissionsGuards)
   @RequirePermissions(AppPermission.USER_MANAGE) // Require admin-level permission
   @ApiBearerAuth('Bearer Auth')
   @ApiOperation({ summary: 'Admin search users with detailed info' })
@@ -309,6 +317,7 @@ export class UsersController {
    * Get user profile by ID
    */
   @Get('/:id/profile')
+  @UseGuards(JwtAuthGuard, PermissionsGuards)
   @RequirePermissions(AppPermission.USER_READ_PUBLIC)
   @ApiBearerAuth('Bearer Auth')
   @ApiOperation({ summary: 'Get user profile by ID' })
@@ -345,6 +354,7 @@ export class UsersController {
    * Ban user by id
    */
   @Post(':id/ban')
+  @UseGuards(JwtAuthGuard, PermissionsGuards)
   @RequirePermissions(AppPermission.USER_MANAGE) // Require admin-level permission
   @ApiBearerAuth('Bearer Auth')
   @ApiOperation({ summary: 'Ban user by ID' })
@@ -381,6 +391,7 @@ export class UsersController {
    * Restore a soft-deleted user by ID
    */
   @Post('/:id/restore')
+  @UseGuards(JwtAuthGuard, PermissionsGuards)
   @RequirePermissions(AppPermission.USER_MANAGE) // Require admin-level permission
   @ApiBearerAuth('Bearer Auth')
   @ApiOperation({ summary: 'Restore a soft-deleted user by ID' })
@@ -415,6 +426,7 @@ export class UsersController {
    * Get user by ID with all details
    */
   @Get(':id')
+  @UseGuards(JwtAuthGuard, PermissionsGuards)
   @RequirePermissions(AppPermission.USER_READ_PRIVATE)
   @ApiBearerAuth('Bearer Auth')
   @ApiOperation({ summary: 'Get user by ID' })
@@ -442,6 +454,38 @@ export class UsersController {
     },
   })
   public getUserById(
+    @Param('id', new ParseUUIDPipe()) id: UUID,
+  ): Promise<GetUserDto> {
+    return this.usersService.getUserById(id);
+  }
+
+  @Get(':id/internal')
+  @InternalService()
+  @ApiOperation({ summary: 'Get user by ID - internal service endpoint' })
+  @ApiParam({
+    name: 'id',
+    description: 'UUID of the user to retrieve',
+    type: 'string',
+    format: 'uuid',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'User retrieved successfully',
+    schema: {
+      allOf: [
+        { $ref: getSchemaPath(ApiResponseDto) },
+        {
+          properties: {
+            data: {
+              $ref: getSchemaPath(GetUserDto),
+            },
+          },
+        },
+      ],
+    },
+  })
+  public getUserByIdInternal(
     @Param('id', new ParseUUIDPipe()) id: UUID,
   ): Promise<GetUserDto> {
     return this.usersService.getUserById(id);

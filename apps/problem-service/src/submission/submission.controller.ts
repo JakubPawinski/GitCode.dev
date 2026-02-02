@@ -7,13 +7,20 @@ import {
   Delete,
   UseGuards,
   Query,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { SubmissionService } from './submission.service';
 import {
   CreateSubmissionDto,
   CreateSubmissionResponseDto,
 } from './dto/create-submission.dto';
-import { JwtAuthGuard, User } from '@gitcode/auth';
+import {
+  InternalService,
+  JwtAuthGuard,
+  PermissionsGuards,
+  RequirePermissions,
+  User,
+} from '@gitcode/auth';
 import type { AuthenticatedUser } from '@gitcode/types';
 import {
   ApiBearerAuth,
@@ -30,12 +37,13 @@ import {
   SubmissionHistoryDto,
   SubmissionStatsDto,
 } from './dto';
+import { UserStatsExtendedDto } from './dto/user-stats-extended.dto';
 import {
   ApiResponseDto,
   PaginatedResponseDto,
   PaginationQueryDto,
 } from '@gitcode/common';
-import { PaginatedResult } from '@gitcode/types';
+import { AppPermission, PaginatedResult } from '@gitcode/types';
 
 @Controller('submissions')
 @ApiExtraModels(
@@ -168,6 +176,52 @@ export class SubmissionController {
   getUserStats(@User() user: AuthenticatedUser): Promise<SubmissionStatsDto> {
     const userId = user.id;
     return this.submissionService.getUserStats(userId);
+  }
+
+  /**
+   * Get extended user statistics for README generation and charts for internal services
+   * @param userId - ID of the user
+   * @returns - Extended user statistics with all metrics
+   */
+  @Get('internal/stats/extended/:userId')
+  @ApiBearerAuth('Bearer Auth')
+  @InternalService()
+  @ApiOperation({
+    summary: 'Get extended user statistics for README generation and charts',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Extended user statistics with all metrics',
+    type: UserStatsExtendedDto,
+  })
+  getUserStatsExtendedInternal(
+    @Param('userId', new ParseUUIDPipe()) userId: string,
+  ): Promise<UserStatsExtendedDto> {
+    return this.submissionService.getUserStatsExtended(userId);
+  }
+
+  /**
+   * Get extended user statistics for README generation and charts
+   * @param userId - ID of the user
+   * @returns - Extended user statistics with all metrics
+   */
+  @Get('stats/extended')
+  @ApiBearerAuth('Bearer Auth')
+  @UseGuards(JwtAuthGuard, PermissionsGuards)
+  @RequirePermissions(AppPermission.USER_READ_SELF)
+  @ApiOperation({
+    summary: 'Get extended user statistics for README generation and charts',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Extended user statistics with all metrics',
+    type: UserStatsExtendedDto,
+  })
+  public getUserStatsExtended(
+    @User() user: AuthenticatedUser,
+  ): Promise<UserStatsExtendedDto> {
+    const userId = user.id;
+    return this.submissionService.getUserStatsExtended(userId);
   }
 
   @Get('recent')

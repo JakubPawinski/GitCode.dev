@@ -530,7 +530,7 @@ export class ProblemService {
     });
 
     if (!stats) {
-      throw new NotFoundException(`Stats not found for problem "${slug}"`);
+      return null;
     }
 
     return {

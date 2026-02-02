@@ -7,6 +7,7 @@ export enum AppPermission {
   AI_INTERVIEW = 'ai:interview:participate', // Access to AI Interview features in the AI Service. Allows users to participate in AI-powered mock interviews, receive feedback, and access interview-related analytics.
   AI_REVIEW = 'ai:review:request', // Access to AI Reviewer features in the AI Service. Enables AI-assisted code reviews, suggestions for improvements, and automated testing feedback on submissions.
   AI_TUTOR = 'ai:tutor:chat', // Access to AI Tutor features in the AI Service. Provides personalized tutoring, hints, and explanations for coding problems and submissions.
+  AI_README_GENERATION = 'ai:readme:generation', // Access to AI-powered README generation features in the AI Service. Allows users to generate project documentation and README files using AI assistance.
 
   // --- Github permissions ---
   GITHUB_CONNECT = 'github:connect', // Permission to connect GitHub accounts via the GitHub Integration Service. Allows linking user accounts to GitHub for synchronization and repository access.

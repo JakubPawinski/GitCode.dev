@@ -43,6 +43,7 @@ const PREMIUM_USER_ADDITIONAL_PERMISSIONS: AppPermissions = [
   AppPermission.AI_REVIEW,
   AppPermission.AI_TUTOR,
   AppPermission.AI_INTERVIEW,
+  AppPermission.AI_README_GENERATION,
 ];
 const MODERATOR_ADDITIONAL_PERMISSIONS: AppPermissions = [
   // Content moderation
