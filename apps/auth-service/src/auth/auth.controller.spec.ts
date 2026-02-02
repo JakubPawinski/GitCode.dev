@@ -602,22 +602,28 @@ describe('AuthController', () => {
   describe('getGitHubTokenForUser', () => {
     it('should get GitHub token for user', async () => {
       // Arrange
-      const mockResponse = {
-        success: true,
-        statusCode: 200,
-        message: 'GitHub token retrieved',
-        data: {
-          accessToken: 'github-token-123',
-        },
+      const mockToken = {
+        accessToken: 'github-token-123',
+        scope: 'public_repo,read:user,user:email',
+        tokenType: 'bearer',
       };
-      authService.getOAuthTokenForGithub.mockResolvedValue(mockResponse);
+      authService.getOAuthTokenForGithub.mockResolvedValue(mockToken);
 
       // Act
       const result = await controller.getGitHubTokenForUser('user-123');
 
       // Assert
-      expect(authService.getOAuthTokenForGithub).toHaveBeenCalledWith('user-123');
-      expect(result).toEqual(mockResponse);
+      expect(authService.getOAuthTokenForGithub).toHaveBeenCalledWith(
+        'user-123',
+      );
+      expect(result).toEqual({
+        success: true,
+        statusCode: 200,
+        message: 'GitHub token retrieved',
+        data: mockToken,
+        timestamp: expect.any(String),
+        path: expect.any(String),
+      });
     });
 
     it('should handle missing GitHub token', async () => {
