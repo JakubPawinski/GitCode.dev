@@ -110,7 +110,7 @@ describe('SubmissionController', () => {
     submittedAt: new Date(),
   };
 
-    const mockUserStatsExtended: UserStatsExtendedDto = {
+  const mockUserStatsExtended: UserStatsExtendedDto = {
     userId: mockUserId,
     totalSubmissions: 42,
     successfulSubmissions: 28,
@@ -518,7 +518,9 @@ describe('SubmissionController', () => {
       service.getUserStatsExtended.mockResolvedValue(mockUserStatsExtended);
 
       // Act
-      const result = await controller.getUserStatsExtended(mockUserId);
+      const result = await controller.getUserStatsExtended({
+        id: mockUserId,
+      } as any);
 
       // Assert
       expect(result).toEqual(mockUserStatsExtended);
@@ -532,7 +534,9 @@ describe('SubmissionController', () => {
       service.getUserStatsExtended.mockResolvedValue(mockUserStatsExtended);
 
       // Act
-      const result = await controller.getUserStatsExtended(mockUserId);
+      const result = await controller.getUserStatsExtended({
+        id: mockUserId,
+      } as any);
 
       // Assert
       expect(result.languageStats).toHaveLength(1);
@@ -545,7 +549,9 @@ describe('SubmissionController', () => {
       service.getUserStatsExtended.mockResolvedValue(mockUserStatsExtended);
 
       // Act
-      const result = await controller.getUserStatsExtended(mockUserId);
+      const result = await controller.getUserStatsExtended({
+        id: mockUserId,
+      } as any);
 
       // Assert
       expect(result.difficultyBreakdown).toEqual({
@@ -564,7 +570,7 @@ describe('SubmissionController', () => {
 
       // Act & Assert
       await expect(
-        controller.getUserStatsExtended('nonexistent'),
+        controller.getUserStatsExtended({ id: 'nonexistent' } as any),
       ).rejects.toThrow(NotFoundException);
     });
   });
