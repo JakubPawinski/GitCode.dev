@@ -51,7 +51,7 @@ async def handle_generate_readme(event: GenerateReadmeCommand, metadata: dict):
         # Fetch extended stats from problem-service
         async with httpx.AsyncClient() as client:
             response = await client.get(
-                f"{settings.PROBLEM_SERVICE_URL}/submissions/stats/extended/{event.userId}",
+                f"{settings.PROBLEM_SERVICE_URL}/submissions/stats/extended/internal/{event.userId}",
                 headers={"x-internal-api-key": api_key}
             )
             logger.info(f"Stats response status: {response.status_code}")
