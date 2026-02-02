@@ -8,20 +8,25 @@ import { useAuth } from '@/contexts/auth/AuthContext'
 import { usePathname, useRouter } from 'next/navigation'
 
 export const Interceptor = ({ children }: { children: React.ReactNode }) => {
+  const pathname = usePathname()
+  const isLoginPage = pathname === '/login'
+
+  if (isLoginPage) return children
+
+  return <InterceptorInner>{children}</InterceptorInner>
+}
+
+const InterceptorInner = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter()
 
   const { data: authData, setData } = useAuth()
 
-  const pathname = usePathname()
-  const isLoginPage = pathname === '/login'
-
   const { postMutation, data, error } = usePostRefreshToken<AuthContextProps>()
 
   useEffect(() => {
-    if (!authData) {
-      postMutation()
-    }
-  }, [])
+    if (authData?.accessToken) return
+    if (!authData) postMutation()
+  }, [authData])
 
   useEffect(() => {
     if (data && !authData) {
@@ -69,7 +74,7 @@ export const Interceptor = ({ children }: { children: React.ReactNode }) => {
     }
   }, [data?.accessToken])
 
-  if (!isLoginPage && !authData?.accessToken) {
+  if (!authData?.accessToken) {
     return <Loader />
   }
   return children

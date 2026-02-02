@@ -1,7 +1,7 @@
 import { AuthProvider } from '@/contexts/auth/AuthContext'
 import './globals.css'
 import { Interceptor } from '@/api/Interceptor'
-import { HomeNavbar } from '@/components/home/HomeNavbar'
+import { HomeNavbar } from '@/components/navbar/HomeNavbar'
 
 export default function RootLayout({
   children,

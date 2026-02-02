@@ -7,6 +7,8 @@ import { useState } from 'react'
 import { Loader } from '../loading/Loader'
 import { Error } from '../error/Error'
 import { Brain } from 'lucide-react'
+import { ProfileLink } from './ProfileLink'
+import { useAuth } from '@/contexts/auth/AuthContext'
 interface NavbarSubmitProps {
   onSubmit: () => void
   submissionLoading: boolean
@@ -18,6 +20,11 @@ export const PrimaryProblemNavbar = ({
   submissionError,
 }: NavbarSubmitProps) => {
   const [isOpen, setIsOpen] = useState<boolean>(false)
+  const { data } = useAuth()
+
+  if (!data) return null
+
+  const { user } = data
 
   return (
     <nav className="border-primary/30 grid h-22 grid-cols-3 items-center border-b bg-transparent px-4 shadow-lg">
@@ -68,12 +75,7 @@ export const PrimaryProblemNavbar = ({
         </div>
       </div>
       <div className="flex justify-end">
-        <Link
-          href={'/profile'}
-          className="text-foreground hover:text-accent font-semibold tracking-wider transition-colors"
-        >
-          Profile
-        </Link>
+        <ProfileLink {...user} />
       </div>
       {submissionError && <Error {...submissionError} />}
     </nav>
