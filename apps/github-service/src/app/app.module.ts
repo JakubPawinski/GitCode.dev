@@ -4,7 +4,8 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { GithubModule } from '../github/github.module';
 import { GitCodeAuthModule } from '@gitcode/auth';
-
+import rabbitmqConfig from './config/rabbitmq.config';
+import { MessagingModule } from '@gitcode/messaging';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -17,10 +18,12 @@ import { GitCodeAuthModule } from '@gitcode/auth';
             accessExpiresIn: process.env.JWT_ACCESS_EXPIRATION || '15m',
           },
         }),
+        rabbitmqConfig,
       ],
     }),
     GitCodeAuthModule,
     GithubModule,
+    MessagingModule.forRoot([process.env.RABBITMQ_URL]),
   ],
   controllers: [AppController],
   providers: [AppService],

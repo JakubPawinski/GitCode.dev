@@ -20,6 +20,15 @@
   ],
   "references": [
     {
+      "path": "../../packages/common/tsconfig.lib.json"
+    },
+    {
+      "path": "../../packages/contracts/tsconfig.lib.json"
+    },
+    {
+      "path": "../../packages/messaging/tsconfig.lib.json"
+    },
+    {
       "path": "../../packages/auth/tsconfig.lib.json"
     }
   ]

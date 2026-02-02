@@ -1,0 +1,94 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../../../node_modules/@prisma/client-github"
+}
+datasource db {
+  provider = "postgresql"
+}
+enum UserTier {
+  FREE
+  PREMIUM
+  ENTERPRISE
+}
+
+model User {
+  id        String   @id @default(uuid())
+  userId    String  @unique
+  username  String
+  email     String   @unique
+  tier      UserTier @default(FREE)
+  
+  repositories      Repository[]
+  commits           Commit[]
+  readmeGenerations ReadmeGeneration[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([email])
+  @@map("users")
+}
+
+model Repository {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  name        String   // "gitcode-solutions"
+  fullName    String   // "User/gitcode-solutions"
+  githubId    Int?     // GitHub repository ID
+  htmlUrl     String   // "https://github.com/..."
+  isPrivate   Boolean  @default(false)
+  
+  commits     Commit[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([userId, name])
+  @@index([userId])
+  @@map("repositories")
+}
+
+model Commit {
+  id           String     @id @default(uuid())
+  userId       String
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  repositoryId String
+  repository   Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  
+  sha          String     @unique // GitHub commit SHA
+  message      String
+  url          String     // GitHub commit URL
+  branch       String     @default("main")
+  
+  fileCount    Int        @default(0)
+  additions    Int        @default(0)
+  deletions    Int        @default(0)
+  
+  committedAt  DateTime   // When commit was made on GitHub
+  createdAt    DateTime   @default(now())
+
+  @@index([userId])
+  @@index([repositoryId])
+  @@index([committedAt])
+  @@map("commits")
+}
+
+model ReadmeGeneration {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  month     Int      // 1-12
+  year      Int      // 2026
+  count     Int      @default(0)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, year, month])
+  @@index([userId, year, month])
+  @@map("readme_generations")
+}

@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { Octokit } from '@octokit/rest';
 import { GithubTokenService } from './github-token.service';
 import { RepositoryResponseDto } from '../dto/github-response.dto';
+import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
 export class RepositoryService {
@@ -12,6 +13,7 @@ export class RepositoryService {
 
   constructor(
     private readonly tokenService: GithubTokenService,
+    private readonly prisma: PrismaService,
     private readonly configService: ConfigService,
   ) {
     this.DEFAULT_REPO_NAME = this.configService.get<string>(
@@ -34,43 +36,62 @@ export class RepositoryService {
       const { data: user } = await octokit.users.getAuthenticated();
       this.logger.debug(`Creating/getting repo for user: ${user.login}`);
 
+      // Check if repo exists on GitHub
+      let githubRepo;
+      let created = false;
+
       // Check if repo exists
       try {
-        const { data: existingRepo } = await octokit.repos.get({
+        githubRepo = await octokit.repos.get({
           owner: user.login,
           repo: repoName,
         });
-
-        this.logger.log(`Repository ${repoName} already exists`);
-
-        return {
-          name: existingRepo.name,
-          fullName: existingRepo.full_name,
-          htmlUrl: existingRepo.html_url,
-          isPrivate: existingRepo.private,
-          created: false,
-        };
       } catch (error) {
         if (error.status !== 404) throw error;
-        // Repo doesn't exist, create it
+
+        // Create new repository on GitHub
+        githubRepo = await octokit.repos.createForAuthenticatedUser({
+          name: repoName,
+          description: this.DEFAULT_REPO_DESCRIPTION,
+          private: false,
+          auto_init: true,
+        });
+        created = true;
+        this.logger.log(`Repository ${repoName} created on GitHub`);
       }
 
-      // Create new public repository
-      const { data: newRepo } = await octokit.repos.createForAuthenticatedUser({
-        name: repoName,
-        description: this.DEFAULT_REPO_DESCRIPTION,
-        private: false, // Force public
-        auto_init: true,
+      // Upsert repository in our database
+      await this.prisma.repository.upsert({
+        where: {
+          userId_name: {
+            userId,
+            name: repoName,
+          },
+        },
+        update: {
+          fullName: githubRepo.data.full_name,
+          githubId: githubRepo.data.id,
+          htmlUrl: githubRepo.data.html_url,
+          isPrivate: githubRepo.data.private,
+        },
+        create: {
+          userId,
+          name: githubRepo.data.name,
+          fullName: githubRepo.data.full_name,
+          githubId: githubRepo.data.id,
+          htmlUrl: githubRepo.data.html_url,
+          isPrivate: githubRepo.data.private,
+        },
       });
 
-      this.logger.log(`Repository ${repoName} created successfully`);
+      this.logger.log(`Repository ${repoName} synced to database`);
 
       return {
-        name: newRepo.name,
-        fullName: newRepo.full_name,
-        htmlUrl: newRepo.html_url,
-        isPrivate: newRepo.private,
-        created: true,
+        name: githubRepo.data.name,
+        fullName: githubRepo.data.full_name,
+        htmlUrl: githubRepo.data.html_url,
+        isPrivate: githubRepo.data.private,
+        created,
       };
     } catch (error) {
       this.logger.error(`Failed to create repository: ${error.message}`);
