@@ -5,6 +5,11 @@ import { PrismaService } from '../prisma/prisma.service';
 import { DockerExecutorService } from './docker-executor.service';
 import { SubmissionGateway } from './submission.gateway';
 import { AttemptStatus } from './enum';
+import { EventBus } from '@gitcode/messaging';
+import {
+  SUBMISSION_PATTERNS,
+  SubmissionCompletedEvent,
+} from '@gitcode/contracts';
 @Processor('submissions')
 export class SubmissionProcessor extends WorkerHost {
   private readonly logger = new Logger(SubmissionProcessor.name);
@@ -13,6 +18,7 @@ export class SubmissionProcessor extends WorkerHost {
     private prisma: PrismaService,
     private codeExecutor: DockerExecutorService,
     private submissionGateway: SubmissionGateway,
+    private eventBus: EventBus,
   ) {
     super();
     this.logger.log('SubmissionProcessor initialized!');
@@ -106,6 +112,38 @@ export class SubmissionProcessor extends WorkerHost {
 
       const isAllPassed = passedTests === results.length;
       const status = isAllPassed ? AttemptStatus.SUCCESS : AttemptStatus.FAILED;
+
+      // If all tests passed, publish submission completed event
+      if (isAllPassed) {
+        this.logger.log(`Attempt ${attemptId} passed all tests!`);
+        this.logger.log(
+          `Sending 'submission-completed' event to user ${userId}`,
+        );
+
+        const problemDescription: string = await this.prisma.problem
+          .findUnique({
+            where: { id: problemId },
+            select: { description: true },
+          })
+          .then((problem) => problem?.description || '');
+
+        // Sending submission completed event
+        await this.eventBus.publish(
+          SUBMISSION_PATTERNS.SUBMISSION_COMPLETED,
+          new SubmissionCompletedEvent(
+            userId,
+            submissionId,
+            code,
+            language,
+            problemId,
+            attemptId,
+            problemDescription,
+          ),
+        );
+        this.logger.log(
+          `'submission-completed' event sent for submission ${submissionId}`,
+        );
+      }
 
       // Update attempt with results
       await this.prisma.solutionAttempt.update({

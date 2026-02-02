@@ -205,6 +205,28 @@ services:
       retries: 5
     restart: unless-stopped
 
+  ai-db:
+    image: postgres:18-alpine
+    container_name: ai-db
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_USER=${AI_DB_USER}
+      - POSTGRES_PASSWORD=${AI_DB_PASSWORD}
+      - POSTGRES_DB=${AI_DB_NAME}
+    ports:
+      - '${AI_DB_PORT}:5432'
+    volumes:
+      - ai-db-data-dev:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${AI_DB_USER}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - gitcodedev-network
+    restart: unless-stopped
+
     # GitHub Service Database
   postgres-github:
     image: postgres:18-alpine
@@ -251,4 +273,5 @@ volumes:
   problem-redis-data-dev:
   problem-executions:
   notification-db-data-dev:
+  ai-db-data-dev:
   github_postgres_data:

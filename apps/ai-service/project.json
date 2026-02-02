@@ -1,0 +1,92 @@
+{
+  "name": "@gitcode/ai-service",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "sourceRoot": "apps/ai-service/ai_service",
+  "targets": {
+    "docs": {
+      "executor": "@nxlv/python:run-commands",
+      "options": {
+        "command": "pydoc-markdown -p ai_service --render-toc > docs/source/api.md",
+        "cwd": "apps/ai-service"
+      }
+    },
+    "lock": {
+      "executor": "@nxlv/python:run-commands",
+      "options": {
+        "command": "poetry lock --no-update",
+        "cwd": "apps/ai-service"
+      }
+    },
+    "add": {
+      "executor": "@nxlv/python:add",
+      "options": {}
+    },
+    "update": {
+      "executor": "@nxlv/python:update",
+      "options": {}
+    },
+    "remove": {
+      "executor": "@nxlv/python:remove",
+      "options": {}
+    },
+    "build": {
+      "executor": "@nxlv/python:build",
+      "outputs": ["{projectRoot}/dist"],
+      "options": {
+        "outputPath": "apps/ai-service/dist",
+        "publish": false,
+        "lockedVersions": true,
+        "bundleLocalDependencies": true
+      }
+    },
+    "install": {
+      "executor": "@nxlv/python:install",
+      "options": {
+        "silent": false,
+        "args": "",
+        "cacheDir": ".cache/pypoetry",
+        "verbose": false,
+        "debug": false
+      }
+    },
+    "serve": {
+      "executor": "@nxlv/python:run-commands",
+      "options": {
+        "command": "poetry run python -m app.main",
+        "cwd": "apps/ai-service"
+      }
+    },
+    "lint": {
+      "executor": "@nxlv/python:run-commands",
+      "outputs": ["{workspaceRoot}/reports/apps/ai-service/pylint.txt"],
+      "options": {
+        "command": "poetry run flake8 app tests --output-file=../../reports/apps/ai-service/pylint.txt",
+        "cwd": "apps/ai-service"
+      }
+    },
+    "test": {
+      "executor": "@nxlv/python:run-commands",
+      "outputs": [
+        "{workspaceRoot}/reports/apps/ai-service/unittests",
+        "{workspaceRoot}/coverage/apps/ai-service"
+      ],
+      "options": {
+        "command": "poetry run pytest tests/",
+        "cwd": "apps/ai-service"
+      }
+    },
+    "tox": {
+      "executor": "@nxlv/python:tox",
+      "outputs": [
+        "{workspaceRoot}/reports/apps/ai-service/unittests",
+        "{workspaceRoot}/coverage/apps/ai-service"
+      ],
+      "options": {
+        "silent": false,
+        "args": ""
+      }
+    }
+  },
+  "tags": []
+}

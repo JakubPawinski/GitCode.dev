@@ -79,6 +79,14 @@ http:
       middlewares:
         - strip-api
 
+    ai-route:
+      rule: PathPrefix(`/api/ai`)
+      service: ai-service
+      entryPoints:
+        - gateway
+      middlewares:
+        - strip-api
+
   services:
     auth-service:
       loadBalancer:
@@ -110,6 +118,10 @@ http:
       loadBalancer:
         servers:
           - url: 'http://host.docker.internal:4004'
+    ai-service:
+      loadBalancer:
+        servers:
+          - url: 'http://host.docker.internal:4006'
 
   middlewares:
     strip-api:

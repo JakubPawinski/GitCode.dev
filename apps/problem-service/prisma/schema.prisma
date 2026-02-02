@@ -192,6 +192,8 @@ model SolutionAttempt {
   failedTests   Int        @default(0) @map("failed_tests")
   totalTests    Int        @map("total_tests")
   testResults   TestResult[] // Detailed per-test results
+  // Relations
+  feedbacks    AIFeedback[]
   // Metadata
   createdAt     DateTime   @default(now()) @map("created_at")
   completedAt   DateTime?  @map("completed_at")
@@ -222,6 +224,10 @@ model AIFeedback {
   id            String     @id @default(uuid())
   submissionId  String
   submission    UserSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+
+  attemptId     String?    @map("attempt_id")
+  attempt       SolutionAttempt? @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+
   feedbackType  String     // "style", "optimization", "hint", "explanation"
   content       String     @db.Text
   severity      String?    // "info", "warning", "critical"

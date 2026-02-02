@@ -52,5 +52,10 @@ module.exports = {
       url: `${process.env.NOTIFICATION_SERVICE_URL}/docs-json`,
       pathPrefix: '/api',
     },
+    {
+      name: 'AI Service',
+      url: `${process.env.AI_SERVICE_URL}/openapi.json`,
+      pathPrefix: '/api',
+    },
   ],
 };
