@@ -52,7 +52,7 @@ jobs:
 
       # Prepend any command with "nx-cloud record --" to record its logs to Nx Cloud
       # - run: npx nx-cloud record -- echo Hello World
-      - run: npx nx affected -t lint test build typecheck --no-cloud --exclude='@gitcode/ai-service' --exclude='@gitcode/github-service'
+      - run: npx nx affected -t lint test build typecheck --no-cloud --exclude='@gitcode/ai-service'
         env:
           AUTH_DATABASE_URL: 'postgres://auth_user:auth_password@localhost:5432/auth_db'
           PROBLEM_DATABASE_URL: 'postgres://problem_user:problem_password@localhost:5432/problem_db'
