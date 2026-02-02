@@ -106,6 +106,10 @@ http:
       loadBalancer:
         servers:
           - url: 'http://host.docker.internal:4003'
+    github-service:
+      loadBalancer:
+        servers:
+          - url: 'http://host.docker.internal:4004'
 
   middlewares:
     strip-api:
