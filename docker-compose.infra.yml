@@ -243,7 +243,7 @@ services:
     networks:
       - gitcodedev-network
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      test: ['CMD-SHELL', 'pg_isready -U ${GITHUB_DB_USER}']
       interval: 10s
       timeout: 5s
       retries: 5
