@@ -11,6 +11,8 @@ import {
   ProblemPaginationQueryDto,
 } from './dto';
 import { PaginatedResult } from '@gitcode/types';
+import { ConfigService } from '@nestjs/config';
+import { InternalServiceGuard } from '@gitcode/auth';
 describe('ProblemController', () => {
   let controller: ProblemController;
 
@@ -28,12 +30,22 @@ describe('ProblemController', () => {
     updateProblem: jest.fn(),
     deleteProblem: jest.fn(),
   };
+  const mockConfigService = {
+    get: jest.fn(),
+    getOrThrow: jest.fn(),
+  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ProblemController],
-      providers: [{ provide: ProblemService, useValue: mockProblemService }],
-    }).compile();
+      providers: [
+        { provide: ProblemService, useValue: mockProblemService },
+        { provide: ConfigService, useValue: mockConfigService },
+      ],
+    })
+      .overrideGuard(InternalServiceGuard)
+      .useValue({ canActivate: () => true })
+      .compile();
 
     controller = module.get<ProblemController>(ProblemController);
     jest.clearAllMocks();

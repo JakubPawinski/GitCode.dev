@@ -6,6 +6,8 @@ from app.services.tutor.tutor_service import TutorService
 from app.models.tutor import TutorRequest
 from app.auth.deps import RequiredPermission
 from app.models.generated import AuthenticatedUser, AppPermission
+import httpx
+from app.core.config import settings
 import json
 import logging
 from app.exceptions import (
@@ -18,7 +20,6 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-
 @router.post("/stream")
 async def chat_with_tutor(
     request: TutorRequest,
@@ -27,6 +28,25 @@ async def chat_with_tutor(
 ):
     """Stream AI tutor response"""
     try:
+        # Fetch problem description from problem service
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                f"{settings.PROBLEM_SERVICE_URL}/problems/internal/{request.problem_slug}",
+                headers={"x-internal-api-key": settings.INTERNAL_API_KEY}
+            )
+            logger.info(f"Problem response status: {response.status_code}")
+            
+            if response.status_code != 200:
+                logger.error(f"Failed to fetch problem description: {response.status_code}")
+                raise HTTPException(status_code=502, detail="Failed to fetch problem description")
+            
+            response_json = response.json()
+            problem_description = response_json.get("data", {}).get("description", "")
+            logger.debug(f"Fetched problem description for slug {request.problem_slug}")
+            logger.debug(f"Problem description content: {problem_description}")
+
+
+
         tutor_service = TutorService(db)
         
         async def event_generator():
@@ -36,8 +56,7 @@ async def chat_with_tutor(
                     problem_slug=request.problem_slug,
                     code=request.code,
                     message=request.message,
-                    problem_description=request.problem_description,
-                    attempt_id=request.attempt_id
+                    problem_description=problem_description,
                 ):
                     yield f"data: {json.dumps({'text': chunk, 'done': False})}\n\n"
                 

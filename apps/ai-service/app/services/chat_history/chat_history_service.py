@@ -19,7 +19,6 @@ class ChatHistoryService:
         self, 
         user_id: str, 
         problem_slug: str,
-        attempt_id: str = None
     ) -> ChatSession:
         """Gets or creates a chat session."""
         statement = select(ChatSession).where(
@@ -33,7 +32,6 @@ class ChatHistoryService:
             session = ChatSession(
                 user_id=user_id,
                 problem_slug=problem_slug,
-                attempt_id=attempt_id
             )
             self.db.add(session)
             await self.db.commit()
