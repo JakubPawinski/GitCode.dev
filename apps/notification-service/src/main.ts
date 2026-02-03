@@ -18,6 +18,11 @@ async function bootstrap() {
   // Global exception filter
   app.useGlobalFilters(new HttpExceptionFilter());
 
+  app.enableCors({
+    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    credentials: true,
+  });
+
   // Swagger setup
   const config = new DocumentBuilder()
     .setTitle('GitCode.dev notification-service')

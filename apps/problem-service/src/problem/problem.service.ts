@@ -1,8 +1,4 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   CreateProblemDto,
@@ -21,18 +17,31 @@ import { CodeSnippet } from '@prisma/client-problem';
 
 @Injectable()
 export class ProblemService {
+  private readonly logger = new Logger(ProblemService.name);
   constructor(private prisma: PrismaService) {}
   getHealth() {
     return { status: 'Problem Service is healthy' };
   }
-  async getPaginatedProblems(
+
+  /**
+   * Get a paginated list of problems based on the provided pagination parameters.
+   * @param paginationDto - Pagination parameters including page, limit, sortBy, sortOrder, and filters.
+   * @returns - A paginated list of problems.
+   */
+  public async getPaginatedProblems(
     paginationDto: ProblemPaginationQueryDto,
   ): Promise<PaginatedResult<ProblemResponseDto>> {
+    this.logger.log(
+      `Fetching paginated problems with params: ${JSON.stringify(paginationDto)}`,
+    );
+
     const page = paginationDto.page || 1;
     const limit = paginationDto.limit || 10;
     const sortBy = paginationDto.sortBy || 'createdAt';
     const sortOrder = paginationDto.sortOrder || 'desc';
-    const { difficulty, topic } = paginationDto;
+
+    // Build the where clause based on filters
+    const { difficulty, topic, search } = paginationDto;
 
     const where: any = {};
 
@@ -48,16 +57,36 @@ export class ProblemService {
         },
       };
     }
+    if (search) {
+      const trimmedSearch = search.trim();
+      where.OR = [
+        {
+          title: {
+            contains: trimmedSearch,
+            mode: 'insensitive',
+          },
+        },
+        {
+          description: {
+            contains: trimmedSearch,
+            mode: 'insensitive',
+          },
+        },
+      ];
+    }
+    this.logger.debug(`Constructed where clause: ${JSON.stringify(where)}`);
 
+    // Get total count for pagination
     const total = await this.prisma.problem.count({ where });
     const totalPages = Math.ceil(total / limit);
     const skip = (page - 1) * limit;
 
+    // Fetch paginated data
     const data = await this.prisma.problem.findMany({
       where,
       skip,
       take: +limit,
-      orderBy: [{ problemId: 'asc' }, { [sortBy]: sortOrder }],
+      orderBy: { [sortBy]: sortOrder },
       select: {
         id: true,
         problemId: true,
@@ -178,89 +207,6 @@ export class ProblemService {
     };
 
     return mapped;
-  }
-
-  async searchProblems(
-    query: string,
-    paginationDto: ProblemPaginationQueryDto,
-  ): Promise<PaginatedResult<ProblemResponseDto>> {
-    if (!query || query.trim().length === 0) {
-      throw new BadRequestException('Search query cannot be empty');
-    }
-
-    const page = paginationDto.page || 1;
-    const limit = paginationDto.limit || 10;
-    const sortBy = paginationDto.sortBy || 'createdAt';
-    const sortOrder = paginationDto.sortOrder || 'desc';
-
-    const where: any = {
-      OR: [
-        { title: { contains: query, mode: 'insensitive' } },
-        { description: { contains: query, mode: 'insensitive' } },
-      ],
-    };
-
-    if (paginationDto.topic) {
-      where.topics = { some: { topic: paginationDto.topic } };
-    }
-
-    if (paginationDto.difficulty) {
-      where.difficulty = paginationDto.difficulty.toUpperCase();
-    }
-
-    const total = await this.prisma.problem.count({ where });
-    const totalPages = Math.ceil(total / limit);
-    const skip = (page - 1) * limit;
-
-    const data = await this.prisma.problem.findMany({
-      where,
-      skip,
-      take: +limit,
-      orderBy: [{ problemId: 'asc' }, { [sortBy]: sortOrder }],
-      select: {
-        id: true,
-        problemId: true,
-        title: true,
-        problemSlug: true,
-        difficulty: true,
-        description: true,
-        topics: { select: { topic: true } },
-        similarProblems: {
-          select: {
-            problemTo: {
-              select: {
-                title: true,
-                problemSlug: true,
-                difficulty: true,
-              },
-            },
-          },
-        },
-      },
-    });
-
-    const mappedData: ProblemResponseDto[] = data.map((problem) => ({
-      id: problem.id,
-      problemId: problem.problemId,
-      title: problem.title,
-      difficulty: problem.difficulty,
-      problemSlug: problem.problemSlug,
-      description: problem.description,
-      topics: problem.topics.map((t) => t.topic),
-      similarProblems: problem.similarProblems.map((p) => p.problemTo),
-    }));
-
-    return {
-      data: mappedData,
-      meta: {
-        currentPage: page,
-        pageSize: limit,
-        totalItems: total,
-        totalPages,
-        hasNextPage: page < totalPages,
-        hasPreviousPage: page > 1,
-      },
-    };
   }
 
   async createProblem(
