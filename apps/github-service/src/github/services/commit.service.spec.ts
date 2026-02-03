@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { CommitService } from './commit.service';
 import { GithubTokenService } from './github-token.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { EventBus } from '../../../../../packages/messaging/src/lib/event-bus.service';
 
 describe('CommitService', () => {
   let service: CommitService;
@@ -30,6 +31,12 @@ describe('CommitService', () => {
             commit: {},
             user: {},
             readmeGeneration: {},
+          },
+        },
+        {
+          provide: EventBus,
+          useValue: {
+            publish: jest.fn(),
           },
         },
       ],
