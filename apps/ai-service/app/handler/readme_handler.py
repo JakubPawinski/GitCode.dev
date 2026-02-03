@@ -4,7 +4,8 @@ from app.core.event_dispatcher import dispatcher
 from app.models.generated import (
     GenerateReadmeCommand, 
     AIPATTERNS,
-    ReadmeGeneratedEvent
+    ReadmeGeneratedEvent,
+    ReadmeGenerationFailedEvent,
 )
 from app.core.event_bus import event_bus
 from app.services.readme_generator.readme_generator_service import ReadmeGeneratorService
@@ -58,7 +59,7 @@ async def handle_generate_readme(event: GenerateReadmeCommand, metadata: dict):
             
             if response.status_code != 200:
                 logger.error(f"Failed to fetch user statistics: {response.status_code}")
-                return
+                raise Exception(f"Failed to fetch user statistics: {response.status_code}")
             
             response_json = response.json()
             stats_data = _extract_stats_data(response_json)
@@ -102,4 +103,10 @@ async def handle_generate_readme(event: GenerateReadmeCommand, metadata: dict):
         
     except Exception as e:
         logger.error(f"Error in handle_generate_readme: {e}", exc_info=True)
-        raise
+        await event_bus.publish(
+            AIPATTERNS.ai_readme_generation_failed,
+            ReadmeGenerationFailedEvent(
+                userId=event.userId,
+                reason="Failed to generate README due to external service error"
+            )
+        )
