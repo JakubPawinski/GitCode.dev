@@ -17,9 +17,10 @@ import { ProblemLinkProps } from '@/components/problem/ProblemLink'
 import { useAuth } from '@/contexts/auth/AuthContext'
 import { useParams } from 'next/navigation'
 import { useOnSocket } from '@/hooks/socket/use-on-socket'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { socket } from '@/ws/socket'
 import { LeftProblemNavbar } from '@/components/navbar/LeftProblemNavbar'
+import { AiTutorAside } from '@/components/aside/AiTutorAside'
 
 export interface ProblemDataProps {
   id: string
@@ -49,6 +50,7 @@ export default function ProblemLayout({
 }: {
   children: React.ReactNode
 }) {
+  const [aiTutorOpen, setAiTutorOpen] = useState<boolean>(false)
   const { data: authData } = useAuth()
 
   useEffect(() => {
@@ -120,11 +122,12 @@ export default function ProblemLayout({
       <form className="text-foreground flex h-screen flex-col">
         <PrimaryProblemNavbar
           onSubmit={handleSubmit(onSubmit)}
+          setAiTutorOpen={setAiTutorOpen}
           submissionLoading={loading}
           submissionError={error}
         />
         <section className="flex flex-grow gap-4 overflow-hidden p-4">
-          <div className="border-primary/20 flex w-3/5 flex-col rounded-lg border bg-transparent p-4">
+          <div className="border-primary/20 flex min-w-0 flex-1 flex-col rounded-lg border bg-transparent p-4">
             <LeftProblemNavbar
               testsPassed={messages?.attempt_update.passedTests}
               totalTests={messages?.attempt_update.totalTests}
@@ -134,7 +137,7 @@ export default function ProblemLayout({
               {children}
             </div>
           </div>
-          <div className="flex w-3/5 flex-col gap-4">
+          <div className="flex min-w-0 flex-1 flex-col gap-4">
             <div className="h-3/5">
               <Editor control={control} selectedLanguage={selectedLanguage} />
             </div>
@@ -142,6 +145,7 @@ export default function ProblemLayout({
               <TestCaseScreen testCases={testCases} />
             </div>
           </div>
+          {aiTutorOpen && <AiTutorAside />}
         </section>
       </form>
     </ProblemProvider>

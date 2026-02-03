@@ -3,7 +3,7 @@ import Image from 'next/image'
 import { ExpandPanel } from '../menu/ExpandPanel'
 import { CloudUpload } from 'lucide-react'
 import { SquareMenu } from 'lucide-react'
-import { useState } from 'react'
+import { Dispatch, SetStateAction, useState } from 'react'
 import { Loader } from '../loading/Loader'
 import { Error } from '../error/Error'
 import { Brain } from 'lucide-react'
@@ -11,11 +11,13 @@ import { ProfileLink } from './ProfileLink'
 import { useAuth } from '@/contexts/auth/AuthContext'
 interface NavbarSubmitProps {
   onSubmit: () => void
+  setAiTutorOpen: Dispatch<SetStateAction<boolean>>
   submissionLoading: boolean
   submissionError: any
 }
 export const PrimaryProblemNavbar = ({
   onSubmit,
+  setAiTutorOpen,
   submissionLoading,
   submissionError,
 }: NavbarSubmitProps) => {
@@ -48,7 +50,7 @@ export const PrimaryProblemNavbar = ({
           className="text-foreground hover:text-accent gap-2 transition-colors"
         >
           <ExpandPanel isOpen={isOpen} onClose={() => setIsOpen(false)} />
-          <div className="flex items-center gap-2">
+          <div className="flex cursor-pointer items-center gap-2">
             <SquareMenu />
             <p className="font-semibold tracking-wider">Questions</p>
           </div>
@@ -61,7 +63,7 @@ export const PrimaryProblemNavbar = ({
           className="from-primary to-accent text-foreground transform rounded-lg bg-gradient-to-r px-2 py-1 font-bold shadow-md transition-all duration-300 hover:scale-105 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-60"
         >
           {!submissionLoading ? (
-            <div className="flex cursor-pointer items-center gap-2">
+            <div className="flex cursor-pointer items-center gap-2 p-1">
               <CloudUpload size={20} />
               <span>Submit</span>
             </div>
@@ -69,7 +71,10 @@ export const PrimaryProblemNavbar = ({
             <Loader />
           )}
         </button>
-        <div className="text-foreground hover:text-accent flex cursor-pointer items-center gap-2 transition-colors">
+        <div
+          className="text-foreground hover:text-accent flex cursor-pointer items-center gap-2 transition-colors"
+          onClick={() => setAiTutorOpen((previous: boolean) => !previous)}
+        >
           <Brain size={24} />
           <div className="font-semibold tracking-wider">AI Tutor</div>
         </div>

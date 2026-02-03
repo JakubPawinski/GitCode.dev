@@ -1,6 +1,6 @@
 import { api } from '@/api/axios'
 import { useCallback, useEffect, useState } from 'react'
-export const useGetUserStats = <T>() => {
+export const useGetAiTutorHistory = <T>({ problem }: { problem: string }) => {
   const [data, setData] = useState<T>()
   const [loading, setLoading] = useState<boolean>(false)
   const [error, setError] = useState<any>()
@@ -10,13 +10,13 @@ export const useGetUserStats = <T>() => {
     setLoading(true)
     setError(null)
     api
-      .get(`/submissions/stats/extended/`, {
+      .get(`/stream/sessions/${problem}`, {
         signal: controller.signal,
       })
       .then((res) => setData(res.data.data))
       .catch((err) => setError(err))
       .finally(() => setLoading(false))
-  }, [])
+  }, [problem])
 
   useEffect(() => {
     if (!data) getQuery()
