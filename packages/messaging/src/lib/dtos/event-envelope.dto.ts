@@ -27,6 +27,9 @@ export class EventEnvelopeDto<T> {
   @IsString()
   correlationId?: string;
 
+  @IsOptional()
+  metadata?: any;
+
   constructor(
     event: string,
     payload: T,

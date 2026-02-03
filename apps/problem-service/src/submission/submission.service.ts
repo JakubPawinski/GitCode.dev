@@ -22,7 +22,10 @@ import { SubmissionGateway } from './submission.gateway';
 import { PaginationQueryDto } from '@gitcode/common';
 import { PaginatedResult } from '@gitcode/types';
 import { AttemptStatus } from './enum';
-import { SubmissionAnalyzedEvent } from '@gitcode/contracts';
+import {
+  SubmissionAnalyzedEvent,
+  FileCommittedEvent,
+} from '@gitcode/contracts';
 import {
   UserStatsExtendedDto,
   DifficultyBreakdownDto,
@@ -534,6 +537,34 @@ export class SubmissionService {
       },
       payload.attemptId,
     );
+  }
+
+  public async handleFileCommitted(
+    submissionId: string,
+    payload: FileCommittedEvent,
+  ) {
+    if (!submissionId) {
+      this.logger.warn('File committed without submissionId, skipping update');
+      return;
+    }
+
+    try {
+      await this.prisma.userSubmission.update({
+        where: { id: submissionId },
+        data: {
+          commitHash: payload.commitSha,
+          githubUrl: payload.commitUrl,
+        },
+      });
+
+      this.logger.log(
+        `Updated submission ${submissionId} with commit ${payload.commitSha}`,
+      );
+    } catch (error) {
+      this.logger.warn(
+        `Failed to update submission ${submissionId}: ${error.message}. Submission may not exist or commit is not related to a problem submission.`,
+      );
+    }
   }
 
   private async getQueueStats(): Promise<QueueStatsDto> {

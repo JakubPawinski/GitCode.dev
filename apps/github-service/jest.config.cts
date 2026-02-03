@@ -18,4 +18,7 @@ module.exports = {
   },
   moduleFileExtensions: ['ts', 'js', 'html'],
   coverageDirectory: 'test-output/jest/coverage',
+  transformIgnorePatterns: [
+    'node_modules/(?!(.*\\.mjs$|@octokit|octokit|universal-user-agent|before-after-hook))',
+  ],
 };
