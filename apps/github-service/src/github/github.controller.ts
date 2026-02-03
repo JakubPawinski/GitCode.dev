@@ -46,6 +46,7 @@ export class GithubController {
       dto.files,
       dto.message,
       dto.branch || 'main',
+      dto.submissionId,
     );
   }
 

@@ -1,5 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsArray, ValidateNested, IsNotEmpty } from 'class-validator';
+import {
+  IsString,
+  IsArray,
+  ValidateNested,
+  IsNotEmpty,
+  IsUUID,
+  IsOptional,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class FileChangeDto {
@@ -51,4 +58,13 @@ export class CommitChangesDto {
   })
   @IsString()
   branch?: string;
+
+  @ApiProperty({
+    description: 'Submission ID (optional, for problem submissions)',
+    required: false,
+    example: 'uuid-here',
+  })
+  @IsOptional()
+  @IsUUID()
+  submissionId?: string;
 }

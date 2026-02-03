@@ -60,6 +60,7 @@ model Commit {
   message      String
   url          String
   branch       String     @default("main")
+  submissionId String?    @map("submission_id")
   
   fileCount    Int        @default(0)
   additions    Int        @default(0)
@@ -71,6 +72,7 @@ model Commit {
   @@index([userId])
   @@index([repositoryId])
   @@index([committedAt])
+  @@index([submissionId])
   @@map("commits")
 }
 

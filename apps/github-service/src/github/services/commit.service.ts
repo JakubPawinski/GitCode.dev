@@ -6,7 +6,12 @@ import { FileChangeDto } from '../dto/commit-changes.dto';
 import { CommitResponseDto } from '../dto/github-response.dto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { EventBus } from '@gitcode/messaging';
-import { AI_PATTERNS, GenerateReadmeCommand } from '@gitcode/contracts';
+import {
+  AI_PATTERNS,
+  GenerateReadmeCommand,
+  GITHUB_PATTERNS,
+  FileCommittedEvent,
+} from '@gitcode/contracts';
 
 @Injectable()
 export class CommitService {
@@ -29,6 +34,7 @@ export class CommitService {
     files: FileChangeDto[],
     message: string,
     branch: string = 'main',
+    submissionId?: string,
   ): Promise<CommitResponseDto> {
     const token = await this.tokenService.getGitHubTokenForUser(userId);
     const octokit = new Octokit({ auth: token });
@@ -130,12 +136,29 @@ export class CommitService {
           url: newCommit.html_url,
           branch,
           fileCount: files.length,
+          submissionId: submissionId || null,
           committedAt: new Date(newCommit.committer.date),
         },
       });
 
       this.logger.log(`Commit ${newCommit.sha} saved to database`);
-
+      if (submissionId) {
+        this.logger.log(`Publish ${GITHUB_PATTERNS.FILE_COMMITTED} event`);
+        await this.eventBus.publish(
+          GITHUB_PATTERNS.FILE_COMMITTED,
+          new FileCommittedEvent(
+            userId,
+            newCommit.sha,
+            newCommit.message,
+            newCommit.html_url,
+            repoName,
+            branch,
+            files.map((file) => file.path),
+            new Date(newCommit.committer.date).toISOString(),
+            submissionId,
+          ),
+        );
+      }
       return {
         sha: newCommit.sha,
         message: newCommit.message,
