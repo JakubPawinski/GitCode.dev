@@ -5,10 +5,11 @@ import {
   ApiResponse,
   ApiBearerAuth,
 } from '@nestjs/swagger';
-import { JwtAuthGuard } from '@gitcode/auth';
+import { JwtAuthGuard, User } from '@gitcode/auth';
+import type { AuthenticatedUser } from '@gitcode/types';
 import { RepositoryService } from './services/repository.service';
 import { CommitService } from './services/commit.service';
-import { CreateRepositoryDto, CommitChangesDto, UpdateReadmeDto } from './dto';
+import { CommitChangesDto, UpdateReadmeDto } from './dto';
 import {
   RepositoryResponseDto,
   CommitResponseDto,
@@ -28,19 +29,20 @@ export class GithubController {
   @ApiOperation({ summary: 'Create or get GitCode solutions repository' })
   @ApiResponse({ status: 201, type: RepositoryResponseDto })
   async createRepository(
-    @Body() dto: CreateRepositoryDto,
+    @User() user: AuthenticatedUser,
   ): Promise<RepositoryResponseDto> {
-    return this.repositoryService.createOrGetRepository(dto.userId);
+    return this.repositoryService.createOrGetRepository(user.id);
   }
 
   @Post('commit')
   @ApiOperation({ summary: 'Commit and push files to repository' })
   @ApiResponse({ status: 201, type: CommitResponseDto })
   async commitChanges(
+    @User() user: AuthenticatedUser,
     @Body() dto: CommitChangesDto,
   ): Promise<CommitResponseDto> {
     return this.commitService.commitAndPushFiles(
-      dto.userId,
+      user.id,
       dto.files,
       dto.message,
       dto.branch || 'main',
@@ -50,7 +52,10 @@ export class GithubController {
   @Patch('readme')
   @ApiOperation({ summary: 'Update README.md file' })
   @ApiResponse({ status: 200, type: CommitResponseDto })
-  async updateReadme(@Body() dto: UpdateReadmeDto): Promise<CommitResponseDto> {
-    return this.commitService.updateReadme(dto.userId, dto.content);
+  async updateReadme(
+    @User() user: AuthenticatedUser,
+    @Body() dto: UpdateReadmeDto,
+  ): Promise<CommitResponseDto> {
+    return this.commitService.updateReadme(user.id, dto.content);
   }
 }

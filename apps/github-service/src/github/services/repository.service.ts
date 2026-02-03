@@ -22,7 +22,7 @@ export class RepositoryService {
     );
     this.DEFAULT_REPO_DESCRIPTION = this.configService.get<string>(
       'GITHUB_DEFAULT_REPO_DESCRIPTION',
-      'Repository for GitCode.dev user solutions ', // fallback value
+      'Repository for GitCode.dev user solutions', // fallback value
     );
   }
   async createOrGetRepository(userId: string): Promise<RepositoryResponseDto> {

@@ -23,6 +23,9 @@
       "path": "../../packages/common/tsconfig.lib.json"
     },
     {
+      "path": "../../packages/types/tsconfig.lib.json"
+    },
+    {
       "path": "../../packages/contracts/tsconfig.lib.json"
     },
     {

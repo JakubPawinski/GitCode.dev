@@ -30,10 +30,6 @@ export class GithubTokenService {
         ),
       );
 
-      this.logger.debug(
-        `Successfully fetched: ${JSON.stringify(response.data)}`,
-      );
-
       const githubToken = response.data.data;
 
       if (!githubToken || !githubToken.accessToken) {
