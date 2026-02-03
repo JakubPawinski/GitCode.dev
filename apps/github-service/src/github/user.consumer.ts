@@ -21,7 +21,7 @@ export class UserConsumer {
   @RabbitSubscribe({
     exchange: RABBIT_CONFIG.EXCHANGE,
     routingKey: AUTH_PATTERNS.USER_CREATED,
-    queue: `${RABBIT_CONFIG.QUEUE}_github_user_created`,
+    queue: `${RABBIT_CONFIG.QUEUE}_user_created`,
     errorBehavior: MessageHandlerErrorBehavior.NACK,
   })
   async handleUserCreated(

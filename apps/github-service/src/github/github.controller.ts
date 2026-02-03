@@ -1,4 +1,4 @@
-import { Controller, Post, Patch, Body, UseGuards } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -9,7 +9,7 @@ import { JwtAuthGuard, User } from '@gitcode/auth';
 import type { AuthenticatedUser } from '@gitcode/types';
 import { RepositoryService } from './services/repository.service';
 import { CommitService } from './services/commit.service';
-import { CommitChangesDto, UpdateReadmeDto } from './dto';
+import { CommitChangesDto } from './dto';
 import {
   RepositoryResponseDto,
   CommitResponseDto,
@@ -49,13 +49,12 @@ export class GithubController {
     );
   }
 
-  @Patch('readme')
+  @Post('readme')
   @ApiOperation({ summary: 'Update README.md file' })
   @ApiResponse({ status: 200, type: CommitResponseDto })
   async updateReadme(
     @User() user: AuthenticatedUser,
-    @Body() dto: UpdateReadmeDto,
-  ): Promise<CommitResponseDto> {
-    return this.commitService.updateReadme(user.id, dto.content);
+  ): Promise<{ message: string }> {
+    return this.commitService.handleReadmeUpdate(user.id);
   }
 }

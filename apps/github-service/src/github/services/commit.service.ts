@@ -5,6 +5,8 @@ import { GithubTokenService } from './github-token.service';
 import { FileChangeDto } from '../dto/commit-changes.dto';
 import { CommitResponseDto } from '../dto/github-response.dto';
 import { PrismaService } from '../../prisma/prisma.service';
+import { EventBus } from '@gitcode/messaging';
+import { AI_PATTERNS, GenerateReadmeCommand } from '@gitcode/contracts';
 
 @Injectable()
 export class CommitService {
@@ -14,6 +16,7 @@ export class CommitService {
     private readonly tokenService: GithubTokenService,
     private readonly configService: ConfigService,
     private readonly prisma: PrismaService,
+    private eventBus: EventBus,
   ) {
     this.DEFAULT_REPO_NAME = this.configService.get<string>(
       'GITHUB_DEFAULT_REPO_NAME',
@@ -147,90 +150,22 @@ export class CommitService {
     }
   }
 
-  async updateReadme(
-    userId: string,
-    content: string,
-  ): Promise<CommitResponseDto> {
-    // Check README generation limit for FREE users
-    await this.checkReadmeLimit(userId);
-
-    const result = await this.commitAndPushFiles(
+  async updateReadme(userId: string, content: string): Promise<void> {
+    await this.commitAndPushFiles(
       userId,
       [{ path: 'README.md', content }],
       'Update README.md',
       'main',
     );
-
-    // Increment README generation counter
-    await this.incrementReadmeCount(userId);
-
-    return result;
   }
 
-  private async checkReadmeLimit(userId: string): Promise<void> {
-    // Get user tier
-    const user = await this.prisma.user.findUnique({
-      where: { userId },
-      select: { tier: true },
-    });
-
-    if (!user) {
-      throw new BadRequestException('User not found');
-    }
-
-    // Premium users have unlimited generations
-    if (user.tier === 'PREMIUM' || user.tier === 'ENTERPRISE') {
-      return;
-    }
-
-    // Check FREE user limit (3 per month)
-    const now = new Date();
-    const month = now.getMonth() + 1;
-    const year = now.getFullYear();
-
-    const readmeGen = await this.prisma.readmeGeneration.findUnique({
-      where: {
-        userId_year_month: {
-          userId,
-          year,
-          month,
-        },
-      },
-    });
-
-    const FREE_TIER_LIMIT = 3;
-
-    if (readmeGen && readmeGen.count >= FREE_TIER_LIMIT) {
-      throw new BadRequestException(
-        `Free tier limit reached. You can only generate ${FREE_TIER_LIMIT} READMEs per month. Upgrade to Premium for unlimited generations.`,
-      );
-    }
-  }
-
-  private async incrementReadmeCount(userId: string): Promise<void> {
-    const now = new Date();
-    const month = now.getMonth() + 1;
-    const year = now.getFullYear();
-
-    await this.prisma.readmeGeneration.upsert({
-      where: {
-        userId_year_month: {
-          userId,
-          year,
-          month,
-        },
-      },
-      update: {
-        count: {
-          increment: 1,
-        },
-      },
-      create: {
-        userId,
-        year,
-        month,
-        count: 1,
-      },
-    });
+  async handleReadmeUpdate(userId: string): Promise<{ message: string }> {
+    await this.eventBus.publish(
+      AI_PATTERNS.GENERATE_README,
+      new GenerateReadmeCommand(userId),
+    );
+    return {
+      message: 'Readme update initiated',
+    };
   }
 }

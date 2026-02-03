@@ -8,10 +8,11 @@ import { RepositoryService } from './services/repository.service';
 import { CommitService } from './services/commit.service';
 import { PrismaModule } from '../prisma/prisma.module';
 import { UserConsumer } from './user.consumer';
+import { CommitConsumer } from './services/commit.consumer';
 
 @Module({
   imports: [HttpModule, ConfigModule, PrismaModule],
-  controllers: [GithubController, UserConsumer],
+  controllers: [GithubController, UserConsumer, CommitConsumer],
   providers: [
     GithubService,
     GithubTokenService,
