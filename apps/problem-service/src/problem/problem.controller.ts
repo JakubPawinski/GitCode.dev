@@ -58,6 +58,12 @@ export class ProblemController {
     return this.problemService.getHealth();
   }
 
+  /**
+   * Get a paginated list of problems, optionally filtered by a search query.
+   * @param query Optional search query to filter problems.
+   * @param paginationDto Pagination parameters.
+   * @returns A paginated list of problems.
+   */
   @Get()
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('Bearer Auth')
@@ -79,7 +85,7 @@ export class ProblemController {
       ],
     },
   })
-  findAll(
+  public findAll(
     @Query() paginationDto: ProblemPaginationQueryDto,
   ): Promise<PaginatedResult<ProblemResponseDto>> {
     return this.problemService.getPaginatedProblems(paginationDto);
@@ -137,38 +143,6 @@ export class ProblemController {
   ): Promise<RecommendedResponseDto> {
     const userId = user.id;
     return this.problemService.getRecommended(userId);
-  }
-
-  @Get('search')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth('Bearer Auth')
-  @ApiOperation({ summary: 'Search problems by query' })
-  @ApiResponse({
-    status: 200,
-    description: 'Search results with pagination',
-    schema: {
-      allOf: [
-        { $ref: getSchemaPath(PaginatedResponseDto) },
-        {
-          properties: {
-            data: {
-              $ref: getSchemaPath(ProblemResponseDto),
-              type: 'array',
-            },
-          },
-        },
-      ],
-    },
-  })
-  @ApiResponse({
-    status: 400,
-    description: 'Search query cannot be empty',
-  })
-  search(
-    @Query('q') query: string,
-    @Query() paginationDto: ProblemPaginationQueryDto,
-  ): Promise<PaginatedResult<ProblemResponseDto>> {
-    return this.problemService.searchProblems(query, paginationDto);
   }
 
   @Get('trending')

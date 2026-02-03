@@ -1,9 +1,9 @@
-import { IsIn, IsOptional } from 'class-validator';
+import { IsIn, IsString } from 'class-validator';
 import { PaginationQueryDto } from '@gitcode/common';
 import { ApiProperty } from '@nestjs/swagger';
+import { PartialType } from '@nestjs/swagger';
 
-export class ProblemPaginationQueryDto extends PaginationQueryDto {
-  @IsOptional()
+export class ProblemPaginationQueryDto extends PartialType(PaginationQueryDto) {
   @IsIn(['easy', 'medium', 'hard'])
   @ApiProperty({
     example: 'easy',
@@ -12,7 +12,10 @@ export class ProblemPaginationQueryDto extends PaginationQueryDto {
   })
   difficulty?: 'easy' | 'medium' | 'hard';
 
-  @IsOptional()
   @ApiProperty({ example: 'algorithms', required: false })
   topic?: string;
+
+  @ApiProperty({ example: 'Two Sum', required: false })
+  @IsString()
+  search?: string;
 }
