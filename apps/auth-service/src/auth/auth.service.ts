@@ -10,7 +10,6 @@ import { mapRealmRolesToAppRoles } from './mappers/roles.mapper';
 import { EventBus } from '@gitcode/messaging';
 import { AUTH_PATTERNS, UserCreatedEvent } from '@gitcode/contracts';
 
-const USER_BLACKLIST_TTL = 7 * 24 * 60 * 60; // 24 hours in seconds (greater than refresh token TTL)
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
@@ -59,10 +58,20 @@ export class AuthService {
     this.logger.debug(`Mapped app roles: ${JSON.stringify(appRoles)}`);
 
     // Check if user exists, if not, publish UserCreatedEvent
-    const userExists =
-      (await this.prisma.user.count({
-        where: { keycloakId: userInfo.sub },
-      })) > 0;
+    const existingUser = await this.prisma.user.findUnique({
+      where: { keycloakId: userInfo.sub },
+      select: { userStatus: true, id: true },
+    });
+
+    if (existingUser && existingUser.userStatus !== 'ACTIVE') {
+      this.logger.warn(
+        `User ${userInfo.sub} attempted login but is not active`,
+      );
+      throw new UnauthorizedException('User account is not active');
+    }
+
+    // Check if user existed before
+    const userExists = !!existingUser;
 
     // Create or update user in database
     const user = await this.upsertUser(
@@ -318,18 +327,6 @@ export class AuthService {
     };
   }
 
-  /*
-   * Revoke all refresh tokens for a user (e.g ban)
-   */
-  public async revokeAllUserTokens(userId: string) {
-    // Add user to blacklist in Redis
-    await this.redis.set(
-      `blacklist:user:${userId}`,
-      new Date().toISOString(),
-      USER_BLACKLIST_TTL,
-    );
-  }
-
   async logout(refreshToken: string) {
     try {
       const userId = await this.redis.get(`refresh_token:${refreshToken}`);
@@ -379,12 +376,6 @@ export class AuthService {
 
   async validateUser(userId: string) {
     this.logger.debug(`Validating user (auth service): ${userId}`);
-    // Check if user is blacklisted
-    const isBlacklisted = await this.redis.exists(`blacklist:user:${userId}`);
-    if (isBlacklisted) {
-      this.logger.log(`User ${userId} is blacklisted`);
-      throw new UnauthorizedException('User is blacklisted');
-    }
 
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
