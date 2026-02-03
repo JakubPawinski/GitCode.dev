@@ -20,8 +20,6 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-    # problem_description: str
-
 @router.post("/stream")
 async def chat_with_tutor(
     request: TutorRequest,
@@ -36,16 +34,16 @@ async def chat_with_tutor(
                 f"{settings.PROBLEM_SERVICE_URL}/problems/internal/{request.problem_slug}",
                 headers={"x-internal-api-key": settings.INTERNAL_API_KEY}
             )
-            logger.info(f"Stats response status: {response.status_code}")
+            logger.info(f"Problem response status: {response.status_code}")
             
             if response.status_code != 200:
-                logger.error(f"Failed to fetch user statistics: {response.status_code}")
-                return
+                logger.error(f"Failed to fetch problem description: {response.status_code}")
+                raise HTTPException(status_code=502, detail="Failed to fetch problem description")
             
             response_json = response.json()
             problem_description = response_json.get("data", {}).get("description", "")
             logger.debug(f"Fetched problem description for slug {request.problem_slug}")
-            logger.debug(f"Problem description: {problem_description} characters")
+            logger.debug(f"Problem description content: {problem_description}")
 
 
 
