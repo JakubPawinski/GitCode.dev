@@ -1,12 +1,38 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { ConfigService } from '@nestjs/config';
 import { CommitService } from './commit.service';
+import { GithubTokenService } from './github-token.service';
+import { PrismaService } from '../../prisma/prisma.service';
 
 describe('CommitService', () => {
   let service: CommitService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [CommitService],
+      providers: [
+        CommitService,
+        {
+          provide: GithubTokenService,
+          useValue: {
+            getOctokit: jest.fn(),
+          },
+        },
+        {
+          provide: ConfigService,
+          useValue: {
+            get: jest.fn(),
+          },
+        },
+        {
+          provide: PrismaService,
+          useValue: {
+            repository: {},
+            commit: {},
+            user: {},
+            readmeGeneration: {},
+          },
+        },
+      ],
     }).compile();
 
     service = module.get<CommitService>(CommitService);
