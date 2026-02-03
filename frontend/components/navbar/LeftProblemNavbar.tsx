@@ -5,19 +5,22 @@ import { NotepadText, Clock8 } from 'lucide-react'
 import { SubmissionResultLink } from './SubmissionResultLink'
 import { ChartNoAxesCombined } from 'lucide-react'
 interface NavbarProps {
-  testsPassed?: number
-  totalTests?: number
   submissionId?: string
+  submissionMessages: any
 }
 
 export const LeftProblemNavbar = ({
-  testsPassed,
-  totalTests,
   submissionId,
+  submissionMessages,
 }: NavbarProps) => {
   const pathname = usePathname()
   const pathParts = pathname.split('/')
   const basePath = `/${pathParts[1]}/${pathParts[2]}`
+
+  const status =
+    submissionMessages?.submission_complete?.status ??
+    submissionMessages?.submission_analyzed?.status ??
+    submissionMessages?.attempt_update?.status
 
   const linkClasses =
     'flex items-center gap-2 px-4 py-2 text-foreground/70 hover:text-foreground rounded-md transition-all duration-300'
@@ -38,12 +41,11 @@ export const LeftProblemNavbar = ({
         <span className="tracking-wide">Stats</span>
       </Link>
 
-      {submissionId && (
+      {submissionId && status && (
         <SubmissionResultLink
-          submissionId={submissionId}
-          testsPassed={testsPassed!}
-          totalTests={totalTests!}
           basePath={basePath}
+          status={status}
+          submissionId={submissionId}
         />
       )}
     </nav>

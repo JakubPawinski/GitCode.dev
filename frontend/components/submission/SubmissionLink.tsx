@@ -28,7 +28,6 @@ export const SubmissionLink = ({
   memoryUsed,
   submissionNumber,
 }: SubmissionLinkProps) => {
-  const isAccepted = status.toLowerCase() === 'accepted'
   const { problem } = useParams()
   return (
     <Link
@@ -39,10 +38,14 @@ export const SubmissionLink = ({
         <div>{submissionNumber}</div>
         <div
           className={`flex w-32 items-center gap-2 font-semibold ${
-            isAccepted ? 'text-emerald-400' : 'text-red-400'
+            status === 'success' ? 'text-emerald-400' : 'text-red-400'
           }`}
         >
-          {isAccepted ? <CheckCircle size={20} /> : <XCircle size={20} />}
+          {status === 'success' ? (
+            <CheckCircle size={20} />
+          ) : (
+            <XCircle size={20} />
+          )}
           <span>{status}</span>
         </div>
         <div className="text-foreground/80 hidden items-center gap-2 sm:flex">

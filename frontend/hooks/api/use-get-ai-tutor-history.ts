@@ -10,7 +10,7 @@ export const useGetAiTutorHistory = <T>({ problem }: { problem: string }) => {
     setLoading(true)
     setError(null)
     api
-      .get(`/stream/sessions/${problem}`, {
+      .get(`/ai/tutor/sessions/${problem}`, {
         signal: controller.signal,
       })
       .then((res) => setData(res.data.data))
