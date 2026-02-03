@@ -625,6 +625,11 @@ export class AuthService {
       }
 
       const encryptionKey = this.configService.get<string>('ENCRYPTION_KEY');
+
+      if (!encryptionKey || encryptionKey.length !== 64) {
+        throw new Error('ENCRYPTION_KEY must be 64 hex characters (32 bytes)');
+      }
+
       const key = Buffer.from(encryptionKey, 'hex');
 
       const decipher = crypto.createDecipheriv(
