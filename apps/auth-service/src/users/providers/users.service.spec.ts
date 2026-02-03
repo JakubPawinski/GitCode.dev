@@ -370,12 +370,10 @@ describe('UsersService', () => {
           userStatus: UserStatus.BANNED,
         },
       ]);
-      authService.revokeAllUserTokens.mockResolvedValue();
 
       const result = await service.banUserById('1');
 
       expect(result.userStatus).toBe(UserStatus.BANNED);
-      expect(authService.revokeAllUserTokens).toHaveBeenCalledWith('1');
     });
   });
 

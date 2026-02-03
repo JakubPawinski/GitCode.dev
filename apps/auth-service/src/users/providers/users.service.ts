@@ -21,7 +21,6 @@ import {
 } from '../dtos';
 import { PaginationQueryDto } from '@gitcode/common';
 import { Prisma } from '@prisma/client-auth';
-import { AuthService } from '../../auth/auth.service';
 import { EventBus } from '@gitcode/messaging';
 import {
   AUTH_PATTERNS,
@@ -34,7 +33,6 @@ import {
 export class UsersService {
   constructor(
     private readonly prismaService: PrismaService,
-    private readonly authService: AuthService,
     private readonly eventBus: EventBus,
   ) {}
 
@@ -377,9 +375,6 @@ export class UsersService {
         where: { userId: id },
       }),
     ]);
-
-    // Revoke all tokens for the user
-    await this.authService.revokeAllUserTokens(id);
 
     // Publish user banned event
     await this.eventBus.publish(
