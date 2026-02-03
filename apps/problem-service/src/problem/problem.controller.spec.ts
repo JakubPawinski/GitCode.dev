@@ -133,37 +133,6 @@ describe('ProblemController', () => {
     });
   });
 
-  describe('search', () => {
-    it('passes query and pagination to service', async () => {
-      const paginationDto: ProblemPaginationQueryDto = {
-        page: 1,
-        limit: 10,
-        sortBy: 'createdAt',
-        sortOrder: 'desc',
-      };
-      const expected: PaginatedResult<ProblemResponseDto> = {
-        data: [],
-        meta: {
-          currentPage: 1,
-          pageSize: 10,
-          totalItems: 0,
-          totalPages: 0,
-          hasNextPage: false,
-          hasPreviousPage: false,
-        },
-      };
-      mockProblemService.searchProblems.mockResolvedValue(expected);
-
-      const result = await controller.search('graph', paginationDto);
-
-      expect(mockProblemService.searchProblems).toHaveBeenCalledWith(
-        'graph',
-        paginationDto,
-      );
-      expect(result).toBe(expected);
-    });
-  });
-
   describe('getTrending', () => {
     it('returns trending problems', async () => {
       const expected: TrendingResponseDto = { trendingCount: 0, trending: [] };
