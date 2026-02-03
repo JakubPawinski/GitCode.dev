@@ -378,9 +378,6 @@ export class UsersService {
       }),
     ]);
 
-    // Revoke all tokens for the user
-    await this.authService.revokeAllUserTokens(id);
-
     // Publish user banned event
     await this.eventBus.publish(
       AUTH_PATTERNS.USER_BANNED,

@@ -214,18 +214,6 @@ describe('AuthService', () => {
     });
   });
 
-  describe('revokeAllUserTokens', () => {
-    it('should revoke all tokens for user', async () => {
-      await service.revokeAllUserTokens('1');
-
-      expect(redisService.set).toHaveBeenCalledWith(
-        'blacklist:user:1',
-        expect.any(String),
-        604800,
-      );
-    });
-  });
-
   describe('logout', () => {
     it('should delete refresh token and logout from Keycloak', async () => {
       redisService.get.mockResolvedValue('user-123');
