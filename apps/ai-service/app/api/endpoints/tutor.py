@@ -26,9 +26,8 @@ async def chat_with_tutor(
     user: AuthenticatedUser = Depends(RequiredPermission(AppPermission.ai_tutor_chat)),
     db: AsyncSession = Depends(get_session)
 ):
-    """Stream AI tutor response"""
     try:
-        # Fetch problem description from problem service
+    # Fetch problem description from problem service
         async with httpx.AsyncClient() as client:
             response = await client.get(
                 f"{settings.PROBLEM_SERVICE_URL}/problems/internal/{request.problem_slug}",
@@ -44,41 +43,39 @@ async def chat_with_tutor(
             problem_description = response_json.get("data", {}).get("description", "")
             logger.debug(f"Fetched problem description for slug {request.problem_slug}")
             logger.debug(f"Problem description content: {problem_description}")
-
-
-
-        tutor_service = TutorService(db)
-        
-        async def event_generator():
-            try:
-                async for chunk in tutor_service.stream_chat_response(
-                    user_id=user.id,
-                    problem_slug=request.problem_slug,
-                    code=request.code,
-                    message=request.message,
-                    problem_description=problem_description,
-                ):
-                    yield f"data: {json.dumps({'text': chunk, 'done': False})}\n\n"
-                
-                yield f"data: {json.dumps({'text': '', 'done': True})}\n\n"
-                
-            except Exception as e:
-                logger.error(f"Stream error: {str(e)}")
-                yield f"data: {json.dumps({'error': str(e)})}\n\n"
-        
-        return StreamingResponse(
-            event_generator(),
-            media_type="text/event-stream",
-            headers={
-                "Cache-Control": "no-cache",
-                "X-Accel-Buffering": "no"
-            }
-        )
-    
+    except HTTPException as e:
+        raise
     except Exception as e:
-        logger.error(f"Tutor endpoint error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Error fetching problem description: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error while fetching problem description")
 
+    tutor_service = TutorService(db)
+    
+    async def event_generator():
+        try:
+            async for chunk in tutor_service.stream_chat_response(
+                user_id=user.id,
+                problem_slug=request.problem_slug,
+                code=request.code,
+                message=request.message,
+                problem_description=problem_description,
+            ):
+                yield f"data: {json.dumps({'text': chunk, 'done': False})}\n\n"
+            
+            yield f"data: {json.dumps({'text': '', 'done': True})}\n\n"
+            
+        except Exception as e:
+            logger.error(f"Stream error: {str(e)}", exc_info=True)
+            yield f"data: {json.dumps({'error': 'An error occurred during generation'})}\n\n"
+    
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no"
+        }
+    )
 
 @router.get("/sessions/{problem_slug}")
 async def get_session_history(
