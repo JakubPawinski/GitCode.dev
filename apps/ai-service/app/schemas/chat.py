@@ -1,12 +1,10 @@
 from sqlmodel import SQLModel, Field, Relationship
-from sqlalchemy.orm import RelationshipProperty
 from datetime import datetime
 from typing import Optional, List
 
 class ChatSessionBase(SQLModel):
     user_id: str = Field(index=True)
     problem_slug: str = Field(index=True)
-    attempt_id: Optional[str] = None
 
 class ChatSession(ChatSessionBase, table=True):
     __tablename__ = "chat_sessions"

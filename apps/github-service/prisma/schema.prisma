@@ -1,0 +1,94 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../../../node_modules/@prisma/client-github"
+}
+datasource db {
+  provider = "postgresql"
+}
+enum UserTier {
+  FREE
+  PREMIUM
+  ENTERPRISE
+}
+
+model User {
+  userId    String   @id
+  username  String
+  email     String   @unique
+  tier      UserTier @default(FREE)
+  
+  repositories      Repository[]
+  commits           Commit[]
+  readmeGenerations ReadmeGeneration[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([email])
+  @@map("users")
+}
+
+model Repository {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  
+  name        String
+  fullName    String
+  githubId    Int?
+  htmlUrl     String
+  isPrivate   Boolean  @default(false)
+  
+  commits     Commit[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([userId, name])
+  @@index([userId])
+  @@map("repositories")
+}
+
+model Commit {
+  id           String     @id @default(uuid())
+  userId       String
+  user         User       @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  repositoryId String
+  repository   Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  
+  sha          String     @unique
+  message      String
+  url          String
+  branch       String     @default("main")
+  submissionId String?    @map("submission_id")
+  
+  fileCount    Int        @default(0)
+  additions    Int        @default(0)
+  deletions    Int        @default(0)
+  
+  committedAt  DateTime
+  createdAt    DateTime   @default(now())
+
+  @@index([userId])
+  @@index([repositoryId])
+  @@index([committedAt])
+  @@index([submissionId])
+  @@map("commits")
+}
+
+model ReadmeGeneration {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  
+  month     Int
+  year      Int
+  count     Int      @default(0)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, year, month])
+  @@index([userId, year, month])
+  @@map("readme_generations")
+}

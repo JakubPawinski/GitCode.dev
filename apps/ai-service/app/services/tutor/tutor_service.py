@@ -23,7 +23,6 @@ class TutorService:
         code: str,
         message: str,
         problem_description: str,
-        attempt_id: str = None
     ) -> AsyncGenerator[str, None]:
         """
         Streams chat response from the AI tutor with robust error handling.
@@ -36,7 +35,6 @@ class TutorService:
         :param code: User's code submission
         :param message: User's message to the tutor
         :param problem_description: Description of the problem
-        :param attempt_id: Identifier for the attempt
         :yields: Chunks of the AI response or error message
         :raises: Exceptions for critical failures (session creation, etc.)
         """
@@ -48,7 +46,6 @@ class TutorService:
                 session = await self.history_service.get_or_create_session(
                     user_id=user_id,
                     problem_slug=problem_slug,
-                    attempt_id=attempt_id
                 )
                 logger.info(f"Using session {session.id} for user {user_id}")
             except Exception as e:

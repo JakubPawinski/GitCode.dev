@@ -230,6 +230,27 @@ services:
       - gitcodedev-network
     restart: unless-stopped
 
+    # GitHub Service Database
+  postgres-github:
+    image: postgres:18-alpine
+    container_name: github-db-dev
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=${GITHUB_DB_USER}
+      - POSTGRES_PASSWORD=${GITHUB_DB_PASSWORD}
+      - POSTGRES_DB=${GITHUB_DB_NAME}
+    ports:
+      - '${GITHUB_DB_PORT}:5432'
+    volumes:
+      - github_postgres_data:/var/lib/postgresql/data
+    networks:
+      - gitcodedev-network
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${GITHUB_DB_USER}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   rabbitmq:
     image: rabbitmq:3.11-management-alpine
     container_name: rabbitmq-dev
@@ -256,3 +277,4 @@ volumes:
   problem-executions:
   notification-db-data-dev:
   ai-db-data-dev:
+  github_postgres_data:

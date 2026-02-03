@@ -79,6 +79,9 @@
   "targetDefaults": {
     "test": {
       "dependsOn": ["^build"]
+    },
+    "typecheck": {
+      "dependsOn": ["prisma-generate"]
     }
   }
 }
