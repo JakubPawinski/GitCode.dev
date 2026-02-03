@@ -39,10 +39,10 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> Authenticated
     except jwt.DecodeError:
         raise HTTPException(status_code=401, detail="Invalid token")
     except PyJWTError as e:
-        raise HTTPException(status_code=401, detail=f"Invalid token: {str(e)}")
+        logger.error(f"JWT Error: {e}")
+        raise HTTPException(status_code=401, detail="Invalid token")
     except Exception as e:
         logger.error(f"Auth error: {e}")
-        raise HTTPException(status_code=401, detail="Authentication failed")
     
 class RequiredPermission:
     """
