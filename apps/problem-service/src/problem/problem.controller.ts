@@ -18,7 +18,7 @@ import {
   getSchemaPath,
 } from '@nestjs/swagger';
 import { ProblemService } from './problem.service';
-import { JwtAuthGuard, User } from '@gitcode/auth';
+import { InternalService, JwtAuthGuard, User } from '@gitcode/auth';
 import type { AuthenticatedUser } from '@gitcode/types';
 import {
   ProblemResponseDto,
@@ -165,6 +165,40 @@ export class ProblemController {
   })
   getTrending(): Promise<TrendingResponseDto> {
     return this.problemService.getTrending();
+  }
+
+  /**
+   * Internal endpoint to get problem details by slug using internal service
+   * @param slug - The slug identifier of the problem.
+   * @returns - Detailed information about the problem.
+   */
+  @Get('internal/:slug')
+  @InternalService()
+  @ApiOperation({ summary: 'Get problem details by slug - Internal endpoint' })
+  @ApiResponse({
+    status: 200,
+    description: 'Detailed problem information',
+    schema: {
+      allOf: [
+        { $ref: getSchemaPath(ApiResponseDto) },
+        {
+          properties: {
+            data: {
+              $ref: getSchemaPath(ProblemDetailResponseDto),
+            },
+          },
+        },
+      ],
+    },
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Problem not found',
+  })
+  public findProblemBySlugInternal(
+    @Param('slug') slug: string,
+  ): Promise<ProblemDetailResponseDto> {
+    return this.problemService.findProblemBySlug(slug);
   }
 
   @Get(':slug')
