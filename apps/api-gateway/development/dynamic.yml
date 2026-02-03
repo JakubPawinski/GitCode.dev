@@ -27,6 +27,15 @@ http:
       middlewares:
         - strip-api
 
+      # GitHub Routes
+    github-route:
+      rule: PathPrefix(`/api/github`)
+      service: github-service
+      entryPoints:
+        - gateway
+      middlewares:
+        - strip-api
+
     # Submission Routes
     submission-route:
       rule: PathPrefix(`/api/submissions`)
@@ -69,7 +78,7 @@ http:
         - gateway
       middlewares:
         - strip-api
-    
+
     ai-route:
       rule: PathPrefix(`/api/ai`)
       service: ai-service
@@ -105,6 +114,10 @@ http:
       loadBalancer:
         servers:
           - url: 'http://host.docker.internal:4003'
+    github-service:
+      loadBalancer:
+        servers:
+          - url: 'http://host.docker.internal:4004'
     ai-service:
       loadBalancer:
         servers:

@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from app.api.errors import register_exception_handlers
 import uvicorn
 from app.core.config import settings
 from app.api.routers import router as api_router
@@ -11,6 +12,7 @@ import logging
 import sys
 import signal
 import asyncio
+
 
 logging.basicConfig(
     stream=sys.stdout,
@@ -49,6 +51,8 @@ app.add_middleware(
 """Include API routers"""
 app.include_router(api_router, prefix="/ai")
 
+# Register exception handlers
+register_exception_handlers(app)
 
 if __name__ == "__main__":
     config = uvicorn.Config(

@@ -7,16 +7,14 @@ import {
   RabbitSubscribe,
 } from '@golevelup/nestjs-rabbitmq';
 import { RABBIT_CONFIG } from '../config/rabbitmq.config';
-import { AI_PATTERNS } from '@gitcode/contracts';
-import { SubmissionAnalyzedEnvelope } from '../events/envelopes';
+import { AI_PATTERNS, GITHUB_PATTERNS } from '@gitcode/contracts';
+import { SubmissionAnalyzedEnvelope, SubmissionFileCommittedEnvelope } from '../events/envelopes';
 
 @Controller()
 export class SubmissionConsumer {
   private readonly logger = new Logger(SubmissionConsumer.name);
 
-  constructor(
-    private readonly submissionService: SubmissionService,
-  ) {}
+  constructor(private readonly submissionService: SubmissionService) {}
 
   /**
    * Handles the SubmissionAnalyzedEvent from the AI service.
@@ -45,6 +43,32 @@ export class SubmissionConsumer {
     );
     this.logger.log(
       `Processed AI analysis for submissionId: ${event.payload.submissionId}`,
+    );
+  }
+
+  @RabbitSubscribe({
+    exchange: RABBIT_CONFIG.EXCHANGE,
+    routingKey: GITHUB_PATTERNS.FILE_COMMITTED,
+    queue: `${RABBIT_CONFIG.QUEUE}_submission_file_committed`,
+    errorBehavior: MessageHandlerErrorBehavior.NACK,
+  })
+  public async handleSubmissionFileCommittedEvent(
+    @RabbitPayload() event: SubmissionFileCommittedEnvelope,
+  ) {
+    this.logger.log(
+      `Received SubmissionFileCommittedEvent for submissionId: ${JSON.stringify(
+        event,
+        null,
+        2,
+      )}`,
+    );
+
+    await this.submissionService.handleFileCommitted(
+      event.payload.submissionId,
+      event.payload,
+    );
+    this.logger.log(
+      `Processed file committed for submissionId: ${event.payload.submissionId}`,
     );
   }
 }
