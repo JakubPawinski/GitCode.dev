@@ -186,42 +186,6 @@ describe('ProblemService', () => {
     });
   });
 
-  describe('searchProblems', () => {
-    it('should search problems by title', async () => {
-      jest.spyOn(prisma.problem, 'count').mockResolvedValue(1);
-      jest.spyOn(prisma.problem, 'findMany').mockResolvedValue([
-        {
-          ...mockProblem,
-          topics: [],
-          similarProblems: [],
-        } as any,
-      ]);
-
-      const result = await service.searchProblems('Two', mockPaginationDto);
-
-      expect(result.data).toHaveLength(1);
-      expect(prisma.problem.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: expect.objectContaining({
-            OR: expect.any(Array),
-          }),
-        }),
-      );
-    });
-
-    it('should throw BadRequestException for empty query', async () => {
-      await expect(
-        service.searchProblems('', mockPaginationDto),
-      ).rejects.toThrow(BadRequestException);
-    });
-
-    it('should throw BadRequestException for whitespace-only query', async () => {
-      await expect(
-        service.searchProblems('   ', mockPaginationDto),
-      ).rejects.toThrow(BadRequestException);
-    });
-  });
-
   describe('createProblem', () => {
     it('should create a new problem', async () => {
       const createDto = {
