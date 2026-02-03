@@ -167,36 +167,8 @@ export class ProblemController {
     return this.problemService.getTrending();
   }
 
-  @Get(':slug')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth('Bearer Auth')
-  @ApiOperation({ summary: 'Get problem details by slug' })
-  @ApiResponse({
-    status: 200,
-    description: 'Detailed problem information',
-    schema: {
-      allOf: [
-        { $ref: getSchemaPath(ApiResponseDto) },
-        {
-          properties: {
-            data: {
-              $ref: getSchemaPath(ProblemDetailResponseDto),
-            },
-          },
-        },
-      ],
-    },
-  })
-  @ApiResponse({
-    status: 404,
-    description: 'Problem not found',
-  })
-  findOne(@Param('slug') slug: string): Promise<ProblemDetailResponseDto> {
-    return this.problemService.findProblemBySlug(slug);
-  }
-
   /**
-   * Internal endpoint to get problem details by slug without authentication.
+   * Internal endpoint to get problem details by slug using internal service
    * @param slug - The slug identifier of the problem.
    * @returns - Detailed information about the problem.
    */
@@ -226,6 +198,34 @@ export class ProblemController {
   public findProblemBySlugInternal(
     @Param('slug') slug: string,
   ): Promise<ProblemDetailResponseDto> {
+    return this.problemService.findProblemBySlug(slug);
+  }
+
+  @Get(':slug')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('Bearer Auth')
+  @ApiOperation({ summary: 'Get problem details by slug' })
+  @ApiResponse({
+    status: 200,
+    description: 'Detailed problem information',
+    schema: {
+      allOf: [
+        { $ref: getSchemaPath(ApiResponseDto) },
+        {
+          properties: {
+            data: {
+              $ref: getSchemaPath(ProblemDetailResponseDto),
+            },
+          },
+        },
+      ],
+    },
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Problem not found',
+  })
+  findOne(@Param('slug') slug: string): Promise<ProblemDetailResponseDto> {
     return this.problemService.findProblemBySlug(slug);
   }
 
