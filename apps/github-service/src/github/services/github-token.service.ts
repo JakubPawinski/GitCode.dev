@@ -13,15 +13,15 @@ export class GithubTokenService {
   ) {}
 
   async getGitHubTokenForUser(userId: string): Promise<string> {
-    const authServiceUrl = this.configService.get<string>('auth.serviceUrl');
-    const apiKey = this.configService.get<string>('auth.internalApiKey');
+    const authServiceUrl = this.configService.get<string>('AUTH_SERVICE_URL');
+    const apiKey = this.configService.get<string>('INTERNAL_API_KEY');
 
     try {
       this.logger.debug(`Fetching GitHub token for user ${userId}`);
 
       const response = await firstValueFrom(
         this.httpService.get(
-          `${authServiceUrl}/api/auth/internal/oauth-token/${userId}/github`,
+          `${authServiceUrl}/auth/internal/oauth-token/${userId}/github`,
           {
             headers: {
               'X-Internal-Api-Key': apiKey,
@@ -30,20 +30,21 @@ export class GithubTokenService {
         ),
       );
 
-      if (!response.data || !response.data.accessToken) {
+      const githubToken = response.data.data;
+
+      if (!githubToken || !githubToken.accessToken) {
         throw new UnauthorizedException(
           'GitHub account not connected for this user',
         );
       }
 
-      return response.data.accessToken;
+      return githubToken.accessToken;
     } catch (error) {
       this.logger.error(
-        `Failed to fetch GitHub token for user ${userId}`,
-        error.message,
+        `Failed to fetch GitHub token for user ${userId}: ${error.message}`,
       );
 
-      if (error.response?.status === 404) {
+      if (error.response?.status === 404 || error.response?.status === 401) {
         throw new UnauthorizedException(
           'GitHub account not connected. Please connect your GitHub account first.',
         );
