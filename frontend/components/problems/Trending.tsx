@@ -56,6 +56,19 @@ export const Trending = () => {
             const difficulty = problem.difficulty.toLowerCase()
             const config = difficultyConfig[difficulty] || difficultyConfig.easy
 
+            const acceptanceRateRaw = Number(problem.acceptanceRate)
+            const acceptanceRatePercent = Number.isFinite(acceptanceRateRaw)
+              ? Math.min(
+                  100,
+                  Math.max(
+                    0,
+                    acceptanceRateRaw <= 1
+                      ? acceptanceRateRaw * 100
+                      : acceptanceRateRaw
+                  )
+                )
+              : null
+
             return (
               <Link
                 href={`/problems/${problem.problemSlug}`}
@@ -79,7 +92,9 @@ export const Trending = () => {
                     <div className="flex items-center gap-6">
                       <div className="text-foreground/60 flex w-20 items-center justify-center gap-2">
                         <span className="font-medium">
-                          {(problem.acceptanceRate * 100).toFixed(1)}%
+                          {acceptanceRatePercent === null
+                            ? '—'
+                            : `${acceptanceRatePercent.toFixed(1)}%`}
                         </span>
                       </div>
                       <div

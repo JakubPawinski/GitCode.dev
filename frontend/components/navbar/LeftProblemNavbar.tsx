@@ -67,21 +67,20 @@ export const LeftProblemNavbar = ({
   }
 
   const handleCommitYes = () => {
-    if (!submissionId) return
-
     const trimmedMessage = commitMessage.trim()
     if (!trimmedMessage) return
+    const payload = {
+      message: trimmedMessage,
+      files: [
+        {
+          path: `problems/${messageData.problemSlug}/solution.js`,
+          content: messageData?.code,
+        },
+      ],
+      branch: 'main',
+    }
 
-    onCommitConfirm?.(submissionId, trimmedMessage)
-
-    postMutation({
-      payload: {
-        submissionId,
-        message: trimmedMessage,
-        files: messageData?.code,
-        url: messageData?.problemSlug,
-      },
-    })
+    postMutation({ payload })
   }
 
   return (

@@ -7,6 +7,7 @@ import { Loader } from '../loading/Loader'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { usePostCreateRepository } from '@/hooks/api/use-post-create-repository'
+import { useGetRepository } from '@/hooks/api/use-get-repository'
 
 interface UserStatsProps {
   activityHeatmap: any[]
@@ -56,6 +57,13 @@ export const Profile = () => {
   const { data: statsData, error, loading } = useGetUserStats<UserStatsProps>()
 
   const {
+    data: repoData,
+    loading: repoLoading,
+    error: repoError,
+  } = useGetRepository()
+
+  console.log(repoData)
+  const {
     postMutation,
     data: repositoryData,
     error: repositoryError,
@@ -66,6 +74,11 @@ export const Profile = () => {
     repositoryError?.response?.data?.message ??
     repositoryError?.message ??
     (typeof repositoryError === 'string' ? repositoryError : null)
+
+  const repoErrorMessage =
+    repoError?.response?.data?.message ??
+    repoError?.message ??
+    (typeof repoError === 'string' ? repoError : null)
 
   if (error) return <Error {...error} />
   if (loading) return <Loader />
@@ -216,15 +229,19 @@ export const Profile = () => {
               </div>
             </div>
 
-            {repositoryLoading && (
+            {(repoLoading || repositoryLoading) && (
               <div className="mt-4 space-y-2">
                 <div className="bg-primary/10 h-2 w-full overflow-hidden rounded-full">
                   <div className="bg-primary h-full w-full animate-pulse" />
                 </div>
                 <p className="text-foreground/60 text-xs">
-                  Creating repository…
+                  {repositoryLoading ? 'Creating repository…' : 'Loading…'}
                 </p>
               </div>
+            )}
+
+            {!!repoErrorMessage && (
+              <p className="mt-4 text-sm text-red-400">{repoErrorMessage}</p>
             )}
 
             {!!repositoryErrorMessage && (
@@ -233,57 +250,58 @@ export const Profile = () => {
               </p>
             )}
 
-            {repositoryData ? (
-              <div className="mt-4 space-y-3">
-                <div className="text-sm">
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="text-foreground/60">Name</span>
-                    <span className="truncate font-medium">
-                      {String(
-                        (repositoryData as any)?.name ??
-                          (repositoryData as any)?.full_name ??
-                          (repositoryData as any)?.fullName ??
-                          'Repository'
-                      )}
-                    </span>
+            {(() => {
+              const resolvedRepo: any = (repoData as any)?.data ?? repoData
+              const repoName =
+                resolvedRepo?.name ??
+                resolvedRepo?.full_name ??
+                resolvedRepo?.fullName
+              const repoUrl =
+                resolvedRepo?.html_url ??
+                resolvedRepo?.htmlUrl ??
+                resolvedRepo?.url
+
+              const hasRepo = !!(resolvedRepo && (repoName || repoUrl))
+
+              if (!hasRepo) {
+                return (
+                  <div className="mt-5">
+                    <button
+                      type="button"
+                      onClick={() => postMutation({ payload: {} })}
+                      disabled={repoLoading || repositoryLoading}
+                      className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-10 w-full items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors disabled:opacity-60"
+                    >
+                      {repositoryLoading ? 'Creating…' : 'Create repository'}
+                    </button>
                   </div>
-                </div>
+                )
+              }
 
-                {(repositoryData as any)?.html_url ||
-                (repositoryData as any)?.htmlUrl ||
-                (repositoryData as any)?.url ? (
-                  <Link
-                    href={String(
-                      (repositoryData as any)?.html_url ??
-                        (repositoryData as any)?.htmlUrl ??
-                        (repositoryData as any)?.url
-                    )}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-primary hover:text-primary/90 inline-flex items-center text-sm font-medium"
-                  >
-                    Open repository
-                  </Link>
-                ) : null}
+              return (
+                <div className="mt-4 space-y-3">
+                  <div className="text-sm">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-foreground/60">Name</span>
+                      <span className="truncate font-medium">
+                        {String(repoName ?? 'Repository')}
+                      </span>
+                    </div>
+                  </div>
 
-                <div className="text-foreground/60 rounded-md bg-black/20 p-3 text-xs">
-                  <pre className="break-words whitespace-pre-wrap">
-                    {JSON.stringify(repositoryData, null, 2)}
-                  </pre>
+                  {repoUrl ? (
+                    <Link
+                      href={String(repoUrl)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-primary hover:text-primary/90 inline-flex items-center text-sm font-medium"
+                    >
+                      Open repository
+                    </Link>
+                  ) : null}
                 </div>
-              </div>
-            ) : (
-              <div className="mt-5">
-                <button
-                  type="button"
-                  onClick={() => postMutation({ payload: {} })}
-                  disabled={repositoryLoading}
-                  className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-10 w-full items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors disabled:opacity-60"
-                >
-                  {repositoryLoading ? 'Creating…' : 'Create repository'}
-                </button>
-              </div>
-            )}
+              )
+            })()}
           </div>
 
           <div className="border-primary/20 bg-primary/5 rounded-lg border p-6 shadow-sm">

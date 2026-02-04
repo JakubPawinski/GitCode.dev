@@ -1,3 +1,1 @@
-export default function SubmissionPage() {
-    
-}
+export default function SubmissionPage() {}

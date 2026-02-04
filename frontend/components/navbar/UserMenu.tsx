@@ -60,15 +60,15 @@ export const UserMenu = ({ user }: UserMenuProps) => {
     return <Error {...error} />
   }
 
-  const logout = async () => {
-    postMutation().then(() => {
-      setData(null)
-      delete api.defaults.headers.common.Authorization
-      setOpen(false)
-      router.replace('/login')
-      router.refresh()
-    })
-  }
+  // const logout = async () => {
+  //   postMutation().then(() => {
+  //     setData(null)
+  //     delete api.defaults.headers.common.Authorization
+  //     setOpen(false)
+  //     router.replace('/login')
+  //     router.refresh()
+  //   })
+  // }
 
   return (
     <div ref={rootRef} className="relative flex items-center">
@@ -109,7 +109,7 @@ export const UserMenu = ({ user }: UserMenuProps) => {
               <UserRound size={18} className="text-foreground/70" />
               <span>Go to profile</span>
             </Link>
-
+            {/* 
             <button
               role="menuitem"
               type="button"
@@ -118,7 +118,7 @@ export const UserMenu = ({ user }: UserMenuProps) => {
             >
               <LogOut size={18} className="text-foreground/70" />
               <span>Log out</span>
-            </button>
+            </button> */}
           </div>
         </div>
       )}
