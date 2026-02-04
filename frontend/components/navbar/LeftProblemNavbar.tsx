@@ -4,14 +4,11 @@ import { usePathname } from 'next/navigation'
 import { NotepadText, Clock8, Sparkles } from 'lucide-react'
 import { SubmissionResultLink } from './SubmissionResultLink'
 import { ChartNoAxesCombined } from 'lucide-react'
-<<<<<<< HEAD
 import { useEffect, useRef, useState } from 'react'
 import { usePostCommit } from '@/hooks/api/use-post-commit'
 import { useAiSendMessageContext } from '@/contexts/ai/AiSendMessageContext'
 import { useAuth } from '@/contexts/auth/AuthContext'
-=======
 
->>>>>>> f0004a1fb0f915bbf10d045aa397f431b4c3ce6d
 interface NavbarProps {
   submissionId?: string
   submissionMessages: any
@@ -40,7 +37,6 @@ export const LeftProblemNavbar = ({
     submissionMessages?.submission_analyzed?.status ??
     submissionMessages?.attempt_update?.status
 
-<<<<<<< HEAD
   useEffect(() => {
     if (!submissionId) return
     if (status !== 'success') return
@@ -63,11 +59,8 @@ export const LeftProblemNavbar = ({
     if (!data) return
     setIsCommitModalOpen(false)
   }, [data, isCommitModalOpen])
-=======
-  // Fetch AI analysis attempt ID
   const aiAnalysis = submissionMessages?.submission_analyzed
   const hasAiAnalysis = !!aiAnalysis?.attemptId
->>>>>>> f0004a1fb0f915bbf10d045aa397f431b4c3ce6d
 
   const linkClasses =
     'flex items-center gap-2 px-4 py-2 text-foreground/70 hover:text-foreground rounded-md transition-all duration-300'
@@ -116,6 +109,17 @@ export const LeftProblemNavbar = ({
             status={status}
             submissionId={submissionId}
           />
+        )}
+
+        {hasAiAnalysis && (
+          <Link
+            href={`${basePath}/submissions/${aiAnalysis.attemptId}`}
+            className="flex items-center gap-2 rounded-md bg-gradient-to-r from-purple-500/20 to-blue-500/20 px-4 py-2 text-purple-400 transition-all duration-300 hover:from-purple-500/30 hover:to-blue-500/30"
+            title="View AI Analysis"
+          >
+            <Sparkles size={20} className="animate-pulse" />
+            <span className="tracking-wide">AI Analysis</span>
+          </Link>
         )}
       </nav>
 
@@ -183,21 +187,6 @@ export const LeftProblemNavbar = ({
           </div>
         </div>
       )}
-<<<<<<< HEAD
     </div>
-=======
-
-      {hasAiAnalysis && (
-        <Link
-          href={`${basePath}/submissions/${aiAnalysis.attemptId}`}
-          className="flex items-center gap-2 rounded-md bg-gradient-to-r from-purple-500/20 to-blue-500/20 px-4 py-2 text-purple-400 transition-all duration-300 hover:from-purple-500/30 hover:to-blue-500/30"
-          title="View AI Analysis"
-        >
-          <Sparkles size={20} className="animate-pulse" />
-          <span className="tracking-wide">AI Analysis</span>
-        </Link>
-      )}
-    </nav>
->>>>>>> f0004a1fb0f915bbf10d045aa397f431b4c3ce6d
   )
 }
