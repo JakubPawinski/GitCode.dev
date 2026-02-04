@@ -15,7 +15,6 @@ describe('HttpExceptionFilter', () => {
   let filter: HttpExceptionFilter;
 
   beforeEach(() => {
-    // Tworz filtr bezpośrednio bez TestingModule
     filter = new HttpExceptionFilter('test-service');
   });
 

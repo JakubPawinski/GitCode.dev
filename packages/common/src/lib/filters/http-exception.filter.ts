@@ -119,10 +119,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
       if (Array.isArray(resp.message)) {
         message = 'Validation failed';
         errorCode = 'VALIDATION_ERROR';
-        details = resp.message.map((msg: string) => ({
-          code: 'VALIDATION',
-          constraint: msg,
-        }));
+        details = this.parseValidationErrors(resp.message);
       }
     }
 
@@ -144,6 +141,35 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
     this.logError(exception, request, status, true);
     response.status(status).json(errorResponse);
+  }
+
+  /**
+   * Parses NestJS ValidationPipe error messages to extract structured validation details.
+   * Handles messages in format: "property constraint" or "property constraint (value)"
+   * Example: "email must be an email (invalid@)" or "firstName must be a string"
+   *
+   * @param messages Array of validation error messages from NestJS ValidationPipe
+   * @returns Array of structured ErrorDetails with property and constraint information
+   */
+  private parseValidationErrors(messages: string[]): ErrorDetails[] {
+    return messages.map((msg: string) => {
+      const match = msg.match(/^([a-zA-Z0-9_$]+)\s+(.+?)(?:\s+\(.+\))?$/);
+
+      if (match) {
+        const [, property, constraint] = match;
+        return {
+          code: 'VALIDATION',
+          field: property,
+          constraint,
+        };
+      }
+
+      // Fallback if pattern doesn't match
+      return {
+        code: 'VALIDATION',
+        constraint: msg,
+      };
+    });
   }
 
   /**
@@ -201,12 +227,14 @@ export class HttpExceptionFilter implements ExceptionFilter {
     status: number,
     isOperational: boolean,
   ) {
+    const requestId = request.headers['x-request-id'] as string | undefined;
+
     const logContext = {
       status,
       path: request.url,
       method: request.method,
       service: this.serviceName,
-      requestId: request.headers['x-request-id'],
+      ...(requestId && { requestId }),
       stack: exception instanceof Error ? exception.stack : undefined,
     };
 
@@ -225,7 +253,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     } else {
       this.logger.error(
         `[NON-OPERATIONAL] [${status}] ${request.method} ${request.url}`,
-        exception instanceof Error ? exception.stack : undefined,
+        logContext,
       );
     }
   }

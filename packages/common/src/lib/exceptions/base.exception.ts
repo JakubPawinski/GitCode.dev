@@ -5,6 +5,7 @@ export interface ErrorDetails {
   field?: string;
   constraint?: string;
   meta?: Record<string, any>;
+  [key: string]: any;
 }
 
 /**
