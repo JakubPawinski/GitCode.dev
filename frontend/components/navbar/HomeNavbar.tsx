@@ -3,7 +3,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { useAuth } from '@/contexts/auth/AuthContext'
-import { ProfileLink } from './ProfileLink'
+import { UserMenu } from './UserMenu'
 
 export const HomeNavbar = () => {
   const { problem } = useParams()
@@ -30,7 +30,7 @@ export const HomeNavbar = () => {
           <span className="text-xl font-bold">GitCode.dev</span>
         </Link>
       </div>
-      <ProfileLink {...user} />
+      <UserMenu user={user} />
     </nav>
   )
 }

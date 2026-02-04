@@ -1,7 +1,17 @@
 'use client'
 import { createContext, ReactNode, useContext } from 'react'
 export interface AiTutorContextProps {
-  tutorData: any
+  tutorData: {
+    sessionId?: number | string
+    createdAt?: string
+    messages: {
+      role: string
+      content: string
+      createdAt?: string
+    }[]
+  }
+  messageLoading: boolean
+  messageError: any
 }
 
 export const AiTutorContext = createContext<AiTutorContextProps | null>(null)
@@ -9,12 +19,26 @@ export const AiTutorContext = createContext<AiTutorContextProps | null>(null)
 export const AiTutorContextProvider = ({
   children,
   tutorData,
+  messageLoading,
+  messageError,
 }: {
   children: ReactNode
-  tutorData: any
+  tutorData: {
+    sessionId?: number | string
+    createdAt?: string
+    messages: {
+      role: string
+      content: string
+      createdAt?: string
+    }[]
+  }
+  messageLoading: boolean
+  messageError: any
 }) => {
   return (
-    <AiTutorContext.Provider value={tutorData}>
+    <AiTutorContext.Provider
+      value={{ tutorData, messageLoading, messageError }}
+    >
       {children}
     </AiTutorContext.Provider>
   )

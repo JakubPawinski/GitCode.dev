@@ -7,20 +7,7 @@ import { Loader } from '../loading/Loader'
 
 interface UserStatsProps {
   activityHeatmap: any[]
-  aiFeedbackBySeverity: {
-    info: number
-    warning: number
-    critical: number
-  }
-  aiFeedbackByType: {
-    bug: number
-    performance: number
-    security: number
-    cleanCode: number
-    logic: number
-    [key: string]: number
-  }
-  averageDifficultyScore: number
+
   consistencyScore: number
   difficultyBreakdown: {
     easy: number
@@ -28,16 +15,8 @@ interface UserStatsProps {
     hard: number
     total: number
   }
-  difficultyPercentage: {
-    easy: number
-    medium: number
-    hard: number
-  }
-  generatedAt: string
-  growthRate: number
-  hourlyActivity: any[]
+
   languageStats: any[]
-  milestones: any[]
   performanceMetrics: {
     avgExecutionTime: number | null
     avgMemoryUsed: number | null
@@ -48,24 +27,17 @@ interface UserStatsProps {
   }
   problemsAttempted: number
   problemsSolved: number
-  progressOverTime: any[]
-  recentActivity: any[]
+
   streak: {
     currentStreak: number
     longestStreak: number
     lastActivityDate: string | null
     activeToday: boolean
   }
-  strengthsWeaknesses: {
-    strengths: string[]
-    weaknesses: string[]
-    recommendedTopics: string[]
-  }
+
   successRate: number
-  successfulSubmissions: number
   topicStats: any[]
   totalSubmissions: number
-  userId: string
   weeklyActivity: any[]
 }
 
@@ -83,7 +55,6 @@ export const Profile = () => {
 
   const {
     totalSubmissions,
-    successfulSubmissions,
     successRate,
     performanceMetrics: { avgExecutionTime, avgMemoryUsed },
     problemsAttempted,
@@ -444,7 +415,6 @@ export const Profile = () => {
             </div>
           </div>
 
-          {/* Recent Activity or other stats */}
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="border-primary/20 bg-primary/5 rounded-lg border p-6 shadow-sm">
               <div className="text-foreground/60 mb-2 text-sm font-medium uppercase">

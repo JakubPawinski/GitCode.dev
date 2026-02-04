@@ -26,6 +26,10 @@ import {
   AiSendMessageProvider,
   MessageDataProps,
 } from '@/contexts/ai/AiSendMessageContext'
+import {
+  AiTutorContextProps,
+  AiTutorContextProvider,
+} from '@/contexts/ai/AiTutorContext'
 
 export interface ProblemDataProps {
   id: string
@@ -58,8 +62,6 @@ export default function ProblemLayout({
   const [aiTutorOpen, setAiTutorOpen] = useState<boolean>(false)
   const defaultLanguage = availableLanguages[0]
 
-  const pathname = usePathname()
-
   const { data: authData } = useAuth()
 
   useEffect(() => {
@@ -86,6 +88,12 @@ export default function ProblemLayout({
     loading: problemLoading,
     error: problemError,
   } = useGetProblem<ProblemDataProps>(problem as string)
+
+  const {
+    data: tutorData,
+    loading: tutorLoading,
+    error: tutorError,
+  } = useGetAiTutorHistory(problem as string)
 
   const { postMutation, data, loading, error } =
     usePostSubmission<SubmissionDataProps>()
@@ -129,43 +137,57 @@ export default function ProblemLayout({
     code: currentCode,
     problemSlug: problem as string,
   }
+
   return (
     <AiSendMessageProvider messageData={messageData}>
-      <ProblemProvider problemData={problemData}>
-        <div className="flex">
-          <form className="text-foreground flex h-screen flex-1 flex-col">
-            <PrimaryProblemNavbar
-              onSubmit={handleSubmit(onSubmit)}
-              setAiTutorOpen={setAiTutorOpen}
-              submissionLoading={loading}
-              submissionError={error}
-            />
-            <section className="flex flex-grow gap-4 overflow-hidden p-4">
-              <div className="border-primary/20 flex min-w-0 flex-1 flex-col rounded-lg border bg-transparent p-4">
-                <LeftProblemNavbar
-                  submissionId={data?.submissionId}
-                  submissionMessages={messages}
-                />
-                <div className="custom-scrollbar mt-4 overflow-y-auto">
-                  {children}
-                </div>
-              </div>
-              <div className="flex min-w-0 flex-1 flex-col gap-4">
-                <div className="h-3/5">
-                  <Editor
-                    control={control}
-                    selectedLanguage={selectedLanguage}
+      <AiTutorContextProvider
+        tutorData={
+          tutorData as {
+            messages: {
+              role: string
+              content: string
+            }[]
+          }
+        }
+        messageLoading={tutorLoading}
+        messageError={tutorError}
+      >
+        <ProblemProvider problemData={problemData}>
+          <div className="flex h-screen overflow-hidden">
+            <form className="text-foreground flex h-screen flex-1 flex-col">
+              <PrimaryProblemNavbar
+                onSubmit={handleSubmit(onSubmit)}
+                setAiTutorOpen={setAiTutorOpen}
+                submissionLoading={loading}
+                submissionError={error}
+              />
+              <section className="flex flex-grow gap-4 overflow-hidden p-4">
+                <div className="border-primary/20 flex min-w-0 flex-1 flex-col rounded-lg border bg-transparent p-4">
+                  <LeftProblemNavbar
+                    submissionId={data?.submissionId}
+                    submissionMessages={messages}
                   />
+                  <div className="custom-scrollbar mt-4 overflow-y-auto">
+                    {children}
+                  </div>
                 </div>
-                <div className="border-primary/20 h-2/5 rounded-lg border bg-transparent">
-                  <TestCaseScreen testCases={testCases} />
+                <div className="flex min-w-0 flex-1 flex-col gap-4">
+                  <div className="h-3/5">
+                    <Editor
+                      control={control}
+                      selectedLanguage={selectedLanguage}
+                    />
+                  </div>
+                  <div className="border-primary/20 h-2/5 rounded-lg border bg-transparent">
+                    <TestCaseScreen testCases={testCases} />
+                  </div>
                 </div>
-              </div>
-            </section>
-          </form>
-          {aiTutorOpen && <AiTutorAside />}
-        </div>
-      </ProblemProvider>
+              </section>
+            </form>
+            {aiTutorOpen && <AiTutorAside />}
+          </div>
+        </ProblemProvider>
+      </AiTutorContextProvider>
     </AiSendMessageProvider>
   )
 }
