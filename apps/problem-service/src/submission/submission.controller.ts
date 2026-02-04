@@ -63,6 +63,7 @@ export class SubmissionController {
   @Post()
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('Bearer Auth')
+  @RequirePermissions(AppPermission.SUBMISSION_CREATE)
   @ApiOperation({ summary: 'Create a new submission' })
   @ApiResponse({
     status: 201,
@@ -93,6 +94,7 @@ export class SubmissionController {
 
   @Get('user/history')
   @UseGuards(JwtAuthGuard)
+  @RequirePermissions(AppPermission.SUBMISSION_READ_SELF)
   @ApiBearerAuth('Bearer Auth')
   @ApiOperation({ summary: 'Get user submission history' })
   @ApiResponse({
@@ -128,6 +130,7 @@ export class SubmissionController {
   @Get('attempts/:attemptId')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('Bearer Auth')
+  @RequirePermissions(AppPermission.SUBMISSION_READ_SELF)
   @ApiOperation({ summary: 'Get details of a specific submission attempt' })
   @ApiResponse({
     status: 200,
@@ -155,6 +158,7 @@ export class SubmissionController {
   @Get('stats')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('Bearer Auth')
+  @RequirePermissions(AppPermission.SUBMISSION_READ_SELF)
   @ApiOperation({ summary: 'Get user submission statistics' })
   @ApiResponse({
     status: 200,
@@ -208,7 +212,7 @@ export class SubmissionController {
   @Get('stats/extended')
   @ApiBearerAuth('Bearer Auth')
   @UseGuards(JwtAuthGuard, PermissionsGuards)
-  @RequirePermissions(AppPermission.USER_READ_SELF)
+  @RequirePermissions(AppPermission.SUBMISSION_READ_SELF)
   @ApiOperation({
     summary: 'Get extended user statistics for README generation and charts',
   })
@@ -227,6 +231,7 @@ export class SubmissionController {
   @Get('recent')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('Bearer Auth')
+  @RequirePermissions(AppPermission.SUBMISSION_READ_SELF)
   @ApiOperation({ summary: 'Get recent submissions (last N)' })
   @ApiResponse({
     status: 200,
@@ -256,6 +261,7 @@ export class SubmissionController {
   @Get(':submissionId')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('Bearer Auth')
+  @RequirePermissions(AppPermission.SUBMISSION_READ_SELF)
   @ApiOperation({ summary: 'Get submission details by ID' })
   @ApiResponse({
     status: 200,
@@ -285,6 +291,7 @@ export class SubmissionController {
   @Delete(':submissionId')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('Bearer Auth')
+  @RequirePermissions(AppPermission.SUBMISSION_READ_SELF)
   @ApiOperation({ summary: 'Delete a submission' })
   @ApiResponse({
     status: 200,
