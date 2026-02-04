@@ -239,7 +239,9 @@ dist
 .ionide
 
 ### Ignore keycloak config with secrets ###
-keycloak/
+apps/keycloak/*
+!apps/keycloak/.gitignore
+!apps/keycloak/themes/
 
 ### Nx ###
 .nx/installation
