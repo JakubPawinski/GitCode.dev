@@ -31,6 +31,7 @@ import {
   JwtAuthGuard,
   InternalService,
   RequirePermissions,
+  PermissionsGuards,
 } from '@gitcode/auth';
 import { RedisService } from '../redis/redis.service';
 import { AppService } from '../app.service';
@@ -319,7 +320,7 @@ export class AuthController {
   }
 
   @Get('me')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PermissionsGuards)
   @ApiBearerAuth('Bearer Auth')
   @RequirePermissions(AppPermission.USER_READ_SELF)
   @ApiOperation({ summary: 'Get current user profile' })
@@ -359,7 +360,7 @@ export class AuthController {
   }
 
   @Get('account')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PermissionsGuards)
   @ApiBearerAuth('Bearer Auth')
   @RequirePermissions(AppPermission.USER_READ_SELF)
   @ApiOperation({ summary: 'Initiate account update via Keycloak' })
@@ -373,7 +374,7 @@ export class AuthController {
   }
 
   @Get('account/callback')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PermissionsGuards)
   @RequirePermissions(AppPermission.USER_UPDATE_SELF)
   @ApiOperation({ summary: 'Handle account update callback from Keycloak' })
   @ApiResponse({

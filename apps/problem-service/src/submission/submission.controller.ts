@@ -61,7 +61,7 @@ export class SubmissionController {
   constructor(private readonly submissionService: SubmissionService) {}
 
   @Post()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PermissionsGuards)
   @ApiBearerAuth('Bearer Auth')
   @RequirePermissions(AppPermission.SUBMISSION_CREATE)
   @ApiOperation({ summary: 'Create a new submission' })
@@ -93,7 +93,7 @@ export class SubmissionController {
   }
 
   @Get('user/history')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PermissionsGuards)
   @RequirePermissions(AppPermission.SUBMISSION_READ_SELF)
   @ApiBearerAuth('Bearer Auth')
   @ApiOperation({ summary: 'Get user submission history' })
@@ -128,7 +128,7 @@ export class SubmissionController {
   }
 
   @Get('attempts/:attemptId')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PermissionsGuards)
   @ApiBearerAuth('Bearer Auth')
   @RequirePermissions(AppPermission.SUBMISSION_READ_SELF)
   @ApiOperation({ summary: 'Get details of a specific submission attempt' })
@@ -156,7 +156,7 @@ export class SubmissionController {
   }
 
   @Get('stats')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PermissionsGuards)
   @ApiBearerAuth('Bearer Auth')
   @RequirePermissions(AppPermission.SUBMISSION_READ_SELF)
   @ApiOperation({ summary: 'Get user submission statistics' })
@@ -229,7 +229,7 @@ export class SubmissionController {
   }
 
   @Get('recent')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PermissionsGuards)
   @ApiBearerAuth('Bearer Auth')
   @RequirePermissions(AppPermission.SUBMISSION_READ_SELF)
   @ApiOperation({ summary: 'Get recent submissions (last N)' })
@@ -259,7 +259,7 @@ export class SubmissionController {
   }
 
   @Get(':submissionId')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PermissionsGuards)
   @ApiBearerAuth('Bearer Auth')
   @RequirePermissions(AppPermission.SUBMISSION_READ_SELF)
   @ApiOperation({ summary: 'Get submission details by ID' })
@@ -289,7 +289,7 @@ export class SubmissionController {
   }
 
   @Delete(':submissionId')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PermissionsGuards)
   @ApiBearerAuth('Bearer Auth')
   @RequirePermissions(AppPermission.SUBMISSION_READ_SELF)
   @ApiOperation({ summary: 'Delete a submission' })

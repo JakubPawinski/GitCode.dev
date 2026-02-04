@@ -22,6 +22,7 @@ import {
   InternalService,
   JwtAuthGuard,
   RequirePermissions,
+  PermissionsGuards,
   User,
 } from '@gitcode/auth';
 import type { AuthenticatedUser } from '@gitcode/types';
@@ -70,7 +71,7 @@ export class ProblemController {
    * @returns A paginated list of problems.
    */
   @Get()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PermissionsGuards)
   @RequirePermissions(AppPermission.PROBLEM_READ)
   @ApiBearerAuth('Bearer Auth')
   @ApiOperation({ summary: 'Get paginated problems list' })
@@ -98,7 +99,7 @@ export class ProblemController {
   }
 
   @Get('user/progress')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PermissionsGuards)
   @RequirePermissions(
     AppPermission.PROBLEM_READ,
     AppPermission.SUBMISSION_READ_SELF,
@@ -129,7 +130,7 @@ export class ProblemController {
   }
 
   @Get('recommendations')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PermissionsGuards)
   @ApiBearerAuth('Bearer Auth')
   @RequirePermissions(AppPermission.PROBLEM_READ)
   @ApiOperation({ summary: 'Get recommended problems for user' })
@@ -242,7 +243,7 @@ export class ProblemController {
   }
 
   @Get(':slug/stats')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PermissionsGuards)
   @RequirePermissions(AppPermission.PROBLEM_READ)
   @ApiBearerAuth('Bearer Auth')
   @ApiOperation({ summary: 'Get problem statistics' })
@@ -271,7 +272,7 @@ export class ProblemController {
   }
 
   @Get(':slug/submissions')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PermissionsGuards)
   @RequirePermissions(AppPermission.SUBMISSION_READ_SELF)
   @ApiBearerAuth('Bearer Auth')
   @ApiOperation({ summary: 'Get user submissions for a problem' })
@@ -306,7 +307,7 @@ export class ProblemController {
   // ADMIN ENDPOINTS
 
   @Post()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PermissionsGuards)
   @ApiBearerAuth('Bearer Auth')
   @RequirePermissions(AppPermission.PROBLEM_CREATE)
   @ApiOperation({ summary: 'Create new problem (Admin only)' })
@@ -337,7 +338,7 @@ export class ProblemController {
   }
 
   @Patch(':id')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PermissionsGuards)
   @RequirePermissions(AppPermission.PROBLEM_UPDATE)
   @ApiBearerAuth('Bearer Auth')
   @ApiOperation({ summary: 'Update problem (Admin only)' })
@@ -373,7 +374,7 @@ export class ProblemController {
   }
 
   @Delete(':id')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PermissionsGuards)
   @RequirePermissions(AppPermission.PROBLEM_DELETE)
   @ApiBearerAuth('Bearer Auth')
   @ApiOperation({ summary: 'Delete problem (Admin only)' })
