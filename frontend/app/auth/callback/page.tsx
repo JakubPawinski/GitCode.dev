@@ -1,6 +1,6 @@
 'use client'
 import { useSearchParams } from 'next/navigation'
-import { useEffect } from 'react'
+import { useEffect, Suspense } from 'react'
 import { useRouter } from 'next/navigation'
 import { Loader } from '@/components/loading/Loader'
 import { UserProps } from '@/components/user/User'
@@ -10,7 +10,7 @@ export interface AuthContextProps {
   user: UserProps
 }
 
-export default function AuthPage() {
+function AuthCallback() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const success = searchParams.get('success')
@@ -23,4 +23,12 @@ export default function AuthPage() {
   }, [success, router])
 
   return <Loader />
+}
+
+export default function AuthPage() {
+  return (
+    <Suspense fallback={<Loader />}>
+      <AuthCallback />
+    </Suspense>
+  )
 }
