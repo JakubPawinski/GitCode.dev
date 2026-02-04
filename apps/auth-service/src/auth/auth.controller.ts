@@ -30,10 +30,17 @@ import { ApiResponseDto } from '@gitcode/common';
 import { JwtAuthGuard, InternalService } from '@gitcode/auth';
 import { RedisService } from '../redis/redis.service';
 import { AppService } from '../app.service';
+import { GitHubTokenDto } from './dto/github-token.dto';
 
 @Controller('auth')
 @ApiTags('Authentication')
-@ApiExtraModels(ApiResponseDto, AuthResponseDto, UserDto, LogoutResponseDto)
+@ApiExtraModels(
+  ApiResponseDto,
+  AuthResponseDto,
+  UserDto,
+  LogoutResponseDto,
+  GitHubTokenDto,
+)
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
@@ -382,6 +389,11 @@ export class AuthController {
       }`,
     );
   }
+
+  /**
+   * Internal endpoint to get GitHub OAuth token for a user
+   * Used by other internal services (e.g., github-service) to perform actions on behalf of the user
+   */
   @Get('internal/oauth-token/:userId/github')
   @InternalService()
   @ApiOperation({
@@ -390,28 +402,16 @@ export class AuthController {
   @ApiResponse({
     status: 200,
     description: 'GitHub OAuth token retrieved successfully',
-    schema: {
-      allOf: [
-        { $ref: getSchemaPath(ApiResponseDto) },
-        {
-          properties: {
-            data: {
-              type: 'object',
-              properties: {
-                accessToken: { type: 'string' },
-              },
-            },
-          },
-        },
-      ],
-    },
+    type: GitHubTokenDto,
   })
   @ApiResponse({
     status: 401,
     description:
       'Unauthorized - missing/invalid internal API key or user not connected',
   })
-  async getGitHubTokenForUser(@Param('userId') userId: string): Promise<any> {
+  async getGitHubTokenForUser(
+    @Param('userId') userId: string,
+  ): Promise<GitHubTokenDto> {
     return this.authService.getOAuthTokenForGithub(userId);
   }
 }

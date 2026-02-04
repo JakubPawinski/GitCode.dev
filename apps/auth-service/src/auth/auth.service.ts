@@ -9,6 +9,8 @@ import { mapRolesToPermissions } from './mappers/permissions.mapper';
 import { mapRealmRolesToAppRoles } from './mappers/roles.mapper';
 import { EventBus } from '@gitcode/messaging';
 import { AUTH_PATTERNS, UserCreatedEvent } from '@gitcode/contracts';
+import { URLSearchParams } from 'url';
+import { GitHubTokenDto } from './dto/github-token.dto';
 
 @Injectable()
 export class AuthService {
@@ -20,6 +22,7 @@ export class AuthService {
     private configService: ConfigService,
     private eventBus: EventBus,
   ) {}
+  private readonly ENCRYPTION_ALGORITHM = 'aes-256-gcm';
 
   async initiateLogin(provider: string = 'keycloak') {
     const state = crypto.randomBytes(32).toString('hex');
@@ -78,6 +81,8 @@ export class AuthService {
       { ...userInfo, roles: appRoles, permissions: appPermissions },
       tokens,
     );
+    // Fetch and store GitHub token if available
+    await this.fetchAndStoreGitHubToken(user.id, tokens.access_token);
 
     if (!userExists) {
       this.logger.log(
@@ -113,6 +118,89 @@ export class AuthService {
         avatarUrl: user.avatarUrl,
       },
     };
+  }
+
+  /**
+   * Fetch GitHub OAuth token from Keycloak broker and store it encrypted
+   * Called after user logs in through GitHub via Keycloak
+   * Only fetches if token doesn't already exist in database
+   */
+  private async fetchAndStoreGitHubToken(
+    userId: string,
+    keycloakAccessToken: string,
+  ): Promise<void> {
+    try {
+      // Check if we already have a GitHub token for this user
+      const existingToken = await this.prisma.oAuthToken.findUnique({
+        where: { userId_provider: { userId, provider: 'github' } },
+      });
+
+      // If token already exists, skip fetching (GitHub tokens don't expire)
+      if (existingToken) {
+        this.logger.debug(
+          `GitHub token already exists for user ${userId}, skipping fetch`,
+        );
+        return;
+      }
+
+      const keycloakConfig = this.configService.get('keycloak');
+
+      // Keycloak broker endpoint to retrieve external provider tokens
+      const url = `${keycloakConfig.internalUrl}/realms/${keycloakConfig.realm}/broker/github/token`;
+
+      const response = await axios.get(url, {
+        headers: {
+          Authorization: `Bearer ${keycloakAccessToken}`,
+        },
+      });
+
+      // Parse URL-encoded response (access_token=...&scope=...&token_type=...)
+      const params = new URLSearchParams(response.data);
+      const githubToken = {
+        access_token: params.get('access_token'),
+        refresh_token: params.get('refresh_token'),
+        expires_in: params.get('expires_in')
+          ? parseInt(params.get('expires_in'))
+          : null,
+        scope: params.get('scope'),
+        token_type: params.get('token_type'),
+      };
+
+      if (githubToken.access_token) {
+        this.logger.log(
+          `GitHub token retrieved successfully for user ${userId}`,
+        );
+
+        // Encrypt the sensitive token before storing
+        const encryptedAccessToken = this.encryptToken(
+          githubToken.access_token,
+        );
+
+        // Store encrypted GitHub token in database
+        await this.prisma.oAuthToken.create({
+          data: {
+            userId,
+            provider: 'github',
+            accessToken: encryptedAccessToken,
+            refreshToken: null, // GitHub tokens don't have refresh tokens
+            expiresAt: null, // GitHub tokens don't expire
+            scope: githubToken.scope,
+            tokenType: githubToken.token_type || 'bearer',
+          },
+        });
+
+        this.logger.log(`GitHub token stored (encrypted) for user ${userId}`);
+      }
+    } catch (error) {
+      // Don't throw - user might log in without GitHub connection
+      this.logger.warn(
+        `Could not fetch GitHub token for user ${userId}: ${error.message}`,
+      );
+
+      if (error.response?.status === 400) {
+        this.logger.debug('User probably has no GitHub identity linked');
+      }
+    }
   }
 
   private async exchangeCodeForTokens(code: string) {
@@ -462,23 +550,94 @@ export class AuthService {
     }
   }
 
-  async getOAuthTokenForGithub(userId: string): Promise<any> {
+  /**
+   * Get decrypted GitHub OAuth token for a user (internal service use)
+   * Called by github-service to perform GitHub API operations
+   */
+  async getOAuthTokenForGithub(userId: string): Promise<GitHubTokenDto> {
     const oauthToken = await this.prisma.oAuthToken.findUnique({
       where: { userId_provider: { userId, provider: 'github' } },
     });
 
+    // If no token found, user has not connected GitHub
     if (!oauthToken) {
       throw new UnauthorizedException(
-        'GitHub account not connected for this user',
+        'GitHub account not connected. Please connect your GitHub account first.',
       );
     }
 
+    // Decrypt tokens before returning
+    const decryptedAccessToken = this.decryptToken(oauthToken.accessToken);
+
     return {
-      accessToken: oauthToken.accessToken,
-      refreshToken: oauthToken.refreshToken,
-      expiresAt: oauthToken.expiresAt,
+      accessToken: decryptedAccessToken,
       scope: oauthToken.scope,
       tokenType: oauthToken.tokenType,
     };
+  }
+
+  /**
+   * Encrypt sensitive token data using AES-256-GCM
+   */
+  private encryptToken(token: string): string {
+    try {
+      const encryptionKey = this.configService.get<string>('ENCRYPTION_KEY');
+
+      if (!encryptionKey || encryptionKey.length !== 64) {
+        throw new Error('ENCRYPTION_KEY must be 64 hex characters (32 bytes)');
+      }
+
+      const key = Buffer.from(encryptionKey, 'hex');
+      const iv = crypto.randomBytes(16);
+
+      const cipher = crypto.createCipheriv(this.ENCRYPTION_ALGORITHM, key, iv);
+      let encrypted = cipher.update(token, 'utf8', 'hex');
+      encrypted += cipher.final('hex');
+
+      const authTag = cipher.getAuthTag();
+
+      // Format: iv:authTag:encrypted
+      return `${iv.toString('hex')}:${authTag.toString('hex')}:${encrypted}`;
+    } catch (error) {
+      this.logger.error('Token encryption failed', error);
+      throw new Error('Failed to encrypt token');
+    }
+  }
+
+  /**
+   * Decrypt token encrypted with encryptToken()
+   */
+  private decryptToken(encryptedToken: string): string {
+    try {
+      const [ivHex, authTagHex, encrypted] = encryptedToken.split(':');
+
+      if (!ivHex || !authTagHex || !encrypted) {
+        throw new Error('Invalid encrypted token format');
+      }
+
+      const encryptionKey = this.configService.get<string>('ENCRYPTION_KEY');
+
+      if (!encryptionKey || encryptionKey.length !== 64) {
+        throw new Error('ENCRYPTION_KEY must be 64 hex characters (32 bytes)');
+      }
+
+      const key = Buffer.from(encryptionKey, 'hex');
+
+      const decipher = crypto.createDecipheriv(
+        this.ENCRYPTION_ALGORITHM,
+        key,
+        Buffer.from(ivHex, 'hex'),
+      );
+
+      decipher.setAuthTag(Buffer.from(authTagHex, 'hex'));
+
+      let decrypted = decipher.update(encrypted, 'hex', 'utf8');
+      decrypted += decipher.final('utf8');
+
+      return decrypted;
+    } catch (error) {
+      this.logger.error('Token decryption failed', error);
+      throw new Error('Failed to decrypt token');
+    }
   }
 }
