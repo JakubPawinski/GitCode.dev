@@ -49,3 +49,11 @@ export class FriendshipRequestedEnvelope extends WithEventPayload(
 export class SubmissionAnalyzedEnvelope extends WithEventPayload(
   SubmissionAnalyzedEvent,
 ) {}
+
+export class SubmissionCompletedEnvelope extends WithEventPayload(
+  SubmissionAnalyzedEvent,
+) {}
+
+export class SubmissionFailedEnvelope extends WithEventPayload(
+  SubmissionAnalyzedEvent,
+) {}
