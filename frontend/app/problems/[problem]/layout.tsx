@@ -81,6 +81,13 @@ export default function ProblemLayout({
 
   const { messages } = useOnSocket({ rooms, socket })
 
+  // Debug
+  useEffect(() => {
+    if (messages?.submission_analyzed) {
+      console.log('AI Analysis event received:', messages.submission_analyzed)
+    }
+  }, [messages?.submission_analyzed])
+
   const {
     data: problemData,
     loading: problemLoading,
