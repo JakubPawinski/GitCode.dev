@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { useAuth } from '@/contexts/auth/AuthContext'
 import { ProfileLink } from './ProfileLink'
+import { NotificationBell } from '../notification/NotificationBell'
 
 export const HomeNavbar = () => {
   const { problem } = useParams()
@@ -30,7 +31,10 @@ export const HomeNavbar = () => {
           <span className="text-xl font-bold">GitCode.dev</span>
         </Link>
       </div>
-      <ProfileLink {...user} />
+      <div className="flex items-center gap-4">
+        <NotificationBell />
+        <ProfileLink {...user} />
+      </div>
     </nav>
   )
 }

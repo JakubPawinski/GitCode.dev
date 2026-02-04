@@ -4,6 +4,7 @@ import {
   AUTH_PATTERNS,
   SOCIAL_PATTERNS,
   AI_PATTERNS,
+  SUBMISSION_PATTERNS,
 } from '@gitcode/contracts';
 import { NotificationService } from './providers/notification.service';
 import {
@@ -27,6 +28,8 @@ import {
   UserCreatedEnvelope,
   UserProfileUpdatedEnvelope,
   UserSoftDeletedEnvelope,
+  SubmissionCompletedEnvelope,
+  SubmissionFailedEnvelope,
 } from './events/envelopes';
 import { NotifyParams } from './interfaces';
 import { RABBIT_CONFIG } from '../app/config/rabbitmq.config';
@@ -338,6 +341,58 @@ export class NotificationConsumer {
         title: 'Submission Analyzed',
         message: 'Your submission has been analyzed.',
         attemptId: event.payload.attemptId,
+      },
+    };
+    await this.notificationService.notify(payload);
+  }
+
+  /*
+   * Handle submission completed events
+   */
+  @RabbitSubscribe({
+    exchange: RABBIT_CONFIG.EXCHANGE,
+    routingKey: SUBMISSION_PATTERNS.SUBMISSION_COMPLETED,
+    queue: `${RABBIT_CONFIG.QUEUE}_submission_completed`,
+    errorBehavior: MessageHandlerErrorBehavior.NACK,
+  })
+  public async handleSubmissionCompleted(
+    @RabbitPayload() event: SubmissionCompletedEnvelope,
+  ): Promise<void> {
+    // Create notification payload for user banned event
+    const payload: NotifyParams = {
+      userId: event.payload.userId,
+      type: NotificationType.SYSTEM,
+      kind: NotificationKind.SUBMISSION_COMPLETED,
+      severity: NotificationSeverity.INFO,
+      payload: {
+        title: 'Problem Solved',
+        message: `Congratulations! You have solved the problem.`,
+      },
+    };
+    await this.notificationService.notify(payload);
+  }
+
+  /*
+   * Handle submission failed events
+   */
+  @RabbitSubscribe({
+    exchange: RABBIT_CONFIG.EXCHANGE,
+    routingKey: SUBMISSION_PATTERNS.SUBMISSION_FAILED,
+    queue: `${RABBIT_CONFIG.QUEUE}_submission_failed`,
+    errorBehavior: MessageHandlerErrorBehavior.NACK,
+  })
+  public async handleSubmissionFailed(
+    @RabbitPayload() event: SubmissionFailedEnvelope,
+  ): Promise<void> {
+    // Create notification payload for user banned event
+    const payload: NotifyParams = {
+      userId: event.payload.userId,
+      type: NotificationType.SYSTEM,
+      kind: NotificationKind.SUBMISSION_FAILED,
+      severity: NotificationSeverity.INFO,
+      payload: {
+        title: 'Submission Failed',
+        message: `Your submission has failed for the following reason`,
       },
     };
     await this.notificationService.notify(payload);

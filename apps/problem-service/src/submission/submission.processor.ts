@@ -9,6 +9,7 @@ import { EventBus } from '@gitcode/messaging';
 import {
   SUBMISSION_PATTERNS,
   SubmissionCompletedEvent,
+  SubmissionFailedEvent,
 } from '@gitcode/contracts';
 @Processor('submissions')
 export class SubmissionProcessor extends WorkerHost {
@@ -142,6 +143,36 @@ export class SubmissionProcessor extends WorkerHost {
         );
         this.logger.log(
           `'submission-completed' event sent for submission ${submissionId}`,
+        );
+      }
+      
+      // If some tests failed, publish submission failed event
+      if (!isAllPassed) {
+        this.logger.log(`Attempt ${attemptId} failed some tests!`);
+        this.logger.log(`Sending 'submission-failed' event to user ${userId}`);
+
+        const problemDescription: string = await this.prisma.problem
+          .findUnique({
+            where: { id: problemId },
+            select: { description: true },
+          })
+          .then((problem) => problem?.description || '');
+
+        // Sending submission failed event
+        await this.eventBus.publish(
+          SUBMISSION_PATTERNS.SUBMISSION_FAILED,
+          new SubmissionFailedEvent(
+            userId,
+            submissionId,
+            code,
+            language,
+            problemId,
+            attemptId,
+            problemDescription,
+          ),
+        );
+        this.logger.log(
+          `'submission-failed' event sent for submission ${submissionId}`,
         );
       }
 
