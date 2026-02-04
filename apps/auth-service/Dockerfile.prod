@@ -1,0 +1,41 @@
+FROM node:20-alpine AS builder
+WORKDIR /workspace
+
+ARG AUTH_DATABASE_URL
+ENV AUTH_DATABASE_URL=${AUTH_DATABASE_URL}
+# Copy workspace files
+COPY package*.json ./
+COPY nx.json tsconfig.base.json ./
+COPY packages ./packages
+COPY apps/auth-service ./apps/auth-service
+
+# Install ALL dependencies (needed for build)
+RUN npm ci
+
+# Generate Prisma Client
+RUN npx nx run auth-service:prisma-generate
+
+# Build with NX
+RUN npx nx build auth-service --prod
+
+# Production stage
+FROM node:20-alpine AS runner
+WORKDIR /app
+ENV NODE_ENV=production
+
+# Copy built application
+COPY --from=builder /workspace/dist/apps/auth-service ./
+
+# Copy Prisma schema for migrations
+COPY --from=builder /workspace/apps/auth-service/prisma ./prisma
+
+# Install ONLY production dependencies
+COPY package*.json ./
+RUN npm ci --only=production && npm cache clean --force
+
+# Generate Prisma Client for production
+RUN npx prisma generate
+
+EXPOSE 4001
+
+CMD ["sh", "-c", "npx prisma migrate deploy && node main.js"]

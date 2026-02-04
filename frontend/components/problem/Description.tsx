@@ -4,7 +4,7 @@ import { Hint, HintProps } from './Hint'
 import { Topic } from './Topic'
 
 export interface DescriptionProps {
-  problemId: number
+  problemId: string
   title: string
   description: string
   examples: ExampleProps[]
