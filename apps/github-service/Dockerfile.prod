@@ -1,0 +1,29 @@
+FROM node:20-alpine AS builder
+WORKDIR /workspace
+
+ARG GITHUB_DATABASE_URL
+ENV GITHUB_DATABASE_URL=${GITHUB_DATABASE_URL}
+
+COPY package*.json ./
+COPY nx.json tsconfig.base.json ./
+COPY packages ./packages
+COPY apps/github-service ./apps/github-service
+
+RUN npm ci
+RUN npx nx run github-service:prisma-generate
+RUN npx nx build github-service --prod
+
+FROM node:20-alpine AS runner
+WORKDIR /app
+ENV NODE_ENV=production
+
+COPY --from=builder /workspace/dist/apps/github-service ./
+COPY --from=builder /workspace/apps/github-service/prisma ./prisma
+
+COPY package*.json ./
+RUN npm ci --only=production && npm cache clean --force
+RUN npx prisma generate
+
+EXPOSE 4004
+
+CMD ["sh", "-c", "npx prisma migrate deploy && node main.js"]
