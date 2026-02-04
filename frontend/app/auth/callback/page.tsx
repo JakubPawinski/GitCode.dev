@@ -24,11 +24,3 @@ function AuthCallback() {
 
   return <Loader />
 }
-
-export default function AuthPage() {
-  return (
-    <Suspense fallback={<Loader />}>
-      <AuthCallback />
-    </Suspense>
-  )
-}

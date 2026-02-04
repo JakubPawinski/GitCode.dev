@@ -1,6 +1,4 @@
-import { Controller } from '@nestjs/common';
-import { Logger } from '@nestjs/common';
-import { SubmissionService } from './submission.service';
+import { Controller, Logger } from '@nestjs/common';
 import {
   MessageHandlerErrorBehavior,
   RabbitPayload,
@@ -8,7 +6,11 @@ import {
 } from '@golevelup/nestjs-rabbitmq';
 import { RABBIT_CONFIG } from '../config/rabbitmq.config';
 import { AI_PATTERNS, GITHUB_PATTERNS } from '@gitcode/contracts';
-import { SubmissionAnalyzedEnvelope, SubmissionFileCommittedEnvelope } from '../events/envelopes';
+import {
+  SubmissionAnalyzedEnvelope,
+  SubmissionFileCommittedEnvelope,
+} from '../events/envelopes';
+import { SubmissionService } from './submission.service';
 
 @Controller()
 export class SubmissionConsumer {
@@ -16,10 +18,6 @@ export class SubmissionConsumer {
 
   constructor(private readonly submissionService: SubmissionService) {}
 
-  /**
-   * Handles the SubmissionAnalyzedEvent from the AI service.
-   * @param event The event payload containing analysis results.
-   */
   @RabbitSubscribe({
     exchange: RABBIT_CONFIG.EXCHANGE,
     routingKey: AI_PATTERNS.SUBMISSION_ANALYZED,
@@ -29,21 +27,28 @@ export class SubmissionConsumer {
   public async handleSubmissionAnalyzedEvent(
     @RabbitPayload() event: SubmissionAnalyzedEnvelope,
   ) {
-    this.logger.log(
-      `Received SubmissionAnalyzedEvent for submissionId: ${JSON.stringify(
-        event,
-        null,
-        2,
-      )}`,
-    );
+    const submissionId = event.payload.submissionId;
 
-    await this.submissionService.handleAiAnalysisResult(
-      event.payload.submissionId,
-      event.payload,
-    );
-    this.logger.log(
-      `Processed AI analysis for submissionId: ${event.payload.submissionId}`,
-    );
+    try {
+      this.logger.log(
+        `Received SubmissionAnalyzedEvent for submissionId: ${submissionId}`,
+      );
+
+      await this.submissionService.handleAiAnalysisResult(
+        submissionId,
+        event.payload,
+      );
+
+      this.logger.log(
+        `Successfully processed AI analysis for submissionId: ${submissionId}`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Error processing AI analysis for submissionId: ${submissionId}`,
+        error instanceof Error ? error.stack : String(error),
+      );
+      throw error;
+    }
   }
 
   @RabbitSubscribe({
@@ -55,20 +60,27 @@ export class SubmissionConsumer {
   public async handleSubmissionFileCommittedEvent(
     @RabbitPayload() event: SubmissionFileCommittedEnvelope,
   ) {
-    this.logger.log(
-      `Received SubmissionFileCommittedEvent for submissionId: ${JSON.stringify(
-        event,
-        null,
-        2,
-      )}`,
-    );
+    const submissionId = event.payload.submissionId;
 
-    await this.submissionService.handleFileCommitted(
-      event.payload.submissionId,
-      event.payload,
-    );
-    this.logger.log(
-      `Processed file committed for submissionId: ${event.payload.submissionId}`,
-    );
+    try {
+      this.logger.log(
+        `Received SubmissionFileCommittedEvent for submissionId: ${submissionId}`,
+      );
+
+      await this.submissionService.handleFileCommitted(
+        submissionId,
+        event.payload,
+      );
+
+      this.logger.log(
+        `Successfully processed file committed for submissionId: ${submissionId}`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Error processing file committed for submissionId: ${submissionId}`,
+        error instanceof Error ? error.stack : String(error),
+      );
+      throw error;
+    }
   }
 }

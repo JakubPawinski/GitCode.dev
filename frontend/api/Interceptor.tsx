@@ -8,24 +8,25 @@ import { useAuth } from '@/contexts/auth/AuthContext'
 import { usePathname, useRouter } from 'next/navigation'
 
 export const Interceptor = ({ children }: { children: React.ReactNode }) => {
-  const router = useRouter()
-  const { data: authData, setData } = useAuth()
   const pathname = usePathname()
+  const isLoginPage = pathname === '/login'
 
-  const isPublicPage = pathname === '/login' || pathname === '/auth/callback'
+  if (isLoginPage) return children
+
+  return <InterceptorInner>{children}</InterceptorInner>
+}
+
+const InterceptorInner = ({ children }: { children: React.ReactNode }) => {
+  const router = useRouter()
+
+  const { data: authData, setData } = useAuth()
 
   const { postMutation, data, error } = usePostRefreshToken<AuthContextProps>()
 
   useEffect(() => {
-    if (!authData) {
-      const isAuth = localStorage.getItem('is_authenticated')
-      if (isAuth) {
-        postMutation()
-      } else if (!isPublicPage) {
-        router.push('/login')
-      }
-    }
-  }, [])
+    if (authData?.accessToken) return
+    if (!authData) postMutation()
+  }, [authData])
 
   useEffect(() => {
     if (data && !authData) {
@@ -35,7 +36,6 @@ export const Interceptor = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     if (error) {
-      localStorage.removeItem('is_authenticated')
       router.push('/login')
     }
   }, [router, error])
@@ -74,7 +74,7 @@ export const Interceptor = ({ children }: { children: React.ReactNode }) => {
     }
   }, [data?.accessToken])
 
-  if (!isPublicPage && !authData?.accessToken) {
+  if (!authData?.accessToken) {
     return <Loader />
   }
   return children

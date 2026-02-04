@@ -11,6 +11,7 @@ import { Sort } from '@/components/problems/Sort'
 import { DifficultyType } from '@/consts/filters/difficulty'
 import { sortOrderType } from '@/consts/sort/sortOrder'
 import { useDebounce } from '@/hooks/debounce/use-debounce'
+import { ArrowDownUp, Funnel } from 'lucide-react'
 
 export interface ProblemsPageProps {
   problemId: number
@@ -27,6 +28,9 @@ export default function Home() {
   const [sortOrder, setSortOrder] = useState<sortOrderType | ''>('')
   const [query, setQuery] = useState<string>('')
   const [page, setPage] = useState<number>(1)
+
+  const [sortClicked, setSortClicked] = useState<boolean>(false)
+  const [filterClicked, setFilterClicked] = useState<boolean>(false)
 
   const [fetchedProblems, setFetchedProblems] = useState<ProblemsPageProps[]>(
     []
@@ -91,18 +95,43 @@ export default function Home() {
         <nav className="border-primary/40 from-primary/10 via-accent/5 to-primary/10 relative z-10 mx-auto mb-8 flex max-w-4xl items-center justify-center gap-4 rounded-2xl border bg-gradient-to-r p-4 shadow-2xl backdrop-blur-lg">
           <Search onQueryChange={setQuery} />
           <div className="border-accent/40 h-8 w-px border-l"></div>
-          <Sort
-            selectedSortOrder={sortOrder}
-            onSortOrderChange={setSortOrder}
-          />
+          <button
+            onClick={() => {
+              setSortClicked((previous: boolean) => !previous)
+              if (filterClicked) setFilterClicked(false)
+            }}
+            className="text-foreground hover:text-accent flex items-center gap-2 transition-all duration-300"
+          >
+            <ArrowDownUp size={20} />
+            <span className="font-semibold">Sort</span>
+          </button>
+          {sortClicked && (
+            <Sort
+              selectedSortOrder={sortOrder}
+              onSortOrderChange={setSortOrder}
+            />
+          )}
+
           <div className="border-accent/40 h-8 w-px border-l"></div>
-          <Filter
-            selectedDifficulty={difficulty}
-            selectedTopic={topic}
-            onDifficultyChange={setDifficulty}
-            onTopicChange={setTopic}
-            onReset={onFilterReset}
-          />
+          <button
+            onClick={() => {
+              setFilterClicked((previous: boolean) => !previous)
+              if (sortClicked) setSortClicked(false)
+            }}
+            className="text-foreground hover:text-accent flex items-center gap-2 transition-all duration-300"
+          >
+            <Funnel size={20} />
+            <span className="font-semibold">Filter</span>
+          </button>
+          {filterClicked && (
+            <Filter
+              selectedDifficulty={difficulty}
+              selectedTopic={topic}
+              onDifficultyChange={setDifficulty}
+              onTopicChange={setTopic}
+              onReset={onFilterReset}
+            />
+          )}
         </nav>
         <section className="custom-scrollbar border-primary/30 from-background/40 via-primary/5 to-accent/5 relative z-0 mx-auto max-w-5xl space-y-4 rounded-2xl border bg-gradient-to-b p-6 shadow-2xl backdrop-blur-md">
           {data &&

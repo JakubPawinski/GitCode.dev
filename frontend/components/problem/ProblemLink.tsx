@@ -39,14 +39,18 @@ export const ProblemLink = ({
     <Link
       prefetch
       href={`/problems/${problemSlug}`}
-      className="hover:bg-primary/20 flex items-center justify-between rounded-lg p-3 transition-all duration-300 hover:shadow-lg"
+      className="hover:bg-primary/20 flex h-16 items-center justify-between gap-4 rounded-lg p-3 transition-all duration-300 hover:shadow-lg"
     >
-      <div className="flex items-center gap-4">
-        <div className="text-foreground/60 w-8 text-center">{problemId}.</div>
-        <div className="text-foreground font-medium">{title}</div>
+      <div className="flex flex-1 items-center gap-4 overflow-hidden">
+        {problemId && (
+          <div className="text-foreground/60 w-8 flex-shrink-0 text-center">
+            {problemId}.
+          </div>
+        )}
+        <div className="text-foreground truncate font-medium">{title}</div>
       </div>
       <div
-        className={`w-20 rounded-full px-3 py-1 text-center text-sm font-semibold ${getDifficultyStyles()}`}
+        className={`w-20 flex-shrink-0 rounded-full px-3 py-1 text-center text-sm font-semibold ${getDifficultyStyles()}`}
       >
         {getDifficultyLabel()}
       </div>

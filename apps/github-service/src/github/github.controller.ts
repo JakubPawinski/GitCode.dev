@@ -1,4 +1,12 @@
-import { Controller, Post, Body, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  UseGuards,
+  Get,
+  HttpCode,
+  HttpStatus,
+} from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -24,6 +32,21 @@ export class GithubController {
     private readonly repositoryService: RepositoryService,
     private readonly commitService: CommitService,
   ) {}
+
+  @Get('repository')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Get user repository if exists' })
+  @ApiResponse({
+    status: 200,
+    type: RepositoryResponseDto,
+    description: 'Repository found',
+  })
+  @ApiResponse({ status: 204, description: 'Repository does not exist' })
+  async getRepository(
+    @User() user: AuthenticatedUser,
+  ): Promise<RepositoryResponseDto | void> {
+    return this.repositoryService.getRepository(user.id);
+  }
 
   @Post('repository')
   @ApiOperation({ summary: 'Create or get GitCode solutions repository' })

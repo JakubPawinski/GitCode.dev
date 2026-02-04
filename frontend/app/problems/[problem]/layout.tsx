@@ -17,9 +17,16 @@ import { ProblemLinkProps } from '@/components/problem/ProblemLink'
 import { useAuth } from '@/contexts/auth/AuthContext'
 import { useParams } from 'next/navigation'
 import { useOnSocket } from '@/hooks/socket/use-on-socket'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { socket } from '@/ws/socket'
 import { LeftProblemNavbar } from '@/components/navbar/LeftProblemNavbar'
+import { AiTutorAside } from '@/components/aside/AiTutorAside'
+import { useGetAiTutorHistory } from '@/hooks/api/use-get-ai-tutor-history'
+import {
+  AiSendMessageProvider,
+  MessageDataProps,
+} from '@/contexts/ai/AiSendMessageContext'
+import { AiTutorContextProvider } from '@/contexts/ai/AiTutorContext'
 
 export interface ProblemDataProps {
   id: string
@@ -49,6 +56,9 @@ export default function ProblemLayout({
 }: {
   children: React.ReactNode
 }) {
+  const [aiTutorOpen, setAiTutorOpen] = useState<boolean>(false)
+  const defaultLanguage = availableLanguages[0]
+
   const { data: authData } = useAuth()
 
   useEffect(() => {
@@ -66,9 +76,17 @@ export default function ProblemLayout({
     'submission_analyzed',
   ]
 
-  const { problem } = useParams()
+  const params = useParams()
+  const problem = params.problem as string
 
   const { messages } = useOnSocket({ rooms, socket })
+
+  // Debug
+  useEffect(() => {
+    if (messages?.submission_analyzed) {
+      console.log('AI Analysis event received:', messages.submission_analyzed)
+    }
+  }, [messages?.submission_analyzed])
 
   const {
     data: problemData,
@@ -76,10 +94,14 @@ export default function ProblemLayout({
     error: problemError,
   } = useGetProblem<ProblemDataProps>(problem as string)
 
+  const {
+    data: tutorData,
+    loading: tutorLoading,
+    error: tutorError,
+  } = useGetAiTutorHistory({ problem })
+
   const { postMutation, data, loading, error } =
     usePostSubmission<SubmissionDataProps>()
-
-  const defaultLanguage = availableLanguages[0]
 
   const { control, handleSubmit, watch } = useForm<EditorType>({
     resolver: zodResolver(editorSchema),
@@ -95,6 +117,7 @@ export default function ProblemLayout({
   })
 
   const selectedLanguage = watch('language')
+  const currentCode = watch('code')
 
   if (problemLoading) {
     return <Loader />
@@ -115,35 +138,61 @@ export default function ProblemLayout({
       },
     })
   }
+  const messageData: Partial<MessageDataProps> = {
+    code: currentCode,
+    problemSlug: problem as string,
+  }
+
   return (
-    <ProblemProvider problemData={problemData}>
-      <form className="text-foreground flex h-screen flex-col">
-        <PrimaryProblemNavbar
-          onSubmit={handleSubmit(onSubmit)}
-          submissionLoading={loading}
-          submissionError={error}
-        />
-        <section className="flex flex-grow gap-4 overflow-hidden p-4">
-          <div className="border-primary/20 flex w-3/5 flex-col rounded-lg border bg-transparent p-4">
-            <LeftProblemNavbar
-              testsPassed={messages?.attempt_update.passedTests}
-              totalTests={messages?.attempt_update.totalTests}
-              submissionId={data?.submissionId}
-            />
-            <div className="custom-scrollbar mt-4 overflow-y-auto">
-              {children}
-            </div>
+    <AiSendMessageProvider messageData={messageData}>
+      <AiTutorContextProvider
+        tutorData={
+          tutorData as {
+            messages: {
+              role: string
+              content: string
+            }[]
+          }
+        }
+        messageLoading={tutorLoading}
+        messageError={tutorError}
+      >
+        <ProblemProvider problemData={problemData}>
+          <div className="flex h-screen overflow-hidden">
+            <form className="text-foreground flex h-screen flex-1 flex-col">
+              <PrimaryProblemNavbar
+                onSubmit={handleSubmit(onSubmit)}
+                setAiTutorOpen={setAiTutorOpen}
+                submissionLoading={loading}
+                submissionError={error}
+              />
+              <section className="flex flex-grow gap-4 overflow-hidden p-4">
+                <div className="border-primary/20 flex min-w-0 flex-1 flex-col rounded-lg border bg-transparent p-4">
+                  <LeftProblemNavbar
+                    submissionId={data?.submissionId}
+                    submissionMessages={messages}
+                  />
+                  <div className="custom-scrollbar mt-4 overflow-y-auto">
+                    {children}
+                  </div>
+                </div>
+                <div className="flex min-w-0 flex-1 flex-col gap-4">
+                  <div className="h-3/5">
+                    <Editor
+                      control={control}
+                      selectedLanguage={selectedLanguage}
+                    />
+                  </div>
+                  <div className="border-primary/20 h-2/5 rounded-lg border bg-transparent">
+                    <TestCaseScreen testCases={testCases} />
+                  </div>
+                </div>
+              </section>
+            </form>
+            {aiTutorOpen && <AiTutorAside />}
           </div>
-          <div className="flex w-3/5 flex-col gap-4">
-            <div className="h-3/5">
-              <Editor control={control} selectedLanguage={selectedLanguage} />
-            </div>
-            <div className="border-primary/20 h-2/5 rounded-lg border bg-transparent">
-              <TestCaseScreen testCases={testCases} />
-            </div>
-          </div>
-        </section>
-      </form>
-    </ProblemProvider>
+        </ProblemProvider>
+      </AiTutorContextProvider>
+    </AiSendMessageProvider>
   )
 }

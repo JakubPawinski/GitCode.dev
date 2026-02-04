@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     LLM_PROVIDER: Literal["openai", "gemini"] = "gemini"
     OPENAI_API_KEY: str | None = None
     GEMINI_API_KEY: str | None = None
-    GEMINI_MODEL_NAME: str = "gemini-3-flash-preview"
+    GEMINI_MODEL_NAME: str = "gemini-2.5-flash"
     OPENAI_MODEL_NAME: str = "gpt-4.1-nano"
 
     AI_DB_USER: str

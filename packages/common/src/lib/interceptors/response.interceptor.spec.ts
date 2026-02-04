@@ -19,6 +19,7 @@ describe('ResponseInterceptor', () => {
     const mockRequest = { url: '/test' };
     const mockResponse = { statusCode: 200 };
     const mockContext = {
+      getType: () => 'http',
       switchToHttp: () => ({
         getRequest: () => mockRequest,
         getResponse: () => mockResponse,
@@ -44,7 +45,7 @@ describe('ResponseInterceptor', () => {
         timestamp: expect.any(String),
         path: '/test',
       } as ApiResponseDto<any>);
-      expect(result.timestamp).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/); // ISO string format
+      expect(result.timestamp).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/);
       done();
     });
   });
@@ -53,6 +54,7 @@ describe('ResponseInterceptor', () => {
     const mockRequest = { url: '/api/users' };
     const mockResponse = { statusCode: 201 };
     const mockContext = {
+      getType: () => 'http',
       switchToHttp: () => ({
         getRequest: () => mockRequest,
         getResponse: () => mockResponse,
@@ -82,6 +84,7 @@ describe('ResponseInterceptor', () => {
     const mockRequest = { url: '/health' };
     const mockResponse = { statusCode: 200 };
     const mockContext = {
+      getType: () => 'http',
       switchToHttp: () => ({
         getRequest: () => mockRequest,
         getResponse: () => mockResponse,

@@ -2,16 +2,9 @@ import { Example, ExampleProps } from './Example'
 import { Constraint } from './Constraint'
 import { Hint, HintProps } from './Hint'
 import { Topic } from './Topic'
+import { ProblemDataProps } from '@/app/problems/[problem]/layout'
 
-export interface DescriptionProps {
-  problemId: string
-  title: string
-  description: string
-  examples: ExampleProps[]
-  constraints: string[]
-  topics: string[]
-  hints: HintProps[]
-}
+export type DescriptionProps = Partial<ProblemDataProps>
 
 export const Description = ({
   problemId,
