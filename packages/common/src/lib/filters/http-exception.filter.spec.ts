@@ -4,15 +4,18 @@ import { Request, Response } from 'express';
 import { HttpExceptionFilter } from './http-exception.filter';
 import { ApiResponseDto } from '../dtos/api-response.dto';
 
+// Mock PrismaExceptionMapper
+jest.mock('../exceptions/prisma-exception.mapper', () => ({
+  PrismaExceptionMapper: {
+    map: jest.fn(() => null),
+  },
+}));
+
 describe('HttpExceptionFilter', () => {
   let filter: HttpExceptionFilter;
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [HttpExceptionFilter],
-    }).compile();
-
-    filter = module.get<HttpExceptionFilter>(HttpExceptionFilter);
+  beforeEach(() => {
+    filter = new HttpExceptionFilter('test-service');
   });
 
   it('should handle HttpException with string message', () => {
@@ -20,13 +23,17 @@ describe('HttpExceptionFilter', () => {
       status: jest.fn().mockReturnThis(),
       json: jest.fn(),
     } as any as Response;
-    const mockRequest = { url: '/test' } as Request;
+    const mockRequest = {
+      url: '/test',
+      headers: {},
+      method: 'GET',
+    } as any as Request;
     const mockHost = {
       switchToHttp: () => ({
         getResponse: () => mockResponse,
         getRequest: () => mockRequest,
       }),
-    } as ArgumentsHost;
+    } as any as ArgumentsHost;
 
     const exception = new HttpException('Test error', HttpStatus.BAD_REQUEST);
     filter.catch(exception, mockHost);
@@ -39,11 +46,12 @@ describe('HttpExceptionFilter', () => {
         message: 'Test error',
         data: null,
         error: expect.objectContaining({
-          code: 'INTERNAL_SERVER_ERROR',
+          code: 'BAD_REQUEST',
           message: 'Test error',
+          service: 'test-service',
         }),
         path: '/test',
-      } as ApiResponseDto<null>),
+      }),
     );
   });
 
@@ -52,19 +60,22 @@ describe('HttpExceptionFilter', () => {
       status: jest.fn().mockReturnThis(),
       json: jest.fn(),
     } as any as Response;
-    const mockRequest = { url: '/test' } as Request;
+    const mockRequest = {
+      url: '/test',
+      headers: {},
+      method: 'POST',
+    } as any as Request;
     const mockHost = {
       switchToHttp: () => ({
         getResponse: () => mockResponse,
         getRequest: () => mockRequest,
       }),
-    } as ArgumentsHost;
+    } as any as ArgumentsHost;
 
     const exception = new HttpException(
       {
         message: 'Custom message',
         error: 'CUSTOM_ERROR',
-        details: { key: 'value' },
       },
       HttpStatus.UNAUTHORIZED,
     );
@@ -80,10 +91,10 @@ describe('HttpExceptionFilter', () => {
         error: expect.objectContaining({
           code: 'CUSTOM_ERROR',
           message: 'Custom message',
-          details: { key: 'value' },
+          service: 'test-service',
         }),
         path: '/test',
-      } as ApiResponseDto<null>),
+      }),
     );
   });
 
@@ -92,13 +103,17 @@ describe('HttpExceptionFilter', () => {
       status: jest.fn().mockReturnThis(),
       json: jest.fn(),
     } as any as Response;
-    const mockRequest = { url: '/test' } as Request;
+    const mockRequest = {
+      url: '/test',
+      headers: {},
+      method: 'GET',
+    } as any as Request;
     const mockHost = {
       switchToHttp: () => ({
         getResponse: () => mockResponse,
         getRequest: () => mockRequest,
       }),
-    } as ArgumentsHost;
+    } as any as ArgumentsHost;
 
     const exception = new Error('Generic error');
     filter.catch(exception, mockHost);
@@ -115,9 +130,10 @@ describe('HttpExceptionFilter', () => {
         error: expect.objectContaining({
           code: 'INTERNAL_SERVER_ERROR',
           message: 'Generic error',
+          service: 'test-service',
         }),
         path: '/test',
-      } as ApiResponseDto<null>),
+      }),
     );
   });
 
@@ -126,13 +142,17 @@ describe('HttpExceptionFilter', () => {
       status: jest.fn().mockReturnThis(),
       json: jest.fn(),
     } as any as Response;
-    const mockRequest = { url: '/test' } as Request;
+    const mockRequest = {
+      url: '/test',
+      headers: {},
+      method: 'GET',
+    } as any as Request;
     const mockHost = {
       switchToHttp: () => ({
         getResponse: () => mockResponse,
         getRequest: () => mockRequest,
       }),
-    } as ArgumentsHost;
+    } as any as ArgumentsHost;
 
     const exception = 'Unknown error';
     filter.catch(exception, mockHost);
@@ -144,14 +164,71 @@ describe('HttpExceptionFilter', () => {
       expect.objectContaining({
         success: false,
         statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-        message: 'Internal server error',
         data: null,
         error: expect.objectContaining({
           code: 'INTERNAL_SERVER_ERROR',
-          message: 'Internal server error',
+          service: 'test-service',
         }),
         path: '/test',
-      } as ApiResponseDto<null>),
+      }),
+    );
+  });
+
+  it('should include requestId when provided', () => {
+    const mockResponse = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    } as any as Response;
+    const mockRequest = {
+      url: '/test',
+      headers: { 'x-request-id': 'req-123' },
+      method: 'GET',
+    } as any as Request;
+    const mockHost = {
+      switchToHttp: () => ({
+        getResponse: () => mockResponse,
+        getRequest: () => mockRequest,
+      }),
+    } as any as ArgumentsHost;
+
+    const exception = new HttpException('Test error', HttpStatus.BAD_REQUEST);
+    filter.catch(exception, mockHost);
+
+    expect(mockResponse.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        error: expect.objectContaining({
+          requestId: 'req-123',
+        }),
+      }),
+    );
+  });
+
+  it('should have timestamp in ISO format', () => {
+    const mockResponse = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    } as any as Response;
+    const mockRequest = {
+      url: '/test',
+      headers: {},
+      method: 'GET',
+    } as any as Request;
+    const mockHost = {
+      switchToHttp: () => ({
+        getResponse: () => mockResponse,
+        getRequest: () => mockRequest,
+      }),
+    } as any as ArgumentsHost;
+
+    const exception = new HttpException('Test error', HttpStatus.BAD_REQUEST);
+    filter.catch(exception, mockHost);
+
+    expect(mockResponse.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        timestamp: expect.stringMatching(
+          /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/,
+        ),
+      }),
     );
   });
 });

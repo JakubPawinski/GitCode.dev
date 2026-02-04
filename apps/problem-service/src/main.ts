@@ -14,7 +14,7 @@ async function bootstrap() {
   app.useGlobalInterceptors(new ResponseInterceptor());
 
   // Global exception filter for error formatting
-  app.useGlobalFilters(new HttpExceptionFilter());
+  app.useGlobalFilters(new HttpExceptionFilter('problem-service'));
 
   const config = new DocumentBuilder()
     .setTitle('GitCode.dev problem-service')

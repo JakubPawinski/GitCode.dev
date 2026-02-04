@@ -19,6 +19,8 @@ export class ApiResponseDto<T> implements ApiResponse<T> {
     code: string;
     message: string;
     details?: any;
+    service?: string;
+    requestId?: string;
   };
 
   @ApiProperty({ example: '2025-11-02T14:30:45.123Z' })
