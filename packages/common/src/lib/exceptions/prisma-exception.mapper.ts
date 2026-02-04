@@ -1,4 +1,3 @@
-import { Prisma } from '@prisma/client';
 import {
   DatabaseException,
   RecordNotFoundException,
@@ -6,41 +5,47 @@ import {
   ForeignKeyConstraintException,
   DatabaseConnectionException,
   DatabaseTimeoutException,
-} from './prisma.exception';
+} from './database.exception';
 import { BaseAppException } from './base.exception';
+
+/**
+ * Interface for Prisma-like errors (duck typing)
+ */
+interface PrismaKnownRequestError {
+  code: string;
+  meta?: Record<string, unknown>;
+  name: string;
+}
 
 /**
  * Maps Prisma errors to application-specific exceptions.
  */
 export class PrismaExceptionMapper {
-  /**
-   * Mapping of Prisma error codes to exception constructors
-   * */
   private static readonly ERROR_CODE_MAP: Record<
     string,
-    (e: any) => BaseAppException
+    (e: PrismaKnownRequestError) => BaseAppException
   > = {
     P2002: (e) => {
       const target = e.meta?.target;
       const field = Array.isArray(target)
         ? target.join(', ')
-        : target || 'unknown';
+        : String(target || 'unknown');
       return new UniqueConstraintException(field);
     },
     P2003: (e) => {
-      const field = e.meta?.field_name || 'unknown';
+      const field = String(e.meta?.field_name || 'unknown');
       return new ForeignKeyConstraintException(field);
     },
     P2001: (e) => {
-      const model = e.meta?.modelName || 'Record';
+      const model = String(e.meta?.modelName || 'Record');
       return new RecordNotFoundException(model);
     },
     P2025: (e) => {
-      const cause = e.meta?.cause || 'Record not found';
+      const cause = String(e.meta?.cause || 'Record not found');
       return new RecordNotFoundException(cause);
     },
     P2012: (e) => {
-      const field = e.meta?.path || 'unknown';
+      const field = String(e.meta?.path || 'unknown');
       return new DatabaseException(`Missing required field: ${field}`, [
         { code: 'REQUIRED_FIELD', field },
       ]);
@@ -50,7 +55,7 @@ export class PrismaExceptionMapper {
     P1008: () => new DatabaseTimeoutException(),
     P2024: () => new DatabaseTimeoutException('Connection pool timeout'),
     P2006: (e) => {
-      const field = e.meta?.model_name || 'unknown';
+      const field = String(e.meta?.model_name || 'unknown');
       return new DatabaseException(`Invalid value for field: ${field}`, [
         { code: 'INVALID_VALUE', field },
       ]);
@@ -62,48 +67,57 @@ export class PrismaExceptionMapper {
    * Returns null if the error is not a recognized Prisma error.
    */
   static map(error: unknown): BaseAppException | null {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      const mapper = this.ERROR_CODE_MAP[error.code];
+    if (!this.isPrismaError(error)) {
+      return null;
+    }
+
+    const prismaError = error as PrismaKnownRequestError;
+
+    // Handle known request errors (P-codes)
+    if (prismaError.code?.startsWith('P')) {
+      const mapper = this.ERROR_CODE_MAP[prismaError.code];
       if (mapper) {
-        return mapper(error);
+        return mapper(prismaError);
       }
-      return new DatabaseException(`Database error: ${error.code}`, [
-        { code: error.code, meta: error.meta as Record<string, any> },
+      return new DatabaseException(`Database error: ${prismaError.code}`, [
+        {
+          code: prismaError.code,
+          meta: prismaError.meta as Record<string, any>,
+        },
       ]);
     }
 
-    if (error instanceof Prisma.PrismaClientUnknownRequestError) {
-      return new DatabaseException('Unknown database error occurred');
+    // Handle other Prisma errors by name
+    switch (prismaError.name) {
+      case 'PrismaClientUnknownRequestError':
+        return new DatabaseException('Unknown database error occurred');
+      case 'PrismaClientValidationError':
+        return new DatabaseException('Database validation error');
+      case 'PrismaClientInitializationError':
+        return new DatabaseConnectionException();
+      case 'PrismaClientRustPanicError':
+        return new DatabaseException('Critical database error', undefined);
+      default:
+        return null;
     }
-
-    if (error instanceof Prisma.PrismaClientValidationError) {
-      const message = error.message;
-      return new DatabaseException(
-        `Validation error: ${message.split('\n').pop()}`,
-      );
-    }
-
-    if (error instanceof Prisma.PrismaClientInitializationError) {
-      return new DatabaseConnectionException();
-    }
-
-    if (error instanceof Prisma.PrismaClientRustPanicError) {
-      return new DatabaseException('Critical database error', undefined);
-    }
-
-    return null;
   }
 
   /**
-   * Checks if the given error is a Prisma error.
+   * Checks if the given error is a Prisma error using duck typing.
    */
   static isPrismaError(error: unknown): boolean {
+    if (!error || typeof error !== 'object') {
+      return false;
+    }
+
+    const err = error as { name?: string };
+
     return (
-      error instanceof Prisma.PrismaClientKnownRequestError ||
-      error instanceof Prisma.PrismaClientUnknownRequestError ||
-      error instanceof Prisma.PrismaClientValidationError ||
-      error instanceof Prisma.PrismaClientInitializationError ||
-      error instanceof Prisma.PrismaClientRustPanicError
+      err.name === 'PrismaClientKnownRequestError' ||
+      err.name === 'PrismaClientUnknownRequestError' ||
+      err.name === 'PrismaClientValidationError' ||
+      err.name === 'PrismaClientInitializationError' ||
+      err.name === 'PrismaClientRustPanicError'
     );
   }
 }

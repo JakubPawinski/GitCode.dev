@@ -5,6 +5,7 @@ import {
   HttpException,
   HttpStatus,
   Logger,
+  Optional,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { ApiResponseDto } from '../dtos/api-response.dto';
@@ -16,7 +17,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger(HttpExceptionFilter.name);
   private readonly serviceName: string;
 
-  constructor(serviceName?: string) {
+  constructor(@Optional() serviceName?: string) {
     this.serviceName = serviceName || process.env.SERVICE_NAME || 'unknown';
   }
 
