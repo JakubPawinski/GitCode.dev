@@ -22,6 +22,7 @@ import {
   ApiBearerAuth,
   ApiExtraModels,
   ApiOperation,
+  ApiParam,
   ApiResponse,
   ApiTags,
   getSchemaPath,
@@ -112,6 +113,20 @@ export class NotificationController {
     @User() user: AuthenticatedUser,
   ): Promise<GetNotificationPreferencesDto> {
     return await this.notificationService.getUserPreferences(user.id);
+  }
+
+  @Post('command/test-notification/:userId')
+  @ApiParam({
+    name: 'userId',
+    description: 'User ID',
+    type: 'string',
+    format: 'uuid',
+    example: '550e8400-e29b-41d4-a716-446655440000',
+  })
+  public async sendTestNotification(
+    @Param('userId', ParseUUIDPipe) userId: UUID,
+  ) {
+    return await this.notificationService.sendCommandNotification(userId);
   }
 
   /*
@@ -210,7 +225,7 @@ export class NotificationController {
       paginationQueryDto,
     );
   }
-  
+
   /*
    * Endpoint to get unread notifications for the user
    */

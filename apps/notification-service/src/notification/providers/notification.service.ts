@@ -18,6 +18,11 @@ import type { NotificationPayload } from '../types/index';
 import { NotifyParams } from '../interfaces';
 import { PaginationQueryDto } from '@gitcode/common';
 import { DEFAULT_NOTIFICATION_PREFERENCES } from '../../app/config/default-preferences.const';
+import { EventBus } from '@gitcode/messaging';
+import {
+  NOTIFICATION_PATTERNS,
+  SendNotificationCommand,
+} from '@gitcode/contracts';
 
 @Injectable()
 export class NotificationService implements OnModuleInit {
@@ -29,6 +34,7 @@ export class NotificationService implements OnModuleInit {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly realtimeService: RealtimeService,
+    private readonly eventBus: EventBus,
   ) {}
 
   /*
@@ -529,5 +535,16 @@ export class NotificationService implements OnModuleInit {
       updatedAt: notification.updatedAt,
       isRead: notification.isRead,
     };
+  }
+
+  // TODO - remove this method, it's only for testing purposes
+  public sendCommandNotification(userId: UUID) {
+    this.logger.log(`Sending command notification to user ${userId}`);
+    this.eventBus.publish(
+      NOTIFICATION_PATTERNS.SEND_NOTIFICATION_CMD,
+      new SendNotificationCommand(userId, 'SYSTEM', 'WELCOME', 'INFO', {
+        message: 'Welcome to the Notification Service!',
+      }),
+    );
   }
 }
