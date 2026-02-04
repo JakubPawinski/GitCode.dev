@@ -9,7 +9,8 @@ import { UserImage } from '@/components/user/UserImage'
 import { usePostLogout } from '@/hooks/auth/use-post-logout'
 import { Loader } from '../loading/Loader'
 import { Error } from '../error/Error'
-
+import { api } from '@/api/axios'
+import { useAuth } from '@/contexts/auth/AuthContext'
 type UserMenuProps = {
   user: UserProps
 }
@@ -18,13 +19,14 @@ export const UserMenu = ({ user }: UserMenuProps) => {
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement | null>(null)
   const router = useRouter()
+  const { setData } = useAuth()
 
   const profileHref = useMemo(
     () => `/profile/${user.username}`,
     [user.username]
   )
 
-  const { postMutation, loading, error } = usePostLogout()
+  const { postMutation, data, loading, error } = usePostLogout()
 
   useEffect(() => {
     if (!open) return
@@ -58,9 +60,14 @@ export const UserMenu = ({ user }: UserMenuProps) => {
     return <Error {...error} />
   }
 
-  const logout = () => {
-    postMutation()
-    router.push('/login')
+  const logout = async () => {
+    postMutation().then(() => {
+      setData(null)
+      delete api.defaults.headers.common.Authorization
+      setOpen(false)
+      router.replace('/login')
+      router.refresh()
+    })
   }
 
   return (
@@ -105,7 +112,7 @@ export const UserMenu = ({ user }: UserMenuProps) => {
 
             <button
               role="menuitem"
-              type="submit"
+              type="button"
               onClick={logout}
               className="hover:bg-destructive/10 text-foreground flex w-full cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm transition"
             >

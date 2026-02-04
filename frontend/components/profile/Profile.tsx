@@ -4,6 +4,9 @@ import { UserImage } from '../user/UserImage'
 import { useGetUserStats } from '@/hooks/api/use-get-user-stats'
 import { Error } from '../error/Error'
 import { Loader } from '../loading/Loader'
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+import { usePostCreateRepository } from '@/hooks/api/use-post-create-repository'
 
 interface UserStatsProps {
   activityHeatmap: any[]
@@ -43,11 +46,26 @@ interface UserStatsProps {
 
 export const Profile = () => {
   const { data } = useAuth()
+
   if (!data) return null
 
   const { user } = data
 
+  const pathname = usePathname()
+
   const { data: statsData, error, loading } = useGetUserStats<UserStatsProps>()
+
+  const {
+    postMutation,
+    data: repositoryData,
+    error: repositoryError,
+    loading: repositoryLoading,
+  } = usePostCreateRepository()
+
+  const repositoryErrorMessage =
+    repositoryError?.response?.data?.message ??
+    repositoryError?.message ??
+    (typeof repositoryError === 'string' ? repositoryError : null)
 
   if (error) return <Error {...error} />
   if (loading) return <Loader />
@@ -178,13 +196,96 @@ export const Profile = () => {
             </div>
           </div>
         </div>
-        <button className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-10 items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50">
+        <Link
+          href={`${pathname}/edit`}
+          className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-10 items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50"
+        >
           Edit Profile
-        </button>
+        </Link>
       </section>
 
       <div className="grid gap-8 md:grid-cols-3">
         <div className="col-span-1 space-y-8">
+          <div className="border-primary/20 bg-primary/5 rounded-lg border p-6 shadow-sm">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h3 className="text-lg font-semibold">Repository</h3>
+                <p className="text-foreground/60 mt-1 text-sm">
+                  Connect your progress with a GitHub repo.
+                </p>
+              </div>
+            </div>
+
+            {repositoryLoading && (
+              <div className="mt-4 space-y-2">
+                <div className="bg-primary/10 h-2 w-full overflow-hidden rounded-full">
+                  <div className="bg-primary h-full w-full animate-pulse" />
+                </div>
+                <p className="text-foreground/60 text-xs">
+                  Creating repository…
+                </p>
+              </div>
+            )}
+
+            {!!repositoryErrorMessage && (
+              <p className="mt-4 text-sm text-red-400">
+                {repositoryErrorMessage}
+              </p>
+            )}
+
+            {repositoryData ? (
+              <div className="mt-4 space-y-3">
+                <div className="text-sm">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-foreground/60">Name</span>
+                    <span className="truncate font-medium">
+                      {String(
+                        (repositoryData as any)?.name ??
+                          (repositoryData as any)?.full_name ??
+                          (repositoryData as any)?.fullName ??
+                          'Repository'
+                      )}
+                    </span>
+                  </div>
+                </div>
+
+                {(repositoryData as any)?.html_url ||
+                (repositoryData as any)?.htmlUrl ||
+                (repositoryData as any)?.url ? (
+                  <Link
+                    href={String(
+                      (repositoryData as any)?.html_url ??
+                        (repositoryData as any)?.htmlUrl ??
+                        (repositoryData as any)?.url
+                    )}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-primary hover:text-primary/90 inline-flex items-center text-sm font-medium"
+                  >
+                    Open repository
+                  </Link>
+                ) : null}
+
+                <div className="text-foreground/60 rounded-md bg-black/20 p-3 text-xs">
+                  <pre className="break-words whitespace-pre-wrap">
+                    {JSON.stringify(repositoryData, null, 2)}
+                  </pre>
+                </div>
+              </div>
+            ) : (
+              <div className="mt-5">
+                <button
+                  type="button"
+                  onClick={() => postMutation({ payload: {} })}
+                  disabled={repositoryLoading}
+                  className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-10 w-full items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors disabled:opacity-60"
+                >
+                  {repositoryLoading ? 'Creating…' : 'Create repository'}
+                </button>
+              </div>
+            )}
+          </div>
+
           <div className="border-primary/20 bg-primary/5 rounded-lg border p-6 shadow-sm">
             <h3 className="mb-4 text-lg font-semibold">Solved Problems</h3>
             <div className="space-y-4">

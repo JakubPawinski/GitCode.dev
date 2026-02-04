@@ -1,17 +1,13 @@
 import { api } from '@/api/axios'
 import { UserProps } from '@/components/user/User'
 import { useCallback, useEffect, useState } from 'react'
-export const usePatchUser = <T>({
-  payload,
-}: {
-  payload: Partial<UserProps>
-}) => {
+export const usePatchUser = <T>() => {
   const [data, setData] = useState<T>()
   const [loading, setLoading] = useState<boolean>(false)
   const [error, setError] = useState<any>()
   const controller = new AbortController()
 
-  const patchMutation = useCallback(() => {
+  const patchMutation = useCallback(({ payload }: any) => {
     setLoading(true)
     setError(null)
     api
@@ -27,11 +23,5 @@ export const usePatchUser = <T>({
       .finally(() => setLoading(false))
   }, [])
 
-  useEffect(() => {
-    if (!data) patchMutation()
-
-    return () => controller.abort()
-  }, [])
-
-  return { data, loading, error }
+  return { patchMutation, data, loading, error }
 }

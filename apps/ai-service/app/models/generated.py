@@ -16,6 +16,7 @@ class AIPATTERNS(StrEnum):
     ai_analysis_failed = "ai.analysis.failed"
     ai_readme_generated = "ai.readme.generated"
     ai_readme_generate = "ai.readme.generate"
+    ai_readme_generation_failed = "ai.readme.generation.failed"
 
 
 class AUTHPATTERNS(StrEnum):
@@ -187,6 +188,14 @@ class ReadmeGeneratedEvent(BaseModel):
         extra="forbid",
     )
     readmeContent: str
+    userId: str
+
+
+class ReadmeGenerationFailedEvent(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+    reason: str
     userId: str
 
 

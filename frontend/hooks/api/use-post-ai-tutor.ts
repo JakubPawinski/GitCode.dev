@@ -48,8 +48,6 @@ export const usePostAiTutor = () => {
 
           buffer += decoder.decode(value, { stream: true })
 
-          // SSE typically arrives as lines: "data: {...}" separated by newlines.
-          // We process full lines and keep the last partial line in `buffer`.
           const lines = buffer.split(/\r?\n/)
           buffer = lines.pop() ?? ''
 
@@ -65,7 +63,6 @@ export const usePostAiTutor = () => {
             if (!event) continue
 
             if (event.done) {
-              // Stop early once the server signals completion.
               buffer = ''
               break
             }
@@ -80,7 +77,6 @@ export const usePostAiTutor = () => {
           }
         }
 
-        // Flush any remaining buffer that might contain a final JSON payload without newline
         const finalPayload = buffer.trim().startsWith('data:')
           ? buffer.trim().slice(5).trimStart()
           : buffer

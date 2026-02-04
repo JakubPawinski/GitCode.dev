@@ -15,7 +15,7 @@ import { Loader } from '@/components/loading/Loader'
 import { Error } from '@/components/error/Error'
 import { ProblemLinkProps } from '@/components/problem/ProblemLink'
 import { useAuth } from '@/contexts/auth/AuthContext'
-import { useParams, usePathname } from 'next/navigation'
+import { useParams } from 'next/navigation'
 import { useOnSocket } from '@/hooks/socket/use-on-socket'
 import { useEffect, useState } from 'react'
 import { socket } from '@/ws/socket'
@@ -26,10 +26,7 @@ import {
   AiSendMessageProvider,
   MessageDataProps,
 } from '@/contexts/ai/AiSendMessageContext'
-import {
-  AiTutorContextProps,
-  AiTutorContextProvider,
-} from '@/contexts/ai/AiTutorContext'
+import { AiTutorContextProvider } from '@/contexts/ai/AiTutorContext'
 
 export interface ProblemDataProps {
   id: string
@@ -79,7 +76,8 @@ export default function ProblemLayout({
     'submission_analyzed',
   ]
 
-  const { problem } = useParams()
+  const params = useParams()
+  const problem = params.problem as string
 
   const { messages } = useOnSocket({ rooms, socket })
 
@@ -93,7 +91,7 @@ export default function ProblemLayout({
     data: tutorData,
     loading: tutorLoading,
     error: tutorError,
-  } = useGetAiTutorHistory(problem as string)
+  } = useGetAiTutorHistory({ problem })
 
   const { postMutation, data, loading, error } =
     usePostSubmission<SubmissionDataProps>()

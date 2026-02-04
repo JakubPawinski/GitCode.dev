@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { NotificationService } from './providers/notification.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { RealtimeService } from '../realtime/realtime.service';
+import { EventBus } from '@gitcode/messaging';
 
 describe('NotificationService', () => {
   let service: NotificationService;
@@ -30,6 +31,10 @@ describe('NotificationService', () => {
       broadcastEvent: jest.fn(),
     };
 
+    const mockEventBus = {
+      publish: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         NotificationService,
@@ -40,6 +45,10 @@ describe('NotificationService', () => {
         {
           provide: RealtimeService,
           useValue: mockRealtimeService,
+        },
+        {
+          provide: EventBus,
+          useValue: mockEventBus,
         },
       ],
     }).compile();

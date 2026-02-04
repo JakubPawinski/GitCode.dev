@@ -1,12 +1,13 @@
 import { Brain, SendHorizonal } from 'lucide-react'
-import { usePostAiTutor } from '@/hooks/api/use.post-ai-tutor'
+import { usePostAiTutor } from '@/hooks/api/use-post-ai-tutor'
 import { Controller, useForm } from 'react-hook-form'
-import { ChatSchemaType } from '@/config/chat-config'
+import { ChatSchema, ChatSchemaType } from '@/config/chat-config'
 import { useAiSendMessageContext } from '@/contexts/ai/AiSendMessageContext'
 import { useAiTutorContext } from '@/contexts/ai/AiTutorContext'
 import { Loader } from '../loading/Loader'
 import { Error } from '../error/Error'
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { zodResolver } from '@hookform/resolvers/zod'
 
 type UiChatMessage = {
   id: string
@@ -28,6 +29,7 @@ export const AiTutorAside = () => {
   const { postMutation, data, loading, error } = usePostAiTutor()
 
   const { control, handleSubmit, reset } = useForm<ChatSchemaType>({
+    resolver: zodResolver(ChatSchema),
     defaultValues: {
       message: '',
     },
