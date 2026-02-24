@@ -3,6 +3,8 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { useAuth } from '@/contexts/auth/AuthContext'
+import { ProfileLink } from './ProfileLink'
+import { NotificationBell } from '../notification/NotificationBell'
 import { UserMenu } from './UserMenu'
 
 export const HomeNavbar = () => {
@@ -29,6 +31,10 @@ export const HomeNavbar = () => {
           />
           <span className="text-xl font-bold">GitCode.dev</span>
         </Link>
+      </div>
+      <div className="flex items-center gap-4">
+        <NotificationBell />
+        <ProfileLink {...user} />
       </div>
       <UserMenu user={user} />
     </nav>
