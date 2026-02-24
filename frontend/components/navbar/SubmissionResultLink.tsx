@@ -1,32 +1,53 @@
 import { Check, X } from 'lucide-react'
 import Link from 'next/link'
-export const SubmissionResultLink = ({
-  submissionId,
-  testsPassed,
-  totalTests,
-  basePath,
-}: {
-  submissionId: string
-  testsPassed: number
-  totalTests: number
+import { Loader } from '../loading/Loader'
+interface SubmissionResultLinkProps {
   basePath: string
-}) => {
-  const allPassed = totalTests > 0 && testsPassed === totalTests
+  status: string
+  submissionId: string
+}
 
-  const resultText = allPassed ? 'Accepted' : 'Wrong Answer'
-  const resultColor = allPassed ? 'text-emerald-400' : 'text-red-400'
+export const SubmissionResultLink = ({
+  status,
+  submissionId,
+  basePath,
+}: SubmissionResultLinkProps) => {
+  const normalizedStatus = status?.toLowerCase()
+  const isRunning = normalizedStatus === 'running'
+  const isPassed =
+    normalizedStatus === 'success' || normalizedStatus === 'passed'
+  const isFailed = normalizedStatus === 'failed'
+
+  const label = isRunning
+    ? 'Running'
+    : isPassed
+      ? 'Passed'
+      : isFailed
+        ? 'Failed'
+        : status
+  const accentClass = isRunning
+    ? 'text-primary'
+    : isPassed
+      ? 'text-emerald-400'
+      : isFailed
+        ? 'text-red-400'
+        : 'text-foreground/70'
 
   return (
     <Link
       href={`${basePath}/submissions/${submissionId}`}
-      className={
-        'text-foreground/70 hover:text-foreground flex items-center gap-2 rounded-md px-4 py-2 transition-all duration-300'
-      }
+      className={`hover:text-foreground flex items-center gap-2 rounded-md px-4 py-2 transition-all duration-300 ${accentClass}`}
     >
-      <div className={`flex items-center gap-1.5 font-semibold ${resultColor}`}>
-        {allPassed ? <Check size={18} /> : <X size={18} />}
-        <span>{resultText}</span>
-      </div>
+      {isRunning ? (
+        <div className="grid place-items-center">
+          <Loader size={18} center={false} />
+        </div>
+      ) : isPassed ? (
+        <Check size={18} />
+      ) : isFailed ? (
+        <X size={18} />
+      ) : null}
+      <span className="text-sm font-semibold tracking-wide">{label}</span>
     </Link>
   )
 }

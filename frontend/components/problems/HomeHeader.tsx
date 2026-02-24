@@ -26,14 +26,13 @@ export const HomeHeader = () => {
       <div className="flex flex-col items-center gap-2">
         {topicRows.map((row, rowIndex) => (
           <div key={rowIndex} className="flex flex-wrap justify-center gap-2">
-            {row.map((topic) => (
-              <Link
-                key={topic}
-                href={'/tag/' + topic}
+            {row.map((topic, index) => (
+              <div
+                key={`${topic}-${index}`}
                 className="from-primary/20 to-accent/10 hover:from-primary/30 hover:to-accent/20 text-foreground/80 hover:text-foreground border-primary/30 transform cursor-pointer rounded-full border bg-gradient-to-r px-3 py-1.5 text-xs font-semibold shadow-md transition-all duration-300 hover:scale-105 hover:shadow-lg"
               >
                 {topic}
-              </Link>
+              </div>
             ))}
           </div>
         ))}

@@ -1,0 +1,34 @@
+FROM node:20-alpine AS builder
+WORKDIR /workspace
+
+ARG PROBLEM_DATABASE_URL
+ENV PROBLEM_DATABASE_URL=${PROBLEM_DATABASE_URL}
+
+RUN apk add --no-cache python3 make g++
+
+COPY package*.json ./
+COPY nx.json tsconfig.base.json ./
+COPY packages ./packages
+COPY apps/problem-service ./apps/problem-service
+
+RUN npm ci
+RUN npx nx run problem-service:prisma-generate
+RUN npx nx build problem-service --prod
+
+FROM node:20-alpine AS runner
+WORKDIR /app
+ENV NODE_ENV=production
+
+RUN apk add --no-cache python3 make g++
+
+COPY --from=builder /workspace/dist/apps/problem-service ./
+COPY --from=builder /workspace/apps/problem-service/prisma ./prisma
+COPY --from=builder /workspace/apps/problem-service/resources ./resources
+
+COPY package*.json ./
+RUN npm ci --only=production && npm cache clean --force
+RUN npx prisma generate
+
+EXPOSE 4002
+
+CMD ["sh", "-c", "npx prisma migrate deploy && npx prisma db seed && node main.js"]

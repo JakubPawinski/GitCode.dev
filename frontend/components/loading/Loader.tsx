@@ -1,7 +1,21 @@
-import { ClipLoader } from 'react-spinners'
+interface LoaderProps {
+  size?: number
+  center?: boolean
+}
 
-export const Loader = () => {
+export const Loader = ({ size = 48, center = true }: LoaderProps) => {
+  const spinner = (
+    <div
+      className="border-primary animate-spin rounded-full border-4 border-solid border-t-transparent"
+      style={{ width: size, height: size }}
+    />
+  )
+
+  if (!center) return spinner
+
   return (
-    <ClipLoader className="align-center absolute flex h-screen w-screen justify-center" />
+    <div className="flex h-full w-full items-center justify-center">
+      {spinner}
+    </div>
   )
 }

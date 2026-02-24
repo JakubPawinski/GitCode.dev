@@ -28,21 +28,24 @@ export const SubmissionLink = ({
   memoryUsed,
   submissionNumber,
 }: SubmissionLinkProps) => {
-  const isAccepted = status.toLowerCase() === 'accepted'
   const { problem } = useParams()
   return (
     <Link
       href={`/problems/${problem}/submissions/${id}`}
-      className="hover:bg-primary/10 hover:border-primary/20 flex items-center justify-around gap-4 rounded-lg border border-transparent p-4 transition-all duration-300 hover:shadow-lg"
+      className="hover:bg-primary/10 hover:border-primary/20 flex items-center justify-between rounded-lg border border-transparent p-4 transition-all duration-300 hover:shadow-lg"
     >
       <div className="flex items-center gap-6">
         <div>{submissionNumber}</div>
         <div
           className={`flex w-32 items-center gap-2 font-semibold ${
-            isAccepted ? 'text-emerald-400' : 'text-red-400'
+            status === 'success' ? 'text-emerald-400' : 'text-red-400'
           }`}
         >
-          {isAccepted ? <CheckCircle size={20} /> : <XCircle size={20} />}
+          {status === 'success' ? (
+            <CheckCircle size={20} />
+          ) : (
+            <XCircle size={20} />
+          )}
           <span>{status}</span>
         </div>
         <div className="text-foreground/80 hidden items-center gap-2 sm:flex">
@@ -63,7 +66,7 @@ export const SubmissionLink = ({
           <Database size={14} />
           <span>{memoryUsed ? `${memoryUsed.toFixed(2)} MB` : 'N/A'}</span>
         </div>
-        <div className="flex flex-col items-end">
+        <div className="flex flex-col">
           <div className="flex items-center gap-1.5">
             <Calendar size={14} />
             <span>{submittedAt?.split('T')[0]}</span>

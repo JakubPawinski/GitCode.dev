@@ -16,13 +16,14 @@ export default function SubmissionsPage() {
   const { problem } = useParams()
 
   const { data, loading, error } = useGetSubmissions<DataProps>({
-    problem: problem as string,
+    problem: problem!.toString(),
   })
 
   if (loading) return <Loader />
   if (error) return <Error {...error} />
   if (!data) return null
   const { attempts } = data
+
   if (attempts.length === 0) {
     return (
       <div className="bg-primary/5 flex h-48 items-center justify-center rounded-lg p-6 shadow-inner">
@@ -35,8 +36,8 @@ export default function SubmissionsPage() {
 
   return (
     <div className="space-y-2">
-      <header className="bg-primary/5 text-foreground/80 flex items-center justify-around rounded-lg p-4 font-semibold">
-        <div className="flex gap-36">
+      <header className="bg-primary/5 text-foreground/80 flex items-center justify-between rounded-lg px-8 py-4 font-semibold">
+        <div className="flex gap-32 px-2">
           <div>Status</div>
           <div>Language</div>
         </div>
@@ -49,11 +50,11 @@ export default function SubmissionsPage() {
       </header>
 
       <main>
-        {attempts?.map((submission, index) => (
+        {attempts.map((submission, index) => (
           <SubmissionLink
             key={submission.id}
             {...submission}
-            submissionNumber={attempts.length - index}
+            submissionNumber={index + 1}
           />
         ))}
       </main>

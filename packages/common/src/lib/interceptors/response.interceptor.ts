@@ -18,6 +18,13 @@ export class ResponseInterceptor<T> implements NestInterceptor<
     context: ExecutionContext,
     next: CallHandler,
   ): Observable<ApiResponseDto<T>> {
+    const ctxType = context.getType();
+
+    // Only intercept HTTP requests
+    if (ctxType !== 'http') {
+      return next.handle() as Observable<ApiResponseDto<T>>;
+    }
+
     const request = context.switchToHttp().getRequest();
     const response = context.switchToHttp().getResponse();
 

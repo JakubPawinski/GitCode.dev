@@ -1,0 +1,404 @@
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+    container_name: gitcode-frontend
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=http://localhost:8080
+    ports:
+      - '3000:3000'
+    depends_on:
+      - api-gateway
+    networks:
+      - gitcodedev-network
+    restart: unless-stopped
+
+  api-gateway:
+    image: traefik:v3.5
+    container_name: api-gateway
+    ports:
+      - '8080:8080'
+      - '8081:8081'
+    volumes:
+      - ./apps/api-gateway/development/traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./apps/api-gateway/development/dynamic.yml:/etc/traefik/dynamic.yml:ro
+    networks:
+      - gitcodedev-network
+    restart: unless-stopped
+
+  auth-service:
+    build:
+      context: .
+      dockerfile: apps/auth-service/Dockerfile.prod
+      args:
+        - AUTH_DATABASE_URL=${AUTH_DATABASE_URL}
+    container_name: auth-service
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+      - PORT=4001
+      - AUTH_DATABASE_URL=${AUTH_DATABASE_URL}
+      - AUTH_REDIS_URL=${AUTH_REDIS_URL}
+      - KEYCLOAK_URL=http://keycloak:8080
+      - KEYCLOAK_INTERNAL_URL=http://keycloak:8080
+      - RABBITMQ_URL=amqp://${RABBITMQ_USER}:${RABBITMQ_PASSWORD}@rabbitmq:5672
+    depends_on:
+      auth-db:
+        condition: service_healthy
+      auth-redis:
+        condition: service_healthy
+      keycloak:
+        condition: service_started
+      rabbitmq:
+        condition: service_started
+    networks:
+      - gitcodedev-network
+    restart: unless-stopped
+
+  problem-service:
+    build:
+      context: .
+      dockerfile: apps/problem-service/Dockerfile.prod
+      args:
+        - PROBLEM_DATABASE_URL=${PROBLEM_DATABASE_URL}
+    container_name: problem-service
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+      - PORT=4002
+      - PROBLEM_DATABASE_URL=${PROBLEM_DATABASE_URL}
+      - REDIS_HOST=problem-redis
+      - REDIS_PORT=6379
+      - DOCKER_HOST=tcp://docker-daemon:2375
+      - RABBITMQ_URL=amqp://${RABBITMQ_USER}:${RABBITMQ_PASSWORD}@rabbitmq:5672
+    depends_on:
+      problem-db:
+        condition: service_healthy
+      problem-redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_started
+      docker-daemon:
+        condition: service_started
+    networks:
+      - gitcodedev-network
+    restart: unless-stopped
+
+  github-service:
+    build:
+      context: .
+      dockerfile: apps/github-service/Dockerfile.prod
+      args:
+        - GITHUB_DATABASE_URL=${GITHUB_DATABASE_URL}
+    container_name: github-service
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+      - PORT=4004
+      - GITHUB_DATABASE_URL=${GITHUB_DATABASE_URL}
+      - RABBITMQ_URL=amqp://${RABBITMQ_USER}:${RABBITMQ_PASSWORD}@rabbitmq:5672
+    depends_on:
+      github-db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_started
+    networks:
+      - gitcodedev-network
+    restart: unless-stopped
+
+  notification-service:
+    build:
+      context: .
+      dockerfile: apps/notification-service/Dockerfile.prod
+      args:
+        - NOTIFICATION_DATABASE_URL=${NOTIFICATION_DATABASE_URL}
+    container_name: notification-service
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+      - PORT=4003
+      - NOTIFICATION_DATABASE_URL=${NOTIFICATION_DATABASE_URL}
+      - RABBITMQ_URL=amqp://${RABBITMQ_USER}:${RABBITMQ_PASSWORD}@rabbitmq:5672
+    depends_on:
+      notification-db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_started
+    networks:
+      - gitcodedev-network
+    restart: unless-stopped
+
+  ai-service:
+    build:
+      context: .
+      dockerfile: apps/ai-service/Dockerfile.prod
+      args:
+        - AI_DATABASE_URL=${AI_DATABASE_URL}
+    container_name: ai-service
+    env_file:
+      - .env
+    environment:
+      - ENVIRONMENT=production
+      - AI_PORT=4006
+      - AI_DATABASE_URL=${AI_DATABASE_URL}
+      - RABBITMQ_URL=amqp://${RABBITMQ_USER}:${RABBITMQ_PASSWORD}@rabbitmq:5672
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - LLM_PROVIDER=${LLM_PROVIDER}
+      - JWT_SECRET=${JWT_SECRET}
+    depends_on:
+      ai-db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_started
+    networks:
+      - gitcodedev-network
+    restart: unless-stopped
+
+  auth-db:
+    image: postgres:18-alpine
+    container_name: auth-db-dev
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_USER=${AUTH_DB_USER}
+      - POSTGRES_PASSWORD=${AUTH_DB_PASSWORD}
+      - POSTGRES_DB=${AUTH_DB_NAME}
+    ports:
+      - '${AUTH_DB_PORT}:5432'
+    volumes:
+      - auth-db-data-dev:/var/lib/postgresql/data
+    networks:
+      - gitcodedev-network
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${AUTH_DB_USER} -d ${AUTH_DB_NAME}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  auth-redis:
+    image: redis:7-alpine
+    container_name: auth-redis-dev
+    ports:
+      - '${AUTH_REDIS_PORT}:6379'
+    volumes:
+      - auth-redis-data-dev:/data
+    networks:
+      - gitcodedev-network
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:23.0
+    container_name: keycloak-dev
+    environment:
+      - KEYCLOAK_ADMIN=${KEYCLOAK_ADMIN_USER}
+      - KEYCLOAK_ADMIN_PASSWORD=${KEYCLOAK_ADMIN_PASSWORD}
+      - KC_DB=postgres
+      - KC_DB_URL=jdbc:postgresql://keycloak-db:5432/${KEYCLOAK_DB_NAME}
+      - KC_DB_USERNAME=${KEYCLOAK_DB_USER}
+      - KC_DB_PASSWORD=${KEYCLOAK_DB_PASSWORD}
+      - KC_HOSTNAME=localhost
+      - KC_HOSTNAME_PORT=8090
+      - KC_HOSTNAME_STRICT=false
+      - KC_HOSTNAME_STRICT_BACKCHANNEL=false
+      - KC_HTTP_ENABLED=true
+      - KC_HEALTH_ENABLED=true
+    volumes:
+      - ./apps/keycloak/realm-export.json:/opt/keycloak/data/import/gitcode-dev-realm.json
+      - ./apps/keycloak/themes/gitcode-theme:/opt/keycloak/themes/gitcode-theme
+    command: >
+      start-dev
+      --import-realm
+    ports:
+      - '${KEYCLOAK_PORT}:8080'
+    depends_on:
+      keycloak-db:
+        condition: service_healthy
+    networks:
+      - gitcodedev-network
+    restart: unless-stopped
+
+  keycloak-db:
+    image: postgres:18-alpine
+    container_name: keycloak-db-dev
+    environment:
+      - POSTGRES_DB=${KEYCLOAK_DB_NAME}
+      - POSTGRES_USER=${KEYCLOAK_DB_USER}
+      - POSTGRES_PASSWORD=${KEYCLOAK_DB_PASSWORD}
+    volumes:
+      - keycloak-db-data-dev:/var/lib/postgresql/data
+    networks:
+      - gitcodedev-network
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'pg_isready -U ${KEYCLOAK_DB_USER} -d ${KEYCLOAK_DB_NAME}',
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  problem-db:
+    image: postgres:18-alpine
+    container_name: problems-db
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_USER=${PROBLEM_DB_USER}
+      - POSTGRES_PASSWORD=${PROBLEM_DB_PASSWORD}
+      - POSTGRES_DB=${PROBLEM_DB_NAME}
+    ports:
+      - '${PROBLEM_DB_PORT}:5432'
+    volumes:
+      - problem-db-data-dev:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${PROBLEM_DB_USER}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - gitcodedev-network
+    restart: unless-stopped
+
+  problem-redis:
+    image: redis:7-alpine
+    container_name: problem-redis-dev
+    ports:
+      - '${PROBLEM_REDIS_PORT}:6379'
+    volumes:
+      - problem-redis-data-dev:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - gitcodedev-network
+    restart: unless-stopped
+
+  docker-daemon:
+    image: docker:dind
+    container_name: docker-daemon-dev
+    privileged: true
+    environment:
+      - DOCKER_TLS_CERTDIR=
+    ports:
+      - '2375:2375'
+    volumes:
+      - problem-executions:/tmp/executions
+    networks:
+      - gitcodedev-network
+    restart: unless-stopped
+
+  notification-db:
+    image: postgres:18-alpine
+    container_name: notification-db-dev
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_USER=${NOTIFICATION_DB_USER}
+      - POSTGRES_PASSWORD=${NOTIFICATION_DB_PASSWORD}
+      - POSTGRES_DB=${NOTIFICATION_DB_NAME}
+    ports:
+      - '${NOTIFICATION_DB_PORT}:5432'
+    volumes:
+      - notification-db-data-dev:/var/lib/postgresql/data
+    networks:
+      - gitcodedev-network
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'pg_isready -U ${NOTIFICATION_DB_USER} -d ${NOTIFICATION_DB_NAME}',
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  ai-db:
+    image: postgres:18-alpine
+    container_name: ai-db
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_USER=${AI_DB_USER}
+      - POSTGRES_PASSWORD=${AI_DB_PASSWORD}
+      - POSTGRES_DB=${AI_DB_NAME}
+    ports:
+      - '${AI_DB_PORT}:5432'
+    volumes:
+      - ai-db-data-dev:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${AI_DB_USER}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - gitcodedev-network
+    restart: unless-stopped
+
+    # GitHub Service Database
+  github-db:
+    image: postgres:18-alpine
+    container_name: github-db-dev
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=${GITHUB_DB_USER}
+      - POSTGRES_PASSWORD=${GITHUB_DB_PASSWORD}
+      - POSTGRES_DB=${GITHUB_DB_NAME}
+    ports:
+      - '${GITHUB_DB_PORT}:5432'
+    volumes:
+      - github_postgres_data:/var/lib/postgresql/data
+    networks:
+      - gitcodedev-network
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${GITHUB_DB_USER}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  rabbitmq:
+    image: rabbitmq:3.11-management-alpine
+    container_name: rabbitmq-dev
+    ports:
+      - '${RABBITMQ_PORT}:5672'
+      - '${RABBITMQ_MANAGEMENT_PORT}:15672'
+    environment:
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASSWORD}
+    networks:
+      - gitcodedev-network
+    restart: unless-stopped
+
+networks:
+  gitcodedev-network:
+    driver: bridge
+
+volumes:
+  auth-db-data-dev:
+  auth-redis-data-dev:
+  keycloak-db-data-dev:
+  problem-db-data-dev:
+  problem-redis-data-dev:
+  problem-executions:
+  notification-db-data-dev:
+  ai-db-data-dev:
+  github_postgres_data:
