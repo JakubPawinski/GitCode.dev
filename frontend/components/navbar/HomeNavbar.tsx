@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation'
 import { useAuth } from '@/contexts/auth/AuthContext'
 import { ProfileLink } from './ProfileLink'
 import { NotificationBell } from '../notification/NotificationBell'
+import { UserMenu } from './UserMenu'
 
 export const HomeNavbar = () => {
   const { problem } = useParams()
@@ -35,6 +36,7 @@ export const HomeNavbar = () => {
         <NotificationBell />
         <ProfileLink {...user} />
       </div>
+      <UserMenu user={user} />
     </nav>
   )
 }
