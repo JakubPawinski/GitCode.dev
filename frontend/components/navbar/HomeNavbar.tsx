@@ -34,9 +34,8 @@ export const HomeNavbar = () => {
       </div>
       <div className="flex items-center gap-4">
         <NotificationBell />
-        <ProfileLink {...user} />
+        <UserMenu user={user} />
       </div>
-      <UserMenu user={user} />
     </nav>
   )
 }
