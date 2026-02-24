@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     OPENROUTER_API_KEY: str | None = None
     OPENROUTER_BASE_URL: str | None = None
     DEFAULT_MODEL: str | None = None
+    AVAILABLE_MODELS: str | None = None  # Comma-separated list of available models
 
     AI_DB_USER: str
     AI_DB_PASSWORD: str

@@ -18,11 +18,38 @@ class OpenRouterClient(BaseLLMClient):
         self.default_model = settings.DEFAULT_MODEL
         self.api_key = settings.OPENROUTER_API_KEY
 
+    def get_available_models(self):
+        if settings.AVAILABLE_MODELS:
+            return [model.strip() for model in settings.AVAILABLE_MODELS.split(",")]
+        return []
+    
+    def is_model_available(self, model_name: str) -> bool:
+        logger.debug(f"Checking availability for model: {model_name}")
+        available_models = self.get_available_models()
+        logger.debug(f"Available models: {available_models}")
+        model_names = [model.split("/")[1] for model in available_models]
+        logger.debug(f"Parsed model names: {model_names}")
+
+        if not available_models:
+            return False
+        return model_name in model_names
+    
+    def validate_model(self, model_name: str) -> str:
+        if model_name and self.is_model_available(model_name):
+            available_models = self.get_available_models()
+            for model in available_models:
+                if model_name in model:
+                    logger.debug(f"Selected model: {model}")
+                    return model
+        else:
+            logger.warning(f"Model '{model_name}' is not available. Falling back to default model.")
+        return self.default_model
+
     def _get_client(self):
         return AsyncOpenAI(base_url=self.base_url, api_key=self.api_key)
 
     async def analyze_code(self, code: str, problem_description: str, model: str = None) -> dict:
-        selected_model = model or self.default_model
+        selected_model = self.validate_model(model)
 
         prompt = f"""
         <problem_description>
@@ -98,7 +125,7 @@ class OpenRouterClient(BaseLLMClient):
             }
 
     async def stream_tutor_chat(self, code: str, problem_description: str, chat_history: list[dict], user_message: str, model: str = None) -> AsyncGenerator[str, None]:
-        selected_model = model or self.default_model
+        selected_model = self.validate_model(model)
 
         system_instruction = """
             # ROLE
@@ -183,7 +210,7 @@ class OpenRouterClient(BaseLLMClient):
         """
         Generate personalized README content based on user statistics using OpenRouter.
         """
-        selected_model = model or self.default_model
+        selected_model = self.validate_model(model)
         system_instruction = """
         # ROLE
         You are a developer profile analyst and technical writer specializing in creating 

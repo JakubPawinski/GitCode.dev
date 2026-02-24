@@ -23,6 +23,7 @@ class TutorService:
         code: str,
         message: str,
         problem_description: str,
+        model: str = None
     ) -> AsyncGenerator[str, None]:
         """
         Streams chat response from the AI tutor with robust error handling.
@@ -84,7 +85,8 @@ class TutorService:
                     code=code,
                     problem_description=problem_description,
                     chat_history=formatted_history,
-                    user_message=message
+                    user_message=message,
+                    model=model
                 ):
                     full_response += chunk
                     yield chunk
