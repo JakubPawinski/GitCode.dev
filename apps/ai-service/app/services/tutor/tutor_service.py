@@ -1,6 +1,6 @@
 from typing import AsyncGenerator
 from app.services.chat_history.chat_history_service import ChatHistoryService
-from app.services.llm.providers.gemini import GeminiClient
+from app.services.llm.providers.open_router import OpenRouterClient
 from app.exceptions import (
     SessionNotFoundError,
     UnauthorizedSessionError,
@@ -14,7 +14,7 @@ class TutorService:
     def __init__(self, db: AsyncSession):
         self.db = db
         self.history_service = ChatHistoryService(db)
-        self.llm_client = GeminiClient()
+        self.llm_client = OpenRouterClient()
     
     async def stream_chat_response(
         self,

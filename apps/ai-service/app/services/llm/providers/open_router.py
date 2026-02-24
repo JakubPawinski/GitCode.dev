@@ -1,21 +1,29 @@
-from google import genai
-from google.genai import types
+from openai import AsyncOpenAI
 from app.core.config import settings
 from app.services.llm.base import BaseLLMClient
 from app.models.ai_analysis import AnalysisResult
 from app.models.ai_readme_content import AIReadmeContent
 import logging
+import json
 from typing import AsyncGenerator
 
 logger = logging.getLogger(__name__)
 
-class GeminiClient(BaseLLMClient):
+class OpenRouterClient(BaseLLMClient):
     def __init__(self):
-        if not settings.GEMINI_API_KEY:
-            raise ValueError("GEMINI_API_KEY is missing")
-        self.client = genai.Client(api_key=settings.GEMINI_API_KEY)
+        if not settings.OPENROUTER_API_KEY:
+            raise ValueError("OPENROUTER_API_KEY is missing")
+        # OpenRouter support
+        self.base_url = settings.OPENROUTER_BASE_URL
+        self.default_model = settings.DEFAULT_MODEL
+        self.api_key = settings.OPENROUTER_API_KEY
 
-    async def analyze_code(self, code: str, problem_description: str) -> dict:
+    def _get_client(self):
+        return AsyncOpenAI(base_url=self.base_url, api_key=self.api_key)
+
+    async def analyze_code(self, code: str, problem_description: str, model: str = None) -> dict:
+        selected_model = model or self.default_model
+
         prompt = f"""
         <problem_description>
         {problem_description}
@@ -53,34 +61,45 @@ class GeminiClient(BaseLLMClient):
         - `Code blocks` for snippets.
         - Bullet points for readability.
         - Sections like: "### Analysis", "### Suggestions", "### Corrected Snippet".
+
+        Return ONLY valid JSON matching this schema:
+        {
+            "content": "string",
+            "feedback_type": "string",
+            "severity": "string"
+        }
         """
         
         try:
-            response = self.client.models.generate_content(
-                model=settings.GEMINI_MODEL_NAME,
-                contents=prompt,
-                config=types.GenerateContentConfig(
-                    system_instruction=system_instruction,
-                    response_mime_type="application/json",
-                    response_schema=AnalysisResult,
-                    temperature=0.2,
-                ))
-            logger.debug(f"Gemini response: {response}")
-
-            parsed_response = response.parsed
-
+            response = await self._get_client().chat.completions.create(
+                model=selected_model,
+                messages=[
+                    {"role": "system", "content": system_instruction},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.2,
+                response_format={"type": "json_object"}
+            )
+            
+            logger.debug(f"OpenRouter response: {response}")
+            
+            content = response.choices[0].message.content
+            parsed_response = json.loads(content)
+            
             logger.info(f"Analysis Result: {parsed_response}")
-            return parsed_response.model_dump()
+            return parsed_response
             
         except Exception as e:
-            logger.error(f"Gemini Error: {e}")
+            logger.error(f"OpenRouter Error: {e}")
             return {
                 "content": "Error during analysis. Please try again later.",
                 "feedback_type": "INFO",
                 "severity": "ERROR"
             }
 
-    async def stream_tutor_chat(self, code: str, problem_description: str, chat_history: list[dict], user_message: str) -> AsyncGenerator[str, None]:
+    async def stream_tutor_chat(self, code: str, problem_description: str, chat_history: list[dict], user_message: str, model: str = None) -> AsyncGenerator[str, None]:
+        selected_model = model or self.default_model
+
         system_instruction = """
             # ROLE
             You are an expert Socratic Algorithmic Tutor. Your goal is to guide students through coding problems (like LeetCode) without ever giving them the answer. You help them build problem-solving muscles by asking guiding questions.
@@ -132,37 +151,39 @@ class GeminiClient(BaseLLMClient):
         """
 
         try:
-            gemini_history = []
+            messages = [
+                {"role": "system", "content": system_instruction}
+            ]
+            
+            # Add chat history
             for msg in chat_history:
-                gemini_history.append(types.Content(
-                    role=msg['role'],
-                    parts=[types.Part(text=msg['content'])]
-                ))
-
-            chat = self.client.aio.chats.create(
-                model=settings.GEMINI_MODEL_NAME,
-                history=gemini_history,
-                config=types.GenerateContentConfig(
-                    system_instruction=system_instruction,
-                    temperature=0.2,
-                )
+                messages.append({
+                    "role": msg['role'],
+                    "content": msg['content']
+                })
+            
+            messages.append({"role": "user", "content": context_prompt})
+            
+            stream = await self._get_client().chat.completions.create(
+                model=selected_model,
+                messages=messages,
+                temperature=0.2,
+                stream=True
             )
             
-            async for chunk in await chat.send_message_stream(context_prompt):
-                if chunk.text:
-                    yield chunk.text
+            async for chunk in stream:
+                if chunk.choices[0].delta.content:
+                    yield chunk.choices[0].delta.content
 
         except Exception as e:
-            logger.error(f"Gemini Streaming Error: {e}")
+            logger.error(f"OpenRouter Streaming Error: {e}")
             yield f"[Error: {str(e)}]"
 
-    async def generate_readme_content(self, stats: dict) -> AIReadmeContent:
+    async def generate_readme_content(self, stats: dict, model: str = None) -> AIReadmeContent:
         """
-        Generate personalized README content based on user statistics using Gemini.
-        
-        :param stats: Extended user statistics dictionary
-        :return: AIReadmeContent with generated content
+        Generate personalized README content based on user statistics using OpenRouter.
         """
+        selected_model = model or self.default_model
         system_instruction = """
         # ROLE
         You are a developer profile analyst and technical writer specializing in creating 
@@ -190,51 +211,59 @@ class GeminiClient(BaseLLMClient):
         - Encouraging without being patronizing
         - Data-driven insights
         - Appropriate use of emojis (sparingly)
+
+        Return ONLY valid JSON matching this schema exactly:
+        {
+            "headline": "string",
+            "bio": "string",
+            "keyStrengths": ["string"],
+            "growthAreas": ["string"],
+            "recommendedFocus": ["string"],
+            "motivationalQuote": "string",
+            "codeQualityAnalysis": "string",
+            "personalizedRecommendations": "string",
+            "summary": "string"
+        }
         """
 
         prompt = self._build_readme_prompt(stats)
         
         try:
-            response = self.client.models.generate_content(
-                model=settings.GEMINI_MODEL_NAME,
-                contents=prompt,
-                config=types.GenerateContentConfig(
-                    system_instruction=system_instruction,
-                    response_mime_type="application/json",
-                    response_schema=AIReadmeContent,
-                    temperature=0.7,
-                )
+            response = await self._get_client().chat.completions.create(
+                model=selected_model,
+                messages=[
+                    {"role": "system", "content": system_instruction},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.7,
+                response_format={"type": "json_object"}
             )
             
-            logger.debug(f"Gemini README response: {response}")
+            logger.debug(f"OpenRouter README response: {response}")
             
-            if response.parsed:
-                logger.info("Successfully generated README content")
-                return response.parsed
-            else:
-                logger.warning("Gemini returned unparsed response, using fallback")
-                return self._get_fallback_content(stats)
+            content = response.choices[0].message.content
+            parsed_data = json.loads(content)
+            
+            logger.info("Successfully generated README content")
+            return AIReadmeContent(**parsed_data)
                 
         except Exception as e:
-            logger.error(f"Gemini README Generation Error: {e}")
+            logger.error(f"OpenRouter README Generation Error: {e}")
             return self._get_fallback_content(stats)
 
     def _build_readme_prompt(self, stats: dict) -> str:
         """Build comprehensive prompt for README generation."""
         
-        # Format topics
         top_topics = self._format_topics(stats.get('topicStats', [])[:5])
         weak_topics = self._format_topics(
             sorted(stats.get('topicStats', []), key=lambda x: x.get('successRate', 0))[:3]
         )
         languages = self._format_languages(stats.get('languageStats', [])[:3])
         
-        # Get achieved milestones
         achieved_milestones = [
             m.get('name') for m in stats.get('milestones', []) if m.get('achieved')
         ]
         
-        # Calculate feedback percentages for context
         total_feedback = stats.get('aiFeedbackByType', {}).get('total', 0)
         feedback_context = ""
         if total_feedback > 0:
@@ -317,7 +346,7 @@ Severity Distribution:
 
 ---
 
-Based on all the above data, generate the AIReadmeContent JSON with:
+Based on all the above data, generate the JSON with:
 1. A compelling headline that captures their coding journey
 2. A professional bio highlighting key achievements
 3. 3-5 specific key strengths based on their best topics and patterns
@@ -356,7 +385,6 @@ Based on all the above data, generate the AIReadmeContent JSON with:
         current_streak = stats.get('streak', {}).get('currentStreak', 0)
         success_rate = stats.get('successRate', 0)
         
-        # Dynamic headline based on progress
         if problems_solved >= 100:
             headline = "Seasoned Problem Solver | Algorithm Enthusiast"
         elif problems_solved >= 50:
@@ -366,7 +394,6 @@ Based on all the above data, generate the AIReadmeContent JSON with:
         else:
             headline = "Aspiring Developer | Beginning the Journey"
         
-        # Dynamic strengths based on stats
         strengths = []
         if current_streak >= 7:
             strengths.append(f"Impressive {current_streak}-day coding streak")
@@ -375,7 +402,6 @@ Based on all the above data, generate the AIReadmeContent JSON with:
         if stats.get('difficultyBreakdown', {}).get('hard', 0) > 0:
             strengths.append("Tackles challenging problems")
         
-        # Add default strengths if needed
         if len(strengths) < 3:
             default_strengths = [
                 "Consistent practice habits",

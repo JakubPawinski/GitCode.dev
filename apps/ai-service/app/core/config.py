@@ -19,11 +19,9 @@ class Settings(BaseSettings):
     AI_QUEUE_NAME: str
 
     # LLM Settings
-    LLM_PROVIDER: Literal["openai", "gemini"] = "gemini"
-    OPENAI_API_KEY: str | None = None
-    GEMINI_API_KEY: str | None = None
-    GEMINI_MODEL_NAME: str = "gemini-2.5-flash"
-    OPENAI_MODEL_NAME: str = "gpt-4.1-nano"
+    OPENROUTER_API_KEY: str | None = None
+    OPENROUTER_BASE_URL: str | None = None
+    DEFAULT_MODEL: str | None = None
 
     AI_DB_USER: str
     AI_DB_PASSWORD: str
