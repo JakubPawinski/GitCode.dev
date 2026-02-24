@@ -10,7 +10,7 @@ export interface AuthContextProps {
   user: UserProps
 }
 
-function AuthCallback() {
+export default function AuthCallback() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const success = searchParams.get('success')
