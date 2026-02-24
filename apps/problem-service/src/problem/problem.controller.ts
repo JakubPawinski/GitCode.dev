@@ -214,7 +214,7 @@ export class ProblemController {
   }
 
   @Get(':slug')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PermissionsGuards)
   @RequirePermissions(AppPermission.PROBLEM_READ)
   @ApiBearerAuth('Bearer Auth')
   @ApiOperation({ summary: 'Get problem details by slug' })
