@@ -5,6 +5,7 @@ class TutorRequest(BaseModel):
     code: str
     problem_slug: str
     message: str
+    model: Optional[str] = None
 
 class TutorMessage(BaseModel):
     text: str

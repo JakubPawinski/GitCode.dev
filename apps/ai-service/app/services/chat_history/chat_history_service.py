@@ -71,7 +71,7 @@ class ChatHistoryService:
         """Formats chat messages for LLM input."""
         return [
             {
-                "role": "model" if msg.role == "assistant" else "user",
+                "role": "assistant" if msg.role == "model" else "user",
                 "content": msg.content
             }
             for msg in messages

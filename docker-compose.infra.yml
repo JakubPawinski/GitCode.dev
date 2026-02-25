@@ -91,6 +91,7 @@ services:
       - KC_HOSTNAME_STRICT_BACKCHANNEL=false
       - KC_HTTP_ENABLED=true
       - KC_HEALTH_ENABLED=true
+      - KC_HOSTNAME_STRICT_HTTPS=false
     volumes:
       - ./apps/keycloak/realm-export.json:/opt/keycloak/data/import/gitcode-dev-realm.json
       - ./apps/keycloak/themes/gitcode-theme:/opt/keycloak/themes/gitcode-theme

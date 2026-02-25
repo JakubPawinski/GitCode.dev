@@ -91,7 +91,7 @@ export class AuthService {
       await this.eventBus.publish(
         AUTH_PATTERNS.USER_CREATED,
         new UserCreatedEvent(
-          userInfo.sub,
+          user.id,
           userInfo.preferred_username,
           userInfo.email,
           userInfo.given_name,
@@ -130,19 +130,6 @@ export class AuthService {
     keycloakAccessToken: string,
   ): Promise<void> {
     try {
-      // Check if we already have a GitHub token for this user
-      const existingToken = await this.prisma.oAuthToken.findUnique({
-        where: { userId_provider: { userId, provider: 'github' } },
-      });
-
-      // If token already exists, skip fetching (GitHub tokens don't expire)
-      if (existingToken) {
-        this.logger.debug(
-          `GitHub token already exists for user ${userId}, skipping fetch`,
-        );
-        return;
-      }
-
       const keycloakConfig = this.configService.get('keycloak');
 
       // Keycloak broker endpoint to retrieve external provider tokens
@@ -177,13 +164,23 @@ export class AuthService {
         );
 
         // Store encrypted GitHub token in database
-        await this.prisma.oAuthToken.create({
-          data: {
+        await this.prisma.oAuthToken.upsert({
+          where: {
+            userId_provider: { userId, provider: 'github' },
+          },
+          update: {
+            accessToken: encryptedAccessToken,
+            refreshToken: null,
+            expiresAt: null,
+            scope: githubToken.scope,
+            tokenType: githubToken.token_type || 'bearer',
+          },
+          create: {
             userId,
             provider: 'github',
             accessToken: encryptedAccessToken,
-            refreshToken: null, // GitHub tokens don't have refresh tokens
-            expiresAt: null, // GitHub tokens don't expire
+            refreshToken: null,
+            expiresAt: null,
             scope: githubToken.scope,
             tokenType: githubToken.token_type || 'bearer',
           },

@@ -2,7 +2,7 @@ import logging
 from app.core.event_dispatcher import dispatcher
 from app.models.generated import SubmissionCompletedEvent, SUBMISSIONPATTERNS, SubmissionAnalyzedEvent,AIPATTERNS
 from app.core.event_bus import event_bus
-from app.services.llm.factory import get_llm_client
+from app.services.llm.providers.open_router import OpenRouterClient
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +19,7 @@ async def handle_submission_completed(event: SubmissionCompletedEvent, metadata:
     """
 
     # Perform analysis using LLM service
-    llm_client = get_llm_client()
+    llm_client = OpenRouterClient()
     
     logger.info(f"Processing completed submission: {event.submissionId} for problem {event.problemId}")
     logger.info(f"Event: {event}")
