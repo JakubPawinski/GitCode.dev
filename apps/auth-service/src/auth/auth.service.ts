@@ -91,7 +91,7 @@ export class AuthService {
       await this.eventBus.publish(
         AUTH_PATTERNS.USER_CREATED,
         new UserCreatedEvent(
-          userInfo.sub,
+          user.id,
           userInfo.preferred_username,
           userInfo.email,
           userInfo.given_name,
