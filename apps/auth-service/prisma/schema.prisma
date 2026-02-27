@@ -48,12 +48,13 @@ model OAuthToken {
   tokenType     String?  @map("token_type")
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
+  isActive      Boolean  @default(true) @map("is_active")
+  revokedAt     DateTime? @map("revoked_at")
   
   user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([userId]) 
-  @@index([provider]) 
-  @@unique([userId, provider])
+  @@index([userId])
+  @@index([provider])
   @@map("oauth_tokens")
 }
 
