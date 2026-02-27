@@ -4,35 +4,98 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { AuthService } from './auth.service';
 import { PrismaService } from '../prisma/prisma.service';
-import { RedisService } from '../redis/redis.service';
-import { AppRole, AppPermission } from '@gitcode/types';
+import { OauthService } from './oauth.service';
+import { SessionService } from './session.service';
 import { EventBus } from '@gitcode/messaging';
+import { AUTH_PATTERNS, UserCreatedEvent } from '@gitcode/contracts';
 
 describe('AuthService', () => {
   let service: AuthService;
   let prismaService: jest.Mocked<PrismaService>;
-  let redisService: jest.Mocked<RedisService>;
   let jwtService: jest.Mocked<JwtService>;
   let configService: jest.Mocked<ConfigService>;
+  let oauthService: jest.Mocked<OauthService>;
+  let sessionService: jest.Mocked<SessionService>;
+  let eventBus: jest.Mocked<EventBus>;
+
+  const mockUser = {
+    id: '1',
+    username: 'testuser',
+    email: 'test@example.com',
+    firstName: 'Test',
+    lastName: 'User',
+    avatarUrl: 'avatar.jpg',
+    roles: ['user'],
+    permissions: ['user:read'],
+    userStatus: 'ACTIVE',
+  };
+
+  const mockOAuthToken = {
+    id: 'oauth-token-id',
+    userId: '1',
+    provider: 'keycloak',
+    accessToken: 'keycloak-access',
+    refreshToken: 'keycloak-refresh',
+    expiresAt: new Date(Date.now() + 3600000),
+    scope: 'openid profile email',
+    tokenType: 'Bearer',
+    isActive: true,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    revokedAt: null,
+  };
+
+  const mockTokens = {
+    access_token: 'keycloak-access',
+    refresh_token: 'keycloak-refresh',
+    expires_in: 3600,
+    scope: 'openid profile email',
+    token_type: 'Bearer',
+  };
+
+  const mockUserInfo = {
+    sub: 'keycloak-id',
+    email: 'test@example.com',
+    preferred_username: 'testuser',
+    given_name: 'Test',
+    family_name: 'User',
+    picture: 'avatar.jpg',
+    email_verified: true,
+    roles: ['user'],
+  };
 
   beforeEach(async () => {
     const mockPrismaService = {
       user: {
         upsert: jest.fn(),
         findUnique: jest.fn(),
-        count: jest.fn(),
+        update: jest.fn(),
       },
       oAuthToken: {
-        upsert: jest.fn(),
+        create: jest.fn(),
         findUnique: jest.fn(),
+        findFirst: jest.fn(),
+        update: jest.fn(),
       },
     };
 
-    const mockRedisService = {
-      set: jest.fn(),
-      get: jest.fn(),
-      del: jest.fn(),
-      exists: jest.fn(),
+    const mockOauthService = {
+      exchangeCodeForTokens: jest.fn(),
+      getUserInfo: jest.fn(),
+      getRealmRoles: jest.fn(),
+      exchangeRefreshTokenForTokens: jest.fn(),
+      logoutFromKeycloak: jest.fn(),
+      encryptToken: jest.fn(),
+      decryptToken: jest.fn(),
+      fetchGitHubTokenFromBroker: jest.fn(),
+    };
+
+    const mockSessionService = {
+      saveOAuthState: jest.fn(),
+      getSessionData: jest.fn(),
+      deleteSession: jest.fn(),
+      saveSessionData: jest.fn(),
+      removeOAuthState: jest.fn(),
     };
 
     const mockJwtService = {
@@ -55,16 +118,20 @@ describe('AuthService', () => {
           useValue: mockPrismaService,
         },
         {
-          provide: RedisService,
-          useValue: mockRedisService,
-        },
-        {
           provide: JwtService,
           useValue: mockJwtService,
         },
         {
           provide: ConfigService,
           useValue: mockConfigService,
+        },
+        {
+          provide: OauthService,
+          useValue: mockOauthService,
+        },
+        {
+          provide: SessionService,
+          useValue: mockSessionService,
         },
         {
           provide: EventBus,
@@ -75,9 +142,11 @@ describe('AuthService', () => {
 
     service = module.get<AuthService>(AuthService);
     prismaService = module.get(PrismaService);
-    redisService = module.get(RedisService);
     jwtService = module.get(JwtService);
     configService = module.get(ConfigService);
+    oauthService = module.get(OauthService);
+    sessionService = module.get(SessionService);
+    eventBus = module.get(EventBus);
   });
 
   it('should be defined', () => {
@@ -86,16 +155,14 @@ describe('AuthService', () => {
 
   describe('initiateLogin', () => {
     it('should generate auth URL and store state', async () => {
+      const keycloakConfig = {
+        authorizationUrl: 'https://keycloak/auth',
+        clientId: 'client-id',
+      };
+
       configService.get.mockImplementation((key: string) => {
-        if (key === 'keycloak') {
-          return {
-            authorizationUrl: 'https://keycloak/auth',
-            clientId: 'client-id',
-          };
-        }
-        if (key === 'api.callbackAuthUrl') {
-          return 'https://api/callback';
-        }
+        if (key === 'keycloak') return keycloakConfig;
+        if (key === 'api.callbackAuthUrl') return 'https://api/callback';
         return undefined;
       });
 
@@ -103,109 +170,188 @@ describe('AuthService', () => {
 
       expect(result.authUrl).toContain('https://keycloak/auth');
       expect(result.authUrl).toContain('client_id=client-id');
-      expect(result.authUrl).toContain(
-        'redirect_uri=https%3A%2F%2Fapi%2Fcallback',
-      );
       expect(result.state).toBeDefined();
-      expect(redisService.set).toHaveBeenCalledWith(
-        expect.stringContaining('oauth_state:'),
+      expect(sessionService.saveOAuthState).toHaveBeenCalledWith(
+        result.state,
         'keycloak',
-        300,
       );
     });
   });
 
   describe('handleCallback', () => {
-    it('should handle callback and return tokens', async () => {
-      const mockTokens = {
-        access_token: 'access',
-        refresh_token: 'refresh',
-        expires_in: 3600,
-      };
-      const mockUserInfo = {
-        sub: 'keycloak-id',
-        email: 'test@example.com',
-        preferred_username: 'testuser',
-        given_name: 'Test',
-        family_name: 'User',
-        picture: 'avatar.jpg',
-        email_verified: true,
-      };
-      const mockUser = {
-        id: '1',
-        username: 'testuser',
-        email: 'test@example.com',
-        firstName: 'Test',
-        lastName: 'User',
-        avatarUrl: 'avatar.jpg',
-        roles: [AppRole.USER],
-        permissions: [AppPermission.USER_READ_PUBLIC],
-      };
-
-      jest
-        .spyOn(service as any, 'exchangeCodeForTokens')
-        .mockResolvedValue(mockTokens);
-      jest.spyOn(service as any, 'getUserInfo').mockResolvedValue(mockUserInfo);
-      jest.spyOn(service as any, 'getRealmRoles').mockReturnValue(['user']);
-      jest.spyOn(service as any, 'upsertUser').mockResolvedValue(mockUser);
-      jest
-        .spyOn(service as any, 'generateAccessToken')
-        .mockReturnValue('access-token');
-      jest
-        .spyOn(service as any, 'generateRefreshToken')
-        .mockResolvedValue('refresh-token');
-
-      const result = await service.handleCallback('code');
-
-      expect(result.accessToken).toBe('access-token');
-      expect(result.refreshToken).toBe('refresh-token');
-      expect(result.user.id).toBe('1');
-    });
-  });
-
-  describe('refreshTokens', () => {
-    it('should refresh tokens successfully', async () => {
-      const mockUser = {
-        id: '1',
-        username: 'testuser',
-        email: 'test@example.com',
-        firstName: 'Test',
-        lastName: 'User',
-        avatarUrl: 'avatar.jpg',
-        userStatus: 'ACTIVE',
-      };
-
-      redisService.get.mockResolvedValue('1');
-      (prismaService.user.findUnique as jest.Mock).mockResolvedValue(mockUser);
-      jest
-        .spyOn(service as any, 'generateAccessToken')
-        .mockReturnValue('new-access');
-      jest
-        .spyOn(service as any, 'generateRefreshToken')
-        .mockResolvedValue('new-refresh');
-
-      const result = await service.refreshTokens('old-refresh');
-
-      expect(result.accessToken).toBe('new-access');
-      expect(result.refreshToken).toBe('new-refresh');
-      expect(redisService.del).toHaveBeenCalledWith(
-        'refresh_token:old-refresh',
+    it('should handle callback and return tokens for new user', async () => {
+      (oauthService.exchangeCodeForTokens as jest.Mock).mockResolvedValue(
+        mockTokens,
       );
-    });
+      (oauthService.getUserInfo as jest.Mock).mockResolvedValue(mockUserInfo);
+      (oauthService.getRealmRoles as jest.Mock).mockReturnValue(['user']);
+      (oauthService.fetchGitHubTokenFromBroker as jest.Mock).mockResolvedValue(
+        null,
+      );
+      (prismaService.user.findUnique as jest.Mock).mockResolvedValue(null);
+      (prismaService.user.upsert as jest.Mock).mockResolvedValue(mockUser);
+      (prismaService.oAuthToken.create as jest.Mock).mockResolvedValue(
+        mockOAuthToken,
+      );
+      (jwtService.sign as jest.Mock).mockReturnValue('access-token-jwt');
+      (sessionService.saveSessionData as jest.Mock).mockResolvedValue(
+        undefined,
+      );
 
-    it('should throw if refresh token invalid', async () => {
-      redisService.get.mockResolvedValue(null);
+      const result = await service.handleCallback('auth-code');
 
-      await expect(service.refreshTokens('invalid')).rejects.toThrow(
-        UnauthorizedException,
+      expect(result.accessToken).toBe('access-token-jwt');
+      expect(result.refreshToken).toBeDefined();
+      expect(result.user.id).toBe('1');
+      expect(eventBus.publish).toHaveBeenCalledWith(
+        AUTH_PATTERNS.USER_CREATED,
+        expect.any(UserCreatedEvent),
       );
     });
 
     it('should throw if user not active', async () => {
-      const mockUser = { userStatus: 'BANNED' };
-      redisService.get.mockResolvedValue('1');
+      const inactiveUser = { ...mockUser, userStatus: 'BANNED' };
+
+      (oauthService.exchangeCodeForTokens as jest.Mock).mockResolvedValue(
+        mockTokens,
+      );
+      (oauthService.getUserInfo as jest.Mock).mockResolvedValue(mockUserInfo);
+      (oauthService.getRealmRoles as jest.Mock).mockReturnValue(['user']);
       (prismaService.user.findUnique as jest.Mock).mockResolvedValue(
-        mockUser as any,
+        inactiveUser,
+      );
+
+      await expect(service.handleCallback('auth-code')).rejects.toThrow(
+        UnauthorizedException,
+      );
+    });
+
+    it('should handle existing user login', async () => {
+      (oauthService.exchangeCodeForTokens as jest.Mock).mockResolvedValue(
+        mockTokens,
+      );
+      (oauthService.getUserInfo as jest.Mock).mockResolvedValue(mockUserInfo);
+      (oauthService.getRealmRoles as jest.Mock).mockReturnValue(['user']);
+      (oauthService.fetchGitHubTokenFromBroker as jest.Mock).mockResolvedValue(
+        null,
+      );
+      (prismaService.user.findUnique as jest.Mock).mockResolvedValue(mockUser);
+      (prismaService.user.upsert as jest.Mock).mockResolvedValue(mockUser);
+      (prismaService.oAuthToken.create as jest.Mock).mockResolvedValue(
+        mockOAuthToken,
+      );
+      (jwtService.sign as jest.Mock).mockReturnValue('access-token-jwt');
+      (sessionService.saveSessionData as jest.Mock).mockResolvedValue(
+        undefined,
+      );
+
+      const result = await service.handleCallback('auth-code');
+
+      expect(result.user.id).toBe('1');
+      expect(eventBus.publish).not.toHaveBeenCalled(); // Nie publikuj dla istniejącego użytkownika
+    });
+  });
+
+  describe('refreshTokens', () => {
+    it('should refresh tokens successfully and sync user data', async () => {
+      const sessionData = {
+        userId: '1',
+        oauthTokenId: 'oauth-token-id',
+      };
+
+      const newTokens = {
+        access_token: 'new-keycloak-access',
+        refresh_token: 'new-keycloak-refresh',
+        expires_in: 3600,
+        scope: 'openid profile email',
+        token_type: 'Bearer',
+      };
+
+      (sessionService.getSessionData as jest.Mock).mockResolvedValue(
+        sessionData,
+      );
+      (sessionService.deleteSession as jest.Mock).mockResolvedValue(undefined);
+      (prismaService.oAuthToken.findUnique as jest.Mock).mockResolvedValue(
+        mockOAuthToken,
+      );
+      (prismaService.user.findUnique as jest.Mock).mockResolvedValue(mockUser);
+      (
+        oauthService.exchangeRefreshTokenForTokens as jest.Mock
+      ).mockResolvedValue(newTokens);
+      (oauthService.getUserInfo as jest.Mock).mockResolvedValue(mockUserInfo);
+      (oauthService.getRealmRoles as jest.Mock).mockReturnValue(['user']);
+      (prismaService.user.update as jest.Mock).mockResolvedValue(mockUser);
+      (prismaService.oAuthToken.update as jest.Mock).mockResolvedValue(
+        mockOAuthToken,
+      );
+      (jwtService.sign as jest.Mock).mockReturnValue('new-access-token');
+      (sessionService.saveSessionData as jest.Mock).mockResolvedValue(
+        undefined,
+      );
+
+      const result = await service.refreshTokens('old-refresh-token');
+
+      expect(result.accessToken).toBe('new-access-token');
+      expect(result.refreshToken).toBeDefined();
+      expect(prismaService.user.update).toHaveBeenCalled();
+      expect(prismaService.oAuthToken.update).toHaveBeenCalled();
+      expect(sessionService.deleteSession).toHaveBeenCalledWith(
+        'old-refresh-token',
+      );
+    });
+
+    it('should throw if refresh token invalid', async () => {
+      (sessionService.getSessionData as jest.Mock).mockResolvedValue(null);
+
+      await expect(service.refreshTokens('invalid-token')).rejects.toThrow(
+        UnauthorizedException,
+      );
+    });
+
+    it('should mark token as inactive if Keycloak rejects refresh', async () => {
+      const sessionData = {
+        userId: '1',
+        oauthTokenId: 'oauth-token-id',
+      };
+
+      (sessionService.getSessionData as jest.Mock).mockResolvedValue(
+        sessionData,
+      );
+      (sessionService.deleteSession as jest.Mock).mockResolvedValue(undefined);
+      (prismaService.oAuthToken.findUnique as jest.Mock).mockResolvedValue(
+        mockOAuthToken,
+      );
+      (prismaService.user.findUnique as jest.Mock).mockResolvedValue(mockUser);
+      (
+        oauthService.exchangeRefreshTokenForTokens as jest.Mock
+      ).mockRejectedValue(new Error('Invalid refresh token'));
+
+      await expect(service.refreshTokens('expired-token')).rejects.toThrow(
+        UnauthorizedException,
+      );
+
+      expect(prismaService.oAuthToken.update).toHaveBeenCalledWith({
+        where: { id: 'oauth-token-id' },
+        data: { isActive: false, revokedAt: expect.any(Date) },
+      });
+    });
+
+    it('should throw if user not active', async () => {
+      const sessionData = {
+        userId: '1',
+        oauthTokenId: 'oauth-token-id',
+      };
+      const inactiveUser = { ...mockUser, userStatus: 'BANNED' };
+
+      (sessionService.getSessionData as jest.Mock).mockResolvedValue(
+        sessionData,
+      );
+      (sessionService.deleteSession as jest.Mock).mockResolvedValue(undefined);
+      (prismaService.oAuthToken.findUnique as jest.Mock).mockResolvedValue(
+        mockOAuthToken,
+      );
+      (prismaService.user.findUnique as jest.Mock).mockResolvedValue(
+        inactiveUser,
       );
 
       await expect(service.refreshTokens('token')).rejects.toThrow(
@@ -215,78 +361,87 @@ describe('AuthService', () => {
   });
 
   describe('logout', () => {
-    it('should delete refresh token and logout from Keycloak', async () => {
-      redisService.get.mockResolvedValue('user-123');
-      (prismaService.oAuthToken.findUnique as jest.Mock).mockResolvedValue({
-        refreshToken: 'keycloak-refresh-token',
-      });
-      configService.get.mockImplementation((key: string) => {
-        if (key === 'keycloak') {
-          return {
-            internalUrl: 'http://localhost:8090',
-            realm: 'gitcode-dev',
-            clientId: 'gitcode-auth-service',
-            clientSecret: 'secret',
-          };
-        }
-        return undefined;
-      });
+    it('should logout and revoke tokens', async () => {
+      const sessionData = {
+        userId: '1',
+        oauthTokenId: 'oauth-token-id',
+      };
 
-      await service.logout('token');
+      (sessionService.getSessionData as jest.Mock).mockResolvedValue(
+        sessionData,
+      );
+      (prismaService.oAuthToken.findUnique as jest.Mock).mockResolvedValue(
+        mockOAuthToken,
+      );
+      (oauthService.logoutFromKeycloak as jest.Mock).mockResolvedValue(
+        undefined,
+      );
+      (prismaService.oAuthToken.update as jest.Mock).mockResolvedValue(
+        mockOAuthToken,
+      );
+      (sessionService.deleteSession as jest.Mock).mockResolvedValue(undefined);
 
-      expect(redisService.get).toHaveBeenCalledWith('refresh_token:token');
-      expect(redisService.del).toHaveBeenCalledWith('refresh_token:token');
+      await service.logout('refresh-token');
+
+      expect(oauthService.logoutFromKeycloak).toHaveBeenCalledWith(
+        mockOAuthToken.refreshToken,
+      );
+      expect(prismaService.oAuthToken.update).toHaveBeenCalledWith({
+        where: { id: 'oauth-token-id' },
+        data: { revokedAt: expect.any(Date), isActive: false },
+      });
+      expect(sessionService.deleteSession).toHaveBeenCalledWith(
+        'refresh-token',
+      );
     });
 
-    it('should handle missing user gracefully', async () => {
-      redisService.get.mockResolvedValue(null);
+    it('should handle missing session gracefully', async () => {
+      (sessionService.getSessionData as jest.Mock).mockResolvedValue(null);
 
       await service.logout('invalid-token');
 
-      expect(redisService.del).not.toHaveBeenCalled();
+      expect(sessionService.deleteSession).not.toHaveBeenCalled();
     });
 
-    it('should delete token even if Keycloak token not found', async () => {
-      redisService.get.mockResolvedValue('user-123');
-      (prismaService.oAuthToken.findUnique as jest.Mock).mockResolvedValue(
-        null,
+    it('should delete session even if Keycloak logout fails', async () => {
+      const sessionData = {
+        userId: '1',
+        oauthTokenId: 'oauth-token-id',
+      };
+
+      (sessionService.getSessionData as jest.Mock).mockResolvedValue(
+        sessionData,
       );
+      (prismaService.oAuthToken.findUnique as jest.Mock).mockResolvedValue(
+        mockOAuthToken,
+      );
+      (oauthService.logoutFromKeycloak as jest.Mock).mockRejectedValue(
+        new Error('Keycloak error'),
+      );
+      (prismaService.oAuthToken.update as jest.Mock).mockResolvedValue(
+        mockOAuthToken,
+      );
+      (sessionService.deleteSession as jest.Mock).mockResolvedValue(undefined);
 
-      await service.logout('token');
+      await service.logout('refresh-token');
 
-      expect(redisService.del).toHaveBeenCalledWith('refresh_token:token');
+      expect(sessionService.deleteSession).toHaveBeenCalledWith(
+        'refresh-token',
+      );
     });
   });
 
   describe('validateUser', () => {
     it('should validate active user', async () => {
-      const mockUser = {
-        id: '1',
-        username: 'testuser',
-        email: 'test@example.com',
-        permissions: [],
-        roles: [],
-        userStatus: 'ACTIVE',
-      };
-
-      redisService.exists.mockResolvedValue(false);
       (prismaService.user.findUnique as jest.Mock).mockResolvedValue(mockUser);
 
       const result = await service.validateUser('1');
 
       expect(result.id).toBe('1');
-    });
-
-    it('should throw if user blacklisted', async () => {
-      redisService.exists.mockResolvedValue(true);
-
-      await expect(service.validateUser('1')).rejects.toThrow(
-        UnauthorizedException,
-      );
+      expect(result.userStatus).toBe('ACTIVE');
     });
 
     it('should throw if user not found', async () => {
-      redisService.exists.mockResolvedValue(false);
       (prismaService.user.findUnique as jest.Mock).mockResolvedValue(null);
 
       await expect(service.validateUser('1')).rejects.toThrow(
@@ -295,10 +450,9 @@ describe('AuthService', () => {
     });
 
     it('should throw if user not active', async () => {
-      const mockUser = { userStatus: 'BANNED' };
-      redisService.exists.mockResolvedValue(false);
+      const inactiveUser = { ...mockUser, userStatus: 'BANNED' };
       (prismaService.user.findUnique as jest.Mock).mockResolvedValue(
-        mockUser as any,
+        inactiveUser,
       );
 
       await expect(service.validateUser('1')).rejects.toThrow(
@@ -309,64 +463,118 @@ describe('AuthService', () => {
 
   describe('initiateAccountUpdate', () => {
     it('should generate account update URL', async () => {
+      const keycloakConfig = {
+        url: 'https://keycloak',
+        realm: 'gitcode-realm',
+        clientId: 'gitcode-client',
+      };
+
       configService.get.mockImplementation((key: string) => {
-        if (key === 'keycloak') {
-          return {
-            url: 'https://keycloak',
-            realm: 'realm',
-            clientId: 'client-id',
-          };
-        }
-        if (key === 'api.callbackAccountUrl') {
-          return 'https://api/callback';
-        }
+        if (key === 'keycloak') return keycloakConfig;
+        if (key === 'api.callbackAccountUrl')
+          return 'https://api/account-callback';
         return undefined;
       });
 
       const result = await service.initiateAccountUpdate();
 
       expect(result.accountUpdateUrl).toContain(
-        'https://keycloak/realms/realm/account',
+        'https://keycloak/realms/gitcode-realm/account',
       );
-      expect(result.accountUpdateUrl).toContain('referrer=client-id');
+      expect(result.accountUpdateUrl).toContain('referrer=gitcode-client');
       expect(result.accountUpdateUrl).toContain(
-        'referrer_uri=https%3A%2F%2Fapi%2Fcallback',
+        'referrer_uri=https%3A%2F%2Fapi%2Faccount-callback',
       );
     });
   });
 
   describe('handleAccountUpdateCallback', () => {
     it('should update profile successfully', async () => {
-      const mockToken = {
-        accessToken: 'access',
-        refreshToken: 'refresh',
-        expiresAt: new Date(),
-        scope: 'scope',
-        tokenType: 'Bearer',
-      };
-      const mockUserInfo = { email: 'updated@example.com' };
-
-      (prismaService.oAuthToken.findUnique as jest.Mock).mockResolvedValue(
-        mockToken as any,
+      (prismaService.oAuthToken.findFirst as jest.Mock).mockResolvedValue(
+        mockOAuthToken,
       );
-      jest.spyOn(service as any, 'getUserInfo').mockResolvedValue(mockUserInfo);
-      jest.spyOn(service as any, 'upsertUser').mockResolvedValue(undefined);
+      (oauthService.getUserInfo as jest.Mock).mockResolvedValue(mockUserInfo);
+      (oauthService.getRealmRoles as jest.Mock).mockReturnValue(['user']);
+      (prismaService.user.upsert as jest.Mock).mockResolvedValue(mockUser);
+      (prismaService.oAuthToken.create as jest.Mock).mockResolvedValue(
+        mockOAuthToken,
+      );
 
       const result = await service.handleAccountUpdateCallback('1');
 
       expect(result.success).toBe(true);
       expect(result.message).toBe('Profile updated successfully');
+      expect(prismaService.oAuthToken.findFirst).toHaveBeenCalledWith({
+        where: {
+          userId: '1',
+          provider: 'keycloak',
+          isActive: true,
+        },
+        orderBy: { createdAt: 'desc' },
+      });
     });
 
-    it('should return failure if no token', async () => {
-      (prismaService.oAuthToken.findUnique as jest.Mock).mockResolvedValue(
-        null,
+    it('should return failure if no active token', async () => {
+      (prismaService.oAuthToken.findFirst as jest.Mock).mockResolvedValue(null);
+
+      const result = await service.handleAccountUpdateCallback('1');
+
+      expect(result.success).toBe(false);
+      expect(result.message).toBe('Failed to update profile');
+    });
+
+    it('should handle errors gracefully', async () => {
+      (prismaService.oAuthToken.findFirst as jest.Mock).mockRejectedValue(
+        new Error('Database error'),
       );
 
       const result = await service.handleAccountUpdateCallback('1');
 
       expect(result.success).toBe(false);
       expect(result.message).toBe('Failed to update profile');
+    });
+  });
+
+  describe('getOAuthTokenForGithub', () => {
+    it('should return decrypted GitHub token', async () => {
+      const githubToken = {
+        id: 'github-token-id',
+        userId: '1',
+        provider: 'github',
+        accessToken: 'encrypted-github-token',
+        scope: 'repo,user',
+        tokenType: 'Bearer',
+        isActive: true,
+        createdAt: new Date(),
+      };
+
+      (prismaService.oAuthToken.findFirst as jest.Mock).mockResolvedValue(
+        githubToken,
+      );
+      (oauthService.decryptToken as jest.Mock).mockReturnValue(
+        'decrypted-github-token',
+      );
+
+      const result = await service.getOAuthTokenForGithub('1');
+
+      expect(result.accessToken).toBe('decrypted-github-token');
+      expect(result.scope).toBe('repo,user');
+      expect(prismaService.oAuthToken.findFirst).toHaveBeenCalledWith({
+        where: {
+          userId: '1',
+          provider: 'github',
+          isActive: true,
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+    });
+
+    it('should throw if GitHub token not connected', async () => {
+      (prismaService.oAuthToken.findFirst as jest.Mock).mockResolvedValue(null);
+
+      await expect(service.getOAuthTokenForGithub('1')).rejects.toThrow(
+        UnauthorizedException,
+      );
     });
   });
 });
