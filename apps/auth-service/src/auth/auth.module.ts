@@ -7,6 +7,8 @@ import { AuthController } from './auth.controller';
 import { PrismaModule } from '../prisma/prisma.module';
 import { RedisModule } from '../redis/redis.module';
 import { AppService } from '../app.service';
+import { OauthService } from './oauth.service';
+import { SessionService } from './session.service';
 
 @Module({
   imports: [
@@ -25,7 +27,7 @@ import { AppService } from '../app.service';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, AppService],
+  providers: [AuthService, AppService, OauthService, SessionService],
   exports: [AuthService],
 })
 export class AuthModule {}

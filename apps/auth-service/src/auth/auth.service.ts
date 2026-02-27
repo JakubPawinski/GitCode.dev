@@ -2,33 +2,36 @@ import { Injectable, UnauthorizedException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
-import { RedisService } from '../redis/redis.service';
-import axios from 'axios';
 import * as crypto from 'crypto';
 import { mapRolesToPermissions } from './mappers/permissions.mapper';
 import { mapRealmRolesToAppRoles } from './mappers/roles.mapper';
 import { EventBus } from '@gitcode/messaging';
 import { AUTH_PATTERNS, UserCreatedEvent } from '@gitcode/contracts';
-import { URLSearchParams } from 'url';
 import { GitHubTokenDto } from './dto/github-token.dto';
+import { OauthService } from './oauth.service';
+import { SessionService } from './session.service';
 
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
   constructor(
     private prisma: PrismaService,
-    private redis: RedisService,
     private jwtService: JwtService,
     private configService: ConfigService,
     private eventBus: EventBus,
+    private oauthService: OauthService,
+    private sessionService: SessionService,
   ) {}
-  private readonly ENCRYPTION_ALGORITHM = 'aes-256-gcm';
 
+  /**
+   * Initiates the OAuth login process
+   * @param provider - OAuth provider
+   * @returns - Authorization URL and state for CSRF protection
+   */
   async initiateLogin(provider: string = 'keycloak') {
     const state = crypto.randomBytes(32).toString('hex');
 
-    // Store state in Redis with short TTL
-    await this.redis.set(`oauth_state:${state}`, provider, 300); // 5 minutes
+    await this.sessionService.saveOAuthState(state, provider);
 
     const keycloakConfig = this.configService.get('keycloak');
     const callbackUrl = this.configService.get('api.callbackAuthUrl');
@@ -43,24 +46,31 @@ export class AuthService {
     return { authUrl: authUrl.toString(), state };
   }
 
+  /**
+   * Handle the OAuth callback after user authentication
+   * @param code - the authorization code received from Keycloak after user login
+   * @returns - an object containing the access token, refresh token, and user info
+   */
   async handleCallback(code: string) {
     // Exchange code for tokens
-    const tokens = await this.exchangeCodeForTokens(code);
+    const tokens = await this.oauthService.exchangeCodeForTokens(code);
+    const userInfo = await this.oauthService.getUserInfo(tokens.access_token);
 
-    // Get user info from IdP
-    const userInfo = await this.getUserInfo(tokens.access_token);
-    this.logger.debug(`Userinfo: ${JSON.stringify(userInfo)}`);
-
-    // Extract and map roles
-    const realmRoles = this.getRealmRoles(tokens.access_token);
+    // Extract roles and permissions from Keycloak token and map to app's roles
+    const realmRoles = this.oauthService.getRealmRoles(tokens.access_token);
     const appRoles = mapRealmRolesToAppRoles(realmRoles);
     const appPermissions = mapRolesToPermissions(realmRoles);
+
+    this.logger.debug(
+      `User info retrieved from Keycloak: ${JSON.stringify(userInfo)}`,
+    );
     this.logger.debug(
       `Mapped app permissions: ${JSON.stringify(appPermissions)}`,
     );
     this.logger.debug(`Mapped app roles: ${JSON.stringify(appRoles)}`);
 
-    // Check if user exists, if not, publish UserCreatedEvent
+
+    // Check if user exists and is active before proceeding
     const existingUser = await this.prisma.user.findUnique({
       where: { keycloakId: userInfo.sub },
       select: { userStatus: true, id: true },
@@ -73,17 +83,16 @@ export class AuthService {
       throw new UnauthorizedException('User account is not active');
     }
 
-    // Check if user existed before
     const userExists = !!existingUser;
-
-    // Create or update user in database
-    const user = await this.upsertUser(
+    const { user, oAuthToken } = await this.upsertUser(
       { ...userInfo, roles: appRoles, permissions: appPermissions },
       tokens,
     );
-    // Fetch and store GitHub token if available
-    await this.fetchAndStoreGitHubToken(user.id, tokens.access_token);
 
+    // Fetch and store GitHub token if available
+    await this.storeGitHubTokenIfAvailable(user.id, tokens.access_token);
+
+    // Publish UserCreatedEvent if this is a new user
     if (!userExists) {
       this.logger.log(
         `Publishing UserCreatedEvent for new user ${userInfo.sub}\n With data: \n${userInfo.sub}, ${userInfo.email}, ${userInfo.given_name}, ${userInfo.family_name}`,
@@ -104,7 +113,10 @@ export class AuthService {
     const accessToken = this.generateAccessToken(user);
 
     // Generate and store refresh token
-    const refreshToken = await this.generateRefreshToken(user.id);
+    const refreshToken = await this.generateRefreshToken(
+      user.id,
+      oAuthToken.id,
+    );
 
     return {
       accessToken,
@@ -121,157 +133,45 @@ export class AuthService {
   }
 
   /**
-   * Fetch GitHub OAuth token from Keycloak broker and store it encrypted
-   * Called after user logs in through GitHub via Keycloak
-   * Only fetches if token doesn't already exist in database
+   * Get user info from Keycloak using the access token
+   * @param userId - the ID of the user in our database
+   * @param keycloakAccessToken - the access token issued by Keycloak for the user
    */
-  private async fetchAndStoreGitHubToken(
+  private async storeGitHubTokenIfAvailable(
     userId: string,
     keycloakAccessToken: string,
   ): Promise<void> {
-    try {
-      const keycloakConfig = this.configService.get('keycloak');
 
-      // Keycloak broker endpoint to retrieve external provider tokens
-      const url = `${keycloakConfig.internalUrl}/realms/${keycloakConfig.realm}/broker/github/token`;
+    const githubToken =
+      await this.oauthService.fetchGitHubTokenFromBroker(keycloakAccessToken);
+    if (!githubToken?.access_token) return;
 
-      const response = await axios.get(url, {
-        headers: {
-          Authorization: `Bearer ${keycloakAccessToken}`,
-        },
-      });
+    // Encrypt the GitHub access token before storing it in the database
+    const encryptedToken = this.oauthService.encryptToken(
+      githubToken.access_token,
+    );
 
-      // Parse URL-encoded response (access_token=...&scope=...&token_type=...)
-      const params = new URLSearchParams(response.data);
-      const githubToken = {
-        access_token: params.get('access_token'),
-        refresh_token: params.get('refresh_token'),
-        expires_in: params.get('expires_in')
-          ? parseInt(params.get('expires_in'))
-          : null,
-        scope: params.get('scope'),
-        token_type: params.get('token_type'),
-      };
+    await this.prisma.oAuthToken.create({
+      data: {
+        userId,
+        provider: 'github',
+        accessToken: encryptedToken,
+        refreshToken: null,
+        expiresAt: null,
+        scope: githubToken.scope,
+        tokenType: githubToken.token_type || 'bearer',
+      },
+    });
 
-      if (githubToken.access_token) {
-        this.logger.log(
-          `GitHub token retrieved successfully for user ${userId}`,
-        );
-
-        // Encrypt the sensitive token before storing
-        const encryptedAccessToken = this.encryptToken(
-          githubToken.access_token,
-        );
-
-        // Store encrypted GitHub token in database
-        await this.prisma.oAuthToken.upsert({
-          where: {
-            userId_provider: { userId, provider: 'github' },
-          },
-          update: {
-            accessToken: encryptedAccessToken,
-            refreshToken: null,
-            expiresAt: null,
-            scope: githubToken.scope,
-            tokenType: githubToken.token_type || 'bearer',
-          },
-          create: {
-            userId,
-            provider: 'github',
-            accessToken: encryptedAccessToken,
-            refreshToken: null,
-            expiresAt: null,
-            scope: githubToken.scope,
-            tokenType: githubToken.token_type || 'bearer',
-          },
-        });
-
-        this.logger.log(`GitHub token stored (encrypted) for user ${userId}`);
-      }
-    } catch (error) {
-      // Don't throw - user might log in without GitHub connection
-      this.logger.warn(
-        `Could not fetch GitHub token for user ${userId}: ${error.message}`,
-      );
-
-      if (error.response?.status === 400) {
-        this.logger.debug('User probably has no GitHub identity linked');
-      }
-    }
+    this.logger.log(`GitHub token stored for user ${userId}`);
   }
 
-  private async exchangeCodeForTokens(code: string) {
-    const keycloakConfig = this.configService.get('keycloak');
-    const callbackUrl = this.configService.get('api.callbackAuthUrl');
-
-    try {
-      const response = await axios.post(
-        keycloakConfig.tokenUrl,
-        new URLSearchParams({
-          grant_type: 'authorization_code',
-          code,
-          redirect_uri: callbackUrl,
-          client_id: keycloakConfig.clientId,
-          client_secret: keycloakConfig.clientSecret,
-        }),
-        {
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        },
-      );
-
-      return response.data;
-    } catch (error) {
-      this.logger.error('Token exchange error', error);
-
-      // Provide specific error messages
-      if (error.response?.status === 400) {
-        const errorData = error.response.data;
-        if (errorData.error === 'invalid_grant') {
-          throw new UnauthorizedException(
-            'Authorization code expired or already used. Please try logging in again.',
-          );
-        }
-      }
-
-      throw new UnauthorizedException('Failed to exchange code for tokens');
-    }
-  }
-
-  private async getUserInfo(accessToken: string) {
-    const keycloakConfig = this.configService.get('keycloak');
-
-    try {
-      const response = await axios.get(keycloakConfig.userInfoUrl, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
-
-      return response.data;
-    } catch (error) {
-      this.logger.error('UserInfo error', error);
-      throw new UnauthorizedException('Failed to get user info');
-    }
-  }
-
-  /*
-   * Extract realm and client roles from access token
+  /**
+   * Upsert user in the database based on Keycloak user info and store OAuth tokens
+   * @param userInfo - the user information retrieved from Keycloak's userinfo endpoint
+   * @param tokens - the access and refresh tokens received from Keycloak after authentication
+   * @returns - the upserted user and the stored OAuth token record
    */
-  private getRealmRoles(accessToken: string) {
-    const [, payloadBase64] = accessToken.split('.');
-    if (!payloadBase64) {
-      return [];
-    }
-
-    const payloadJson = Buffer.from(payloadBase64, 'base64').toString('utf8');
-    const payload = JSON.parse(payloadJson);
-
-    // const keycloakConfig = this.configService.get('keycloak');
-    // const clientId = keycloakConfig.clientId;
-
-    const realmRoles = payload.realm_access?.roles ?? [];
-
-    return realmRoles;
-  }
-
   private async upsertUser(userInfo: any, tokens: any) {
     this.logger.debug(`Upserting user: ${JSON.stringify(userInfo)}`);
 
@@ -310,23 +210,8 @@ export class AuthService {
     });
 
     // Store OAuth tokens (encrypted in production)
-    await this.prisma.oAuthToken.upsert({
-      where: {
-        userId_provider: {
-          userId: user.id,
-          provider: 'keycloak',
-        },
-      },
-      update: {
-        accessToken: tokens.access_token,
-        refreshToken: tokens.refresh_token,
-        expiresAt: tokens.expires_in
-          ? new Date(Date.now() + tokens.expires_in * 1000)
-          : null,
-        scope: tokens.scope,
-        tokenType: tokens.token_type,
-      },
-      create: {
+    const oAuthToken = await this.prisma.oAuthToken.create({
+      data: {
         userId: user.id,
         provider: 'keycloak',
         accessToken: tokens.access_token,
@@ -339,9 +224,14 @@ export class AuthService {
       },
     });
 
-    return user;
+    return { user, oAuthToken };
   }
 
+  /**
+   * Generate a JWT access token for the authenticated user
+   * @param user - the user object for whom to generate the token
+   * @returns - a signed JWT access token containing user info and claims
+   */
   private generateAccessToken(user: any) {
     const payload = {
       sub: user.id,
@@ -360,105 +250,172 @@ export class AuthService {
     });
   }
 
-  private async generateRefreshToken(userId: string) {
+  /**
+   * Generate a secure random refresh token, store it in Redis
+   * @param userId - the ID of the user for whom to generate the refresh token
+   * @param oauthTokenId - the ID of the associated OAuth token (for revocation tracking)
+   * @returns - a securely generated random refresh token string
+   */
+  private async generateRefreshToken(userId: string, oauthTokenId: string) {
     const token = crypto.randomBytes(64).toString('hex');
-
-    await this.redis.set(`refresh_token:${token}`, userId, 7 * 24 * 60 * 60);
-
+    await this.sessionService.saveSessionData(token, userId, oauthTokenId);
     return token;
   }
 
-  async refreshTokens(refreshToken: string) {
-    // Find in Redis
-    const userId = await this.redis.get(`refresh_token:${refreshToken}`);
+  /**
+   * Generate a secure random refresh token, store it in Redis
+   * @param userId - the ID of the user for whom to generate the refresh token
+   * @param oauthTokenId - the ID of the associated OAuth token (for revocation tracking)
+   * @returns - a securely generated random refresh token string
+   */
+  public async refreshTokens(refreshToken: string) {
+    const sessionData = await this.sessionService.getSessionData(refreshToken);
 
-    if (!userId) {
+    if (!sessionData) {
       throw new UnauthorizedException('Invalid or expired refresh token');
     }
 
-    // Token rotation (dlete old one)
-    await this.redis.del(`refresh_token:${refreshToken}`);
+    // Delete the old session
+    await this.sessionService.deleteSession(refreshToken);
+
+    // Validate the associated OAuth token is still active before proceeding
+    const oauthToken = await this.getActiveOAuthToken(sessionData.oauthTokenId);
+
+    if (!oauthToken || oauthToken.userId !== sessionData.userId) {
+      this.logger.warn(
+        `OAuth token not found or inactive for refresh token: ${refreshToken}`,
+      );
+      throw new UnauthorizedException('Invalid refresh token session');
+    }
 
     // Get user
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
+    const user = await this.validateUser(sessionData.userId);
+
+    let newKeycloakTokens;
+    try {
+      newKeycloakTokens = await this.oauthService.exchangeRefreshTokenForTokens(
+        oauthToken.refreshToken,
+      );
+    } catch (error) {
+      this.logger.warn(
+        `Keycloak rejected refresh token for user ${sessionData.userId}. Marking session as inactive.`,
+      );
+
+      await this.prisma.oAuthToken.update({
+        where: { id: sessionData.oauthTokenId },
+        data: { isActive: false, revokedAt: new Date() },
+      });
+
+      throw new UnauthorizedException(
+        'Session expired or user disabled in Identity Provider',
+      );
+    }
+
+    // Fetch user data and sync with keycloak
+    const userInfo = await this.oauthService.getUserInfo(
+      newKeycloakTokens.access_token,
+    );
+    const realmRoles = this.oauthService.getRealmRoles(
+      newKeycloakTokens.access_token,
+    );
+    const appRoles = mapRealmRolesToAppRoles(realmRoles);
+    const appPermissions = mapRolesToPermissions(realmRoles);
+
+    const updatedUser = await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        email: userInfo.email,
+        username: userInfo.preferred_username,
+        firstName: userInfo.given_name,
+        lastName: userInfo.family_name,
+        avatarUrl: userInfo.picture,
+        emailVerified: userInfo.email_verified || false,
+        roles: appRoles,
+        permissions: appPermissions,
+      },
     });
-    this.logger.debug(`User found for refresh token: ${JSON.stringify(user)}`);
 
-    if (!user) {
-      throw new UnauthorizedException('User not found');
-    }
-
-    // Check if user is active
-    if (user.userStatus !== 'ACTIVE') {
-      throw new UnauthorizedException('User account is not active');
-    }
+    await this.prisma.oAuthToken.update({
+      where: { id: sessionData.oauthTokenId },
+      data: {
+        accessToken: newKeycloakTokens.access_token,
+        refreshToken: newKeycloakTokens.refresh_token,
+        expiresAt: newKeycloakTokens.expires_in
+          ? new Date(Date.now() + newKeycloakTokens.expires_in * 1000)
+          : null,
+        scope: newKeycloakTokens.scope,
+        tokenType: newKeycloakTokens.token_type,
+      },
+    });
 
     // Generate new tokens
-    const accessToken = this.generateAccessToken(user);
-    const newRefreshToken = await this.generateRefreshToken(user.id);
+    const accessToken = this.generateAccessToken(updatedUser);
+    const newRefreshToken = await this.generateRefreshToken(
+      sessionData.userId,
+      sessionData.oauthTokenId,
+    );
 
     return {
       accessToken,
       refreshToken: newRefreshToken,
       user: {
-        id: user.id,
-        username: user.username,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        avatarUrl: user.avatarUrl,
+        id: updatedUser.id,
+        username: updatedUser.username,
+        email: updatedUser.email,
+        firstName: updatedUser.firstName,
+        lastName: updatedUser.lastName,
+        avatarUrl: updatedUser.avatarUrl,
       },
     };
   }
 
+  /**
+   * Logout the user by revoking the refresh token in Keycloak and deleting the session in Redis
+   * @param refreshToken - the refresh token associated with the user's session to be logged out
+   */
   async logout(refreshToken: string) {
     try {
-      const userId = await this.redis.get(`refresh_token:${refreshToken}`);
+      const sessionData =
+        await this.sessionService.getSessionData(refreshToken);
 
-      if (!userId) {
-        this.logger.warn('User ID not found for refresh token');
+      if (!sessionData) {
+        this.logger.warn('Session data not found for refresh token');
         return;
       }
 
-      // Get keycloak access token
+      const { userId, oauthTokenId } = sessionData;
+
       const oauthToken = await this.prisma.oAuthToken.findUnique({
-        where: {
-          userId_provider: {
-            userId,
-            provider: 'keycloak',
-          },
-        },
+        where: { id: oauthTokenId },
       });
 
       if (oauthToken?.refreshToken) {
-        const keycloakConfig = this.configService.get('keycloak');
-        const logoutUrl = `${keycloakConfig.internalUrl}/realms/${keycloakConfig.realm}/protocol/openid-connect/logout`;
-
-        await axios.post(
-          logoutUrl,
-          new URLSearchParams({
-            client_id: keycloakConfig.clientId,
-            client_secret: keycloakConfig.clientSecret,
-            refresh_token: oauthToken.refreshToken,
-          }),
-          {
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          },
-        );
+        await this.oauthService.logoutFromKeycloak(oauthToken.refreshToken);
 
         this.logger.log(
           `Successfully logged out from Keycloak for user ${userId}`,
         );
       }
 
-      await this.redis.del(`refresh_token:${refreshToken}`);
+      await this.prisma.oAuthToken.update({
+        where: { id: oauthTokenId },
+        data: {
+          revokedAt: new Date(),
+          isActive: false,
+        },
+      });
+
+      await this.sessionService.deleteSession(refreshToken);
     } catch (error) {
       this.logger.warn(`Failed to logout from Keycloak: ${error.message}`);
-      await this.redis.del(`refresh_token:${refreshToken}`);
+      await this.sessionService.deleteSession(refreshToken);
     }
   }
 
+  /**
+   * Validate the user by their ID, ensuring they exist and are active
+   * @param userId - the ID of the user to validate
+   */
   async validateUser(userId: string) {
     this.logger.debug(`Validating user (auth service): ${userId}`);
 
@@ -468,6 +425,9 @@ export class AuthService {
         id: true,
         username: true,
         email: true,
+        firstName: true,
+        lastName: true,
+        avatarUrl: true,
         permissions: true,
         roles: true,
         userStatus: true,
@@ -476,7 +436,6 @@ export class AuthService {
 
     if (!user) {
       this.logger.log(`User ${userId} not found`);
-
       throw new UnauthorizedException('User not found');
     }
 
@@ -488,8 +447,9 @@ export class AuthService {
     return user;
   }
 
-  /*
-   * Initiate account update by redirecting to Keycloak account management
+  /**
+   * Initiate the account update process by generating a Keycloak account management URL
+   * @returns - an object containing the account management URL for the user to update their profile in Keycloak
    */
   async initiateAccountUpdate() {
     this.logger.debug('Initiating account update process');
@@ -507,14 +467,20 @@ export class AuthService {
     return { accountUpdateUrl: accountUpdateUrl.toString() };
   }
 
-  /*
-   * Handle account update callback from Keycloak
+  /**
+   * Handle the account update callback by refreshing the user's profile data from Keycloak after they update their account information
+   * @param userId - the ID of the user whose account was updated
    */
   async handleAccountUpdateCallback(userId: string) {
     try {
       // Retrieve stored OAuth tokens for the user
-      const oauthToken = await this.prisma.oAuthToken.findUnique({
-        where: { userId_provider: { userId, provider: 'keycloak' } },
+      const oauthToken = await this.prisma.oAuthToken.findFirst({
+        where: {
+          userId,
+          provider: 'keycloak',
+          isActive: true,
+        },
+        orderBy: { createdAt: 'desc' },
       });
 
       // If no tokens found, cannot refresh profile
@@ -526,7 +492,9 @@ export class AuthService {
       }
 
       // Fetch updated user info using the access token
-      const userInfo = await this.getUserInfo(oauthToken.accessToken);
+      const userInfo = await this.oauthService.getUserInfo(
+        oauthToken.accessToken,
+      );
 
       // Update user profile in the database
       const tokens = {
@@ -548,23 +516,29 @@ export class AuthService {
   }
 
   /**
-   * Get decrypted GitHub OAuth token for a user (internal service use)
-   * Called by github-service to perform GitHub API operations
+   * Retrieve the GitHub OAuth token for the user, decrypting it before returning
+   * @param userId - the ID of the user for whom to retrieve the GitHub token
+   * @return - an GithubTokenDto containing the decrypted access token and related info, or throws an exception if not found/invalid
    */
   async getOAuthTokenForGithub(userId: string): Promise<GitHubTokenDto> {
-    const oauthToken = await this.prisma.oAuthToken.findUnique({
-      where: { userId_provider: { userId, provider: 'github' } },
+    const oauthToken = await this.prisma.oAuthToken.findFirst({
+      where: {
+        userId,
+        provider: 'github',
+        isActive: true,
+      },
+      orderBy: { createdAt: 'desc' },
     });
 
-    // If no token found, user has not connected GitHub
     if (!oauthToken) {
       throw new UnauthorizedException(
         'GitHub account not connected. Please connect your GitHub account first.',
       );
     }
 
-    // Decrypt tokens before returning
-    const decryptedAccessToken = this.decryptToken(oauthToken.accessToken);
+    const decryptedAccessToken = this.oauthService.decryptToken(
+      oauthToken.accessToken,
+    );
 
     return {
       accessToken: decryptedAccessToken,
@@ -574,67 +548,13 @@ export class AuthService {
   }
 
   /**
-   * Encrypt sensitive token data using AES-256-GCM
+   * Helper method to get the active Oauth token
+   * @param oauthTokenId - the ID of the OAuth token to validate
+   * @returns the OAuth token record
    */
-  private encryptToken(token: string): string {
-    try {
-      const encryptionKey = this.configService.get<string>('ENCRYPTION_KEY');
-
-      if (!encryptionKey || encryptionKey.length !== 64) {
-        throw new Error('ENCRYPTION_KEY must be 64 hex characters (32 bytes)');
-      }
-
-      const key = Buffer.from(encryptionKey, 'hex');
-      const iv = crypto.randomBytes(16);
-
-      const cipher = crypto.createCipheriv(this.ENCRYPTION_ALGORITHM, key, iv);
-      let encrypted = cipher.update(token, 'utf8', 'hex');
-      encrypted += cipher.final('hex');
-
-      const authTag = cipher.getAuthTag();
-
-      // Format: iv:authTag:encrypted
-      return `${iv.toString('hex')}:${authTag.toString('hex')}:${encrypted}`;
-    } catch (error) {
-      this.logger.error('Token encryption failed', error);
-      throw new Error('Failed to encrypt token');
-    }
-  }
-
-  /**
-   * Decrypt token encrypted with encryptToken()
-   */
-  private decryptToken(encryptedToken: string): string {
-    try {
-      const [ivHex, authTagHex, encrypted] = encryptedToken.split(':');
-
-      if (!ivHex || !authTagHex || !encrypted) {
-        throw new Error('Invalid encrypted token format');
-      }
-
-      const encryptionKey = this.configService.get<string>('ENCRYPTION_KEY');
-
-      if (!encryptionKey || encryptionKey.length !== 64) {
-        throw new Error('ENCRYPTION_KEY must be 64 hex characters (32 bytes)');
-      }
-
-      const key = Buffer.from(encryptionKey, 'hex');
-
-      const decipher = crypto.createDecipheriv(
-        this.ENCRYPTION_ALGORITHM,
-        key,
-        Buffer.from(ivHex, 'hex'),
-      );
-
-      decipher.setAuthTag(Buffer.from(authTagHex, 'hex'));
-
-      let decrypted = decipher.update(encrypted, 'hex', 'utf8');
-      decrypted += decipher.final('utf8');
-
-      return decrypted;
-    } catch (error) {
-      this.logger.error('Token decryption failed', error);
-      throw new Error('Failed to decrypt token');
-    }
+  private async getActiveOAuthToken(oauthTokenId: string) {
+    return this.prisma.oAuthToken.findUnique({
+      where: { id: oauthTokenId },
+    });
   }
 }
