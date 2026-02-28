@@ -16,7 +16,7 @@ export class OauthService {
    * @param code - the authorization code received from Keycloak after user login
    * @returns an object containing the access token, refresh token, and related info, or throws an exception on failure
    */
-  public async exchangeCodeForTokens(code: string) {
+  public async exchangeCodeForTokens(code: string): Promise<any> {
     const keycloakConfig = this.configService.get('keycloak');
     const callbackUrl = this.configService.get('api.callbackAuthUrl');
 
@@ -58,7 +58,9 @@ export class OauthService {
    * @param keycloakRefreshToken - the refresh token issued by Keycloak
    * @returns an object containing the new tokens and related info, or throws an exception on failure
    */
-  public async exchangeRefreshTokenForTokens(keycloakRefreshToken: string) {
+  public async exchangeRefreshTokenForTokens(
+    keycloakRefreshToken: string,
+  ): Promise<any> {
     const keycloakConfig = this.configService.get('keycloak');
 
     try {
@@ -127,7 +129,7 @@ export class OauthService {
   }
 
   /**
-   * Enrypt the given token using AES-256-GCM
+   * Encrypt the given token using AES-256-GCM
    * @param token - the plaintext token to encrypt
    * @returns the encrypted token in the format iv:authTag:encrypted
    * @throws Error if encryption fails or if the ENCRYPTION_KEY is not properly configured
@@ -234,7 +236,7 @@ export class OauthService {
    * Retrieve user info from Keycloak using the access token
    * @param accessToken - the access token after keycloak authentication
    */
-  public async getUserInfo(accessToken: string) {
+  public async getUserInfo(accessToken: string): Promise<any> {
     const keycloakConfig = this.configService.get('keycloak');
 
     try {

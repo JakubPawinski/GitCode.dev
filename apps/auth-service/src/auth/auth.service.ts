@@ -69,7 +69,6 @@ export class AuthService {
     );
     this.logger.debug(`Mapped app roles: ${JSON.stringify(appRoles)}`);
 
-
     // Check if user exists and is active before proceeding
     const existingUser = await this.prisma.user.findUnique({
       where: { keycloakId: userInfo.sub },
@@ -133,15 +132,14 @@ export class AuthService {
   }
 
   /**
-   * Get user info from Keycloak using the access token
-   * @param userId - the ID of the user in our database
-   * @param keycloakAccessToken - the access token issued by Keycloak for the user
+   * Fetch and store the GitHub OAuth token from the Keycloak broker, if available.
+   * @param userId - the ID of the user in our database for whom the token is stored
+   * @param keycloakAccessToken - the Keycloak access token used to request the GitHub token from the broker
    */
   private async storeGitHubTokenIfAvailable(
     userId: string,
     keycloakAccessToken: string,
   ): Promise<void> {
-
     const githubToken =
       await this.oauthService.fetchGitHubTokenFromBroker(keycloakAccessToken);
     if (!githubToken?.access_token) return;
@@ -209,7 +207,7 @@ export class AuthService {
       },
     });
 
-    // Store OAuth tokens (encrypted in production)
+    // Keycloak tokens are not encrypted, unlike Github tokens
     const oAuthToken = await this.prisma.oAuthToken.create({
       data: {
         userId: user.id,
@@ -263,7 +261,7 @@ export class AuthService {
   }
 
   /**
-   * Generate a secure random refresh token, store it in Redis
+   * Validate and refresh an existing session using a refresh token
    * @param userId - the ID of the user for whom to generate the refresh token
    * @param oauthTokenId - the ID of the associated OAuth token (for revocation tracking)
    * @returns - a securely generated random refresh token string
@@ -554,7 +552,7 @@ export class AuthService {
    */
   private async getActiveOAuthToken(oauthTokenId: string) {
     return this.prisma.oAuthToken.findUnique({
-      where: { id: oauthTokenId },
+      where: { id: oauthTokenId, isActive: true },
     });
   }
 }
