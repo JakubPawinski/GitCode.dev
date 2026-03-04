@@ -272,7 +272,7 @@ describe('AuthService', () => {
         sessionData,
       );
       (sessionService.deleteSession as jest.Mock).mockResolvedValue(undefined);
-      (prismaService.oAuthToken.findUnique as jest.Mock).mockResolvedValue(
+      (prismaService.oAuthToken.findFirst as jest.Mock).mockResolvedValue(
         mockOAuthToken,
       );
       (prismaService.user.findUnique as jest.Mock).mockResolvedValue(mockUser);
@@ -319,7 +319,7 @@ describe('AuthService', () => {
         sessionData,
       );
       (sessionService.deleteSession as jest.Mock).mockResolvedValue(undefined);
-      (prismaService.oAuthToken.findUnique as jest.Mock).mockResolvedValue(
+      (prismaService.oAuthToken.findFirst as jest.Mock).mockResolvedValue(
         mockOAuthToken,
       );
       (prismaService.user.findUnique as jest.Mock).mockResolvedValue(mockUser);
@@ -348,7 +348,7 @@ describe('AuthService', () => {
         sessionData,
       );
       (sessionService.deleteSession as jest.Mock).mockResolvedValue(undefined);
-      (prismaService.oAuthToken.findUnique as jest.Mock).mockResolvedValue(
+      (prismaService.oAuthToken.findFirst as jest.Mock).mockResolvedValue(
         mockOAuthToken,
       );
       (prismaService.user.findUnique as jest.Mock).mockResolvedValue(
