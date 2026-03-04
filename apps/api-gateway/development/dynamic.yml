@@ -87,6 +87,13 @@ http:
       middlewares:
         - strip-api
 
+    frontend-route:
+      rule: PathPrefix(`/`)
+      service: frontend-service
+      entryPoints:
+        - gateway
+      priority: 1 
+
   services:
     auth-service:
       loadBalancer:
@@ -122,6 +129,10 @@ http:
       loadBalancer:
         servers:
           - url: 'http://host.docker.internal:4006'
+    frontend-service:
+      loadBalancer:
+        servers:
+          - url: 'http://host.docker.internal:3000'
 
   middlewares:
     strip-api:
