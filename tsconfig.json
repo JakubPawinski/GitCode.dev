@@ -38,6 +38,12 @@
     },
     {
       "path": "./apps/github-service"
+    },
+    {
+      "path": "./apps/achievement-service-e2e"
+    },
+    {
+      "path": "./apps/achievement-service"
     }
   ]
 }

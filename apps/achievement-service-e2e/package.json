@@ -1,0 +1,26 @@
+{
+  "name": "@gitcode/achievement-service-e2e",
+  "version": "0.0.1",
+  "private": true,
+  "nx": {
+    "implicitDependencies": [
+      "@gitcode/achievement-service"
+    ],
+    "targets": {
+      "e2e": {
+        "executor": "@nx/jest:jest",
+        "outputs": [
+          "{projectRoot}/test-output/jest/coverage"
+        ],
+        "options": {
+          "jestConfig": "apps/achievement-service-e2e/jest.config.cts",
+          "passWithNoTests": true
+        },
+        "dependsOn": [
+          "@gitcode/achievement-service:build",
+          "@gitcode/achievement-service:serve"
+        ]
+      }
+    }
+  }
+}
