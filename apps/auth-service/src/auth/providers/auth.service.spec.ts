@@ -73,6 +73,7 @@ describe('AuthService', () => {
       },
       oAuthToken: {
         create: jest.fn(),
+        upsert: jest.fn(),
         findUnique: jest.fn(),
         findFirst: jest.fn(),
         update: jest.fn(),
@@ -190,7 +191,7 @@ describe('AuthService', () => {
       );
       (prismaService.user.findUnique as jest.Mock).mockResolvedValue(null);
       (prismaService.user.upsert as jest.Mock).mockResolvedValue(mockUser);
-      (prismaService.oAuthToken.create as jest.Mock).mockResolvedValue(
+      (prismaService.oAuthToken.upsert as jest.Mock).mockResolvedValue(
         mockOAuthToken,
       );
       (jwtService.sign as jest.Mock).mockReturnValue('access-token-jwt');
@@ -237,7 +238,7 @@ describe('AuthService', () => {
       );
       (prismaService.user.findUnique as jest.Mock).mockResolvedValue(mockUser);
       (prismaService.user.upsert as jest.Mock).mockResolvedValue(mockUser);
-      (prismaService.oAuthToken.create as jest.Mock).mockResolvedValue(
+      (prismaService.oAuthToken.upsert as jest.Mock).mockResolvedValue(
         mockOAuthToken,
       );
       (jwtService.sign as jest.Mock).mockReturnValue('access-token-jwt');
