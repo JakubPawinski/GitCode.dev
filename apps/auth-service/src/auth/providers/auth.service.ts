@@ -1,15 +1,17 @@
 import { Injectable, UnauthorizedException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaService } from '../../prisma/prisma.service';
 import * as crypto from 'crypto';
-import { mapRolesToPermissions } from './mappers/permissions.mapper';
-import { mapRealmRolesToAppRoles } from './mappers/roles.mapper';
+import { mapRolesToPermissions } from '../mappers/permissions.mapper';
+import { mapRealmRolesToAppRoles } from '../mappers/roles.mapper';
 import { EventBus } from '@gitcode/messaging';
 import { AUTH_PATTERNS, UserCreatedEvent } from '@gitcode/contracts';
-import { GitHubTokenDto } from './dto/github-token.dto';
+import { GitHubTokenDto } from '../dto/github-token.dto';
 import { OauthService } from './oauth.service';
 import { SessionService } from './session.service';
+import { UpdateUserDto } from '../dto/update-user.dto';
+import { AppPermissions, AppRoles, UUID } from '@gitcode/types';
 
 @Injectable()
 export class AuthService {
@@ -208,8 +210,28 @@ export class AuthService {
     });
 
     // Keycloak tokens are not encrypted, unlike Github tokens
-    const oAuthToken = await this.prisma.oAuthToken.create({
-      data: {
+    const oAuthToken = await this.prisma.oAuthToken.upsert({
+      where: {
+        userId_provider: {
+          userId: user.id,
+          provider: 'keycloak',
+        },
+      },
+      update: {
+        userId: user.id,
+        provider: 'keycloak',
+        accessToken: tokens.access_token,
+        refreshToken: tokens.refresh_token,
+        expiresAt: tokens.expires_in
+          ? new Date(Date.now() + tokens.expires_in * 1000)
+          : null,
+        scope: tokens.scope,
+        tokenType: tokens.token_type,
+        isActive: true,
+        revokedAt: null,
+        updatedAt: new Date(),
+      },
+      create: {
         userId: user.id,
         provider: 'keycloak',
         accessToken: tokens.access_token,
@@ -289,7 +311,7 @@ export class AuthService {
     // Get user
     const user = await this.validateUser(sessionData.userId);
 
-    let newKeycloakTokens;
+    let newKeycloakTokens: any;
     try {
       newKeycloakTokens = await this.oauthService.exchangeRefreshTokenForTokens(
         oauthToken.refreshToken,
@@ -319,19 +341,13 @@ export class AuthService {
     const appRoles = mapRealmRolesToAppRoles(realmRoles);
     const appPermissions = mapRolesToPermissions(realmRoles);
 
-    const updatedUser = await this.prisma.user.update({
-      where: { id: user.id },
-      data: {
-        email: userInfo.email,
-        username: userInfo.preferred_username,
-        firstName: userInfo.given_name,
-        lastName: userInfo.family_name,
-        avatarUrl: userInfo.picture,
-        emailVerified: userInfo.email_verified || false,
-        roles: appRoles,
-        permissions: appPermissions,
-      },
-    });
+    const userDataToUpdate: UpdateUserDto = this.mapUserInfoToUpdate(
+      userInfo,
+      appRoles,
+      appPermissions,
+    );
+
+    const updatedUser = await this.updateUser(user.id, userDataToUpdate);
 
     await this.prisma.oAuthToken.update({
       where: { id: sessionData.oauthTokenId },
@@ -494,17 +510,21 @@ export class AuthService {
         oauthToken.accessToken,
       );
 
+      // Extract roles and permissions from Keycloak token and map to app's roles
+      const realmRoles = this.oauthService.getRealmRoles(
+        oauthToken.accessToken,
+      );
+      const appRoles = mapRealmRolesToAppRoles(realmRoles);
+      const appPermissions = mapRolesToPermissions(realmRoles);
+
+      const userDataToUpdate: UpdateUserDto = this.mapUserInfoToUpdate(
+        userInfo,
+        appRoles,
+        appPermissions,
+      );
+
       // Update user profile in the database
-      const tokens = {
-        access_token: oauthToken.accessToken,
-        refresh_token: oauthToken.refreshToken,
-        expires_in: oauthToken.expiresAt
-          ? Math.floor((oauthToken.expiresAt.getTime() - Date.now()) / 1000)
-          : null,
-        scope: oauthToken.scope,
-        token_type: oauthToken.tokenType,
-      };
-      await this.upsertUser(userInfo, tokens);
+      await this.updateUser(userId, userDataToUpdate);
 
       return { message: 'Profile updated successfully', success: true };
     } catch (error) {
@@ -554,5 +574,51 @@ export class AuthService {
     return this.prisma.oAuthToken.findUnique({
       where: { id: oauthTokenId, isActive: true },
     });
+  }
+
+  /**
+   * Update the user record in the database
+   * @param userId - the ID of the user to update
+   * @param updateUserDto - the updated user information to save in the database
+   * @returns
+   */
+  private async updateUser(userId: UUID, updateUserDto: UpdateUserDto) {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        email: updateUserDto.email,
+        username: updateUserDto.username,
+        firstName: updateUserDto.firstName,
+        lastName: updateUserDto.lastName,
+        avatarUrl: updateUserDto.avatarUrl,
+        emailVerified: updateUserDto.emailVerified,
+        roles: updateUserDto.roles,
+        permissions: updateUserDto.permissions,
+      },
+    });
+  }
+
+  /**
+   * Maps user information to the update DTO
+   * @param userInfo - the user information from the OAuth provider
+   * @param appRoles - the mapped application roles
+   * @param appPermissions - the mapped application permissions
+   * @returns the updated user DTO
+   */
+  private mapUserInfoToUpdate(
+    userInfo: any,
+    appRoles: AppRoles,
+    appPermissions: AppPermissions,
+  ): UpdateUserDto {
+    return {
+      email: userInfo.email,
+      username: userInfo.preferred_username,
+      firstName: userInfo.given_name,
+      lastName: userInfo.family_name,
+      avatarUrl: userInfo.picture,
+      emailVerified: userInfo.email_verified || false,
+      roles: appRoles,
+      permissions: appPermissions,
+    };
   }
 }

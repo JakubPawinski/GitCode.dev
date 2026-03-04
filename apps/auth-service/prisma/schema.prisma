@@ -53,6 +53,7 @@ model OAuthToken {
   
   user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@unique([userId, provider])
   @@index([userId])
   @@index([provider])
   @@map("oauth_tokens")
