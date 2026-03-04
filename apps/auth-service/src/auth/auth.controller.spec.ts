@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthController } from './auth.controller';
-import { AuthService } from './auth.service';
+import { AuthService } from './providers/auth.service';
 import { RedisService } from '../redis/redis.service';
 import { AppService } from '../app.service';
 import { ConfigService } from '@nestjs/config';
