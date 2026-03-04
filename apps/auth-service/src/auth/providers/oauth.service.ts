@@ -218,7 +218,7 @@ export class OauthService {
         access_token: params.get('access_token'),
         refresh_token: params.get('refresh_token'),
         expires_in: params.get('expires_in')
-          ? parseInt(params.get('expires_in'))
+          ? parseInt(params.get('expires_in') as string, 10)
           : null,
         scope: params.get('scope'),
         token_type: params.get('token_type'),

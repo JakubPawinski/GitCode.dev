@@ -151,8 +151,24 @@ export class AuthService {
       githubToken.access_token,
     );
 
-    await this.prisma.oAuthToken.create({
-      data: {
+    await this.prisma.oAuthToken.upsert({
+      where: {
+        userId_provider: {
+          userId: userId,
+          provider: 'github',
+        },
+      },
+      update: {
+        userId,
+        provider: 'github',
+        accessToken: encryptedToken,
+        isActive: true,
+        revokedAt: null,
+        updatedAt: new Date(),
+        scope: githubToken.scope,
+        tokenType: githubToken.token_type || 'bearer',
+      },
+      create: {
         userId,
         provider: 'github',
         accessToken: encryptedToken,
@@ -571,9 +587,14 @@ export class AuthService {
    * @returns the OAuth token record
    */
   private async getActiveOAuthToken(oauthTokenId: string) {
-    return this.prisma.oAuthToken.findUnique({
+    const oauthToken = await this.prisma.oAuthToken.findFirst({
       where: { id: oauthTokenId, isActive: true },
     });
+    if (!oauthToken) {
+      this.logger.warn(`Active OAuth token not found with ID: ${oauthTokenId}`);
+      return null
+    }
+    return oauthToken;
   }
 
   /**
