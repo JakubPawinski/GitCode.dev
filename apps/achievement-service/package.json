@@ -55,11 +55,25 @@
         ],
         "executor": "nx:noop"
       },
+      "prisma-generate": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "npx prisma generate --config=apps/achievement-service/prisma.config.ts"
+        }
+      },
+      "db-migrate": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "npx prisma migrate dev --config=apps/achievement-service/prisma.config.ts"
+        }
+      },
       "serve": {
         "continuous": true,
         "executor": "@nx/js:node",
         "defaultConfiguration": "development",
         "dependsOn": [
+          "prisma-generate",
+          "db-migrate",
           "build"
         ],
         "options": {
