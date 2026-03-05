@@ -30,9 +30,10 @@ model UserAchievement {
 
   unlockedAt    DateTime @default(now())
 
-  achievement   Achievement @relation(fields: [achievementId], references: [id])
+  achievement   Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+  @@index([achievementId])
   @@unique([userId, achievementId])
 }
 
@@ -45,7 +46,9 @@ model UserProgress {
 
   updatedAt     DateTime @default(now()) @updatedAt
 
-  achievement   Achievement @relation(fields: [achievementId], references: [id])
+  achievement   Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
 
+  @@index([userId])
+  @@index([achievementId])
   @@unique([userId, achievementId])
 }
