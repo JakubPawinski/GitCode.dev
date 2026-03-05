@@ -19,28 +19,9 @@ export class AchievementService {
 
     const skip = (searchAchievementsDto.page - 1) * searchAchievementsDto.limit;
 
-    const where: Prisma.AchievementWhereInput = {};
-
-    if (searchAchievementsDto.name) {
-      where.name = {
-        contains: searchAchievementsDto.name,
-        mode: 'insensitive',
-      };
-    }
-
-    if (searchAchievementsDto.describtion) {
-      where.description = {
-        contains: searchAchievementsDto.describtion,
-        mode: 'insensitive',
-      };
-    }
-
-    if (searchAchievementsDto.eventType) {
-      where.eventType = {
-        contains: searchAchievementsDto.eventType,
-        mode: 'insensitive',
-      };
-    }
+    const where = this.buildWhereClause<Prisma.AchievementWhereInput>(
+      searchAchievementsDto,
+    );
 
     const [achievements, total] = await this.prismaService.$transaction([
       this.prismaService.achievement.findMany({
@@ -84,31 +65,11 @@ export class AchievementService {
 
     const skip = (searchAchievementsDto.page - 1) * searchAchievementsDto.limit;
 
-    const where: Prisma.UserAchievementWhereInput = {
-      userId,
-      achievement: {},
-    };
-
-    if (searchAchievementsDto.name) {
-      where.achievement.name = {
-        contains: searchAchievementsDto.name,
-        mode: 'insensitive',
-      };
-    }
-
-    if (searchAchievementsDto.describtion) {
-      where.achievement.description = {
-        contains: searchAchievementsDto.describtion,
-        mode: 'insensitive',
-      };
-    }
-
-    if (searchAchievementsDto.eventType) {
-      where.achievement.eventType = {
-        contains: searchAchievementsDto.eventType,
-        mode: 'insensitive',
-      };
-    }
+    const where: Prisma.UserAchievementWhereInput =
+      this.buildWhereClause<Prisma.UserAchievementWhereInput>(
+        searchAchievementsDto,
+      );
+    where.userId = userId;
 
     const [userAchievements, total] = await this.prismaService.$transaction([
       this.prismaService.userAchievement.findMany({
@@ -157,31 +118,11 @@ export class AchievementService {
 
     const skip = (searchAchievementsDto.page - 1) * searchAchievementsDto.limit;
 
-    const where: Prisma.UserProgressWhereInput = {
-      userId,
-      achievement: {},
-    };
-
-    if (searchAchievementsDto.name) {
-      where.achievement.name = {
-        contains: searchAchievementsDto.name,
-        mode: 'insensitive',
-      };
-    }
-
-    if (searchAchievementsDto.describtion) {
-      where.achievement.description = {
-        contains: searchAchievementsDto.describtion,
-        mode: 'insensitive',
-      };
-    }
-
-    if (searchAchievementsDto.eventType) {
-      where.achievement.eventType = {
-        contains: searchAchievementsDto.eventType,
-        mode: 'insensitive',
-      };
-    }
+    const where: Prisma.UserProgressWhereInput =
+      this.buildWhereClause<Prisma.UserProgressWhereInput>(
+        searchAchievementsDto,
+      );
+    where.userId = userId;
 
     const [userProgress, total] = await this.prismaService.$transaction([
       this.prismaService.userProgress.findMany({
@@ -217,5 +158,36 @@ export class AchievementService {
       },
     };
   }
-}
 
+  /**
+   * Builds a Prisma where clause based on the provided search criteria.
+   * @param searchAchievementsDto - The search criteria for filtering achievements.
+   * @returns - A Prisma where clause object that can be used in database queries.
+   */
+  private buildWhereClause<T>(searchAchievementsDto: SearchAchievementsDto): T {
+    const where: any = {};
+
+    if (searchAchievementsDto.name) {
+      where.name = {
+        contains: searchAchievementsDto.name,
+        mode: 'insensitive',
+      };
+    }
+
+    if (searchAchievementsDto.describtion) {
+      where.description = {
+        contains: searchAchievementsDto.describtion,
+        mode: 'insensitive',
+      };
+    }
+
+    if (searchAchievementsDto.eventType) {
+      where.eventType = {
+        contains: searchAchievementsDto.eventType,
+        mode: 'insensitive',
+      };
+    }
+
+    return where;
+  }
+}
