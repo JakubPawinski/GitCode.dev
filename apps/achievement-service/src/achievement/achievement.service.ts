@@ -5,6 +5,8 @@ import { GetAchievementDto } from './dtos/get-achievemeent.dto';
 import { SearchAchievementsDto } from './dtos/search-achievements.dto';
 import { Prisma } from '@prisma/client-achievement';
 import { GetAchievementProgressDto } from './dtos/get-achievement-progress.dto';
+import { PatchAchievementDto } from './dtos/patch-achievement.dto';
+import { PostAchievementDto } from './dtos/post-achievement.dto';
 
 @Injectable()
 export class AchievementService {
@@ -40,6 +42,7 @@ export class AchievementService {
     return {
       data: achievements.map((achievement) => ({
         id: achievement.id,
+        code: achievement.code,
         name: achievement.name,
         describtion: achievement.description,
         iconUrl: achievement.iconUrl,
@@ -93,6 +96,7 @@ export class AchievementService {
     return {
       data: userAchievements.map((userAchievement) => ({
         id: userAchievement.achievement.id,
+        code: userAchievement.achievement.code,
         name: userAchievement.achievement.name,
         describtion: userAchievement.achievement.description,
         iconUrl: userAchievement.achievement.iconUrl,
@@ -141,6 +145,7 @@ export class AchievementService {
     return {
       data: userProgress.map((userProgress) => ({
         id: userProgress.achievement.id,
+        code: userProgress.achievement.code,
         name: userProgress.achievement.name,
         describtion: userProgress.achievement.description,
         iconUrl: userProgress.achievement.iconUrl,
@@ -157,6 +162,69 @@ export class AchievementService {
         hasPreviousPage: searchAchievementsDto.page > 1,
       },
     };
+  }
+
+  public async createAchievement(
+    postAchievementDto: PostAchievementDto,
+  ): Promise<GetAchievementDto> {
+    this.logger.log('Creating achievement');
+
+    const achievement = await this.prismaService.achievement.create({
+      data: {
+        code: postAchievementDto.code,
+        name: postAchievementDto.name,
+        description: postAchievementDto.describtion,
+        iconUrl: postAchievementDto.iconUrl,
+        eventType: postAchievementDto.eventType,
+        targetValue: postAchievementDto.targetValue,
+      },
+    });
+
+    return {
+      id: achievement.id,
+      code: achievement.code,
+      name: achievement.name,
+      describtion: achievement.description,
+      iconUrl: achievement.iconUrl,
+      eventType: achievement.eventType,
+      targetValue: achievement.targetValue,
+    };
+  }
+
+  public async updateAchievement(
+    id: string,
+    patchAchievementDto: PatchAchievementDto,
+  ): Promise<GetAchievementDto> {
+    this.logger.log(`Updating achievement with id ${id}`);
+
+    const achievement = await this.prismaService.achievement.update({
+      where: { id },
+      data: {
+        name: patchAchievementDto.name,
+        description: patchAchievementDto.describtion,
+        iconUrl: patchAchievementDto.iconUrl,
+        eventType: patchAchievementDto.eventType,
+        targetValue: patchAchievementDto.targetValue,
+      },
+    });
+
+    return {
+      id: achievement.id,
+      code: achievement.code,
+      name: achievement.name,
+      describtion: achievement.description,
+      iconUrl: achievement.iconUrl,
+      eventType: achievement.eventType,
+      targetValue: achievement.targetValue,
+    };
+  }
+
+  public async deleteAchievement(id: string): Promise<void> {
+    this.logger.log(`Deleting achievement with id ${id}`);
+
+    await this.prismaService.achievement.delete({
+      where: { id },
+    });
   }
 
   /**

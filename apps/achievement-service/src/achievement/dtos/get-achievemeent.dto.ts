@@ -11,6 +11,13 @@ export class GetAchievementDto {
 
   @IsString()
   @ApiProperty({
+    description: 'Unique code for the achievement',
+    example: 'FIRST_COMMIT',
+  })
+  code: string;
+
+  @IsString()
+  @ApiProperty({
     description: 'Name of the achievement',
     example: 'First Commit',
   })
