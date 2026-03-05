@@ -36,6 +36,8 @@ const REGULAR_USER_PERMISSIONS: AppPermissions = [
   AppPermission.PAYMENT_INITIATE,
   AppPermission.PAYMENT_READ_SELF,
   AppPermission.SUBSCRIPTION_MANAGE,
+  // Achievements
+  AppPermission.VIEW_ACHIEVEMENTS,
 ];
 const PREMIUM_USER_ADDITIONAL_PERMISSIONS: AppPermissions = [
   // Premium content
@@ -53,6 +55,10 @@ const MODERATOR_ADDITIONAL_PERMISSIONS: AppPermissions = [
   AppPermission.SUBMISSION_REVIEW,
   //
   AppPermission.PROBLEM_READ_HIDDEN,
+  // Achievement management
+  AppPermission.CREATE_ACHIEVEMENTS,
+  AppPermission.UPDATE_ACHIEVEMENTS,
+  AppPermission.DELETE_ACHIEVEMENTS,
 ];
 const ADMIN_ADDITIONAL_PERMISSIONS: AppPermissions = [
   // Content management
