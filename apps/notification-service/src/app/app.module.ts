@@ -10,11 +10,12 @@ import { NotificationModule } from '../notification/notification.module';
 import { GitCodeAuthModule } from '@gitcode/auth';
 import jwtConfig from './config/jwt.config';
 import { MessagingModule } from '@gitcode/messaging';
+import redisConfig from './config/redis.config';
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [databaseConfig, rabbitmqConfig, jwtConfig],
+      load: [databaseConfig, rabbitmqConfig, jwtConfig, redisConfig],
       validationSchema: envValidation,
     }),
     NotificationModule,
