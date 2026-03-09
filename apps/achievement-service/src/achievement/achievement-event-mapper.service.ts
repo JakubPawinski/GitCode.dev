@@ -36,7 +36,7 @@ export class AchievementEventMapperService {
       languageEventType:
         this.languageMap[normalizedLanguage] || 'SUBMISSION_COMPLETED_UNKNOWN',
       difficultyEventType: difficulty
-        ? this.difficultyMap[difficulty.toUpperCase()] ||
+        ? this.difficultyMap[difficulty.toUpperCase().trim()] ||
           'SUBMISSION_COMPLETED_UNKNOWN'
         : 'SUBMISSION_COMPLETED_UNKNOWN',
     };
