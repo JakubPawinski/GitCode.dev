@@ -11,7 +11,7 @@ export class PrismaService
   private pool: Pool;
 
   constructor() {
-    const connectionString = process.env.ACHIEVEMENT_SERVICE_DATABASE_URL;
+    const connectionString = process.env.ACHIEVEMENT_DATABASE_URL;
     const pool = new Pool({ connectionString });
     const adapter = new PrismaPg(pool);
 
