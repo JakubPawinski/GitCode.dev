@@ -32,9 +32,7 @@ export class AchievementService {
 
     const skip = (searchAchievementsDto.page - 1) * searchAchievementsDto.limit;
 
-    const where = this.buildWhereClause<Prisma.AchievementWhereInput>(
-      searchAchievementsDto,
-    );
+    const where = this.buildAchievementWhereClause(searchAchievementsDto);
 
     const [achievements, total] = await this.prismaService.$transaction([
       this.prismaService.achievement.findMany({
@@ -80,9 +78,7 @@ export class AchievementService {
     const skip = (searchAchievementsDto.page - 1) * searchAchievementsDto.limit;
 
     const where: Prisma.UserAchievementWhereInput =
-      this.buildWhereClause<Prisma.UserAchievementWhereInput>(
-        searchAchievementsDto,
-      );
+      this.buildAchievementRelationWhereClause(searchAchievementsDto);
     where.userId = userId;
 
     const [userAchievements, total] = await this.prismaService.$transaction([
@@ -134,9 +130,7 @@ export class AchievementService {
     const skip = (searchAchievementsDto.page - 1) * searchAchievementsDto.limit;
 
     const where: Prisma.UserProgressWhereInput =
-      this.buildWhereClause<Prisma.UserProgressWhereInput>(
-        searchAchievementsDto,
-      );
+      this.buildAchievementRelationWhereClause(searchAchievementsDto);
     where.userId = userId;
 
     const [userProgress, total] = await this.prismaService.$transaction([
@@ -239,11 +233,13 @@ export class AchievementService {
   }
 
   /**
-   * Builds a Prisma where clause based on the provided search criteria.
-   * @param searchAchievementsDto - The search criteria for filtering achievements.
-   * @returns - A Prisma where clause object that can be used in database queries.
+   * Builds a where clause for filtering achievements based on achievement fields.
+   * @param searchAchievementsDto - Search achievements dto
+   * @returns - where clause
    */
-  private buildWhereClause<T>(searchAchievementsDto: SearchAchievementsDto): T {
+  private buildAchievementWhereClause(
+    searchAchievementsDto: SearchAchievementsDto,
+  ): Prisma.AchievementWhereInput {
     const where: any = {};
 
     if (searchAchievementsDto.name) {
@@ -268,6 +264,42 @@ export class AchievementService {
     }
 
     return where;
+  }
+
+  /**
+   * Builds a where clause for filtering achievements based on related achievement fields.
+   * @param searchAchievementsDto - Search achievements dto
+   * @returns - where clause
+   */
+  private buildAchievementRelationWhereClause(
+    searchAchievementsDto: SearchAchievementsDto,
+  ): any {
+    const achievementWhere: any = {};
+
+    if (searchAchievementsDto.name) {
+      achievementWhere.name = {
+        contains: searchAchievementsDto.name,
+        mode: 'insensitive',
+      };
+    }
+
+    if (searchAchievementsDto.description) {
+      achievementWhere.description = {
+        contains: searchAchievementsDto.description,
+        mode: 'insensitive',
+      };
+    }
+
+    if (searchAchievementsDto.eventType) {
+      achievementWhere.eventType = {
+        contains: searchAchievementsDto.eventType,
+        mode: 'insensitive',
+      };
+    }
+
+    return Object.keys(achievementWhere).length > 0
+      ? { achievement: achievementWhere }
+      : {};
   }
 
   public async handleSubmissionCompletedEvent(
