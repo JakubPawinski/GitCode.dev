@@ -1,0 +1,54 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../../../node_modules/@prisma/client-achievement"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Achievement {
+  id          String   @id @default(uuid())
+  code       String   @unique
+  name       String
+  description String
+  iconUrl    String
+
+  eventType   String
+  targetValue Int
+
+  createdAt   DateTime @default(now())
+
+  userAchievements UserAchievement[]
+  userProgress      UserProgress[]
+}
+
+model UserAchievement {
+  id            String   @id @default(uuid())
+  userId        String
+  achievementId String
+
+  unlockedAt    DateTime @default(now())
+
+  achievement   Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([achievementId])
+  @@unique([userId, achievementId])
+}
+
+model UserProgress {
+  id            String   @id @default(uuid())
+  userId        String
+  achievementId String
+
+  currentProgress      Int
+
+  updatedAt     DateTime @default(now()) @updatedAt
+
+  achievement   Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([achievementId])
+  @@unique([userId, achievementId])
+}

@@ -150,6 +150,27 @@ services:
     networks:
       - gitcodedev-network
     restart: unless-stopped
+  achievement-db:
+    image: postgres:18-alpine
+    container_name: achievement-db
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_USER=${ACHIEVEMENT_DB_USER}
+      - POSTGRES_PASSWORD=${ACHIEVEMENT_DB_PASSWORD}
+      - POSTGRES_DB=${ACHIEVEMENT_DB_NAME}
+    ports:
+      - '${ACHIEVEMENT_DB_PORT}:5432'
+    volumes:
+      - achievement-db-data-dev:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${ACHIEVEMENT_DB_USER}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - gitcodedev-network
+    restart: unless-stopped
 
   problem-redis:
     image: redis:7-alpine
@@ -294,3 +315,4 @@ volumes:
   notification-db-data-dev:
   ai-db-data-dev:
   github_postgres_data:
+  achievement-db-data-dev:
