@@ -209,6 +209,82 @@ export class ProblemService {
     return mapped;
   }
 
+  /**
+   * Get problem details by its unique ID.
+   * @param id - The unique identifier of the problem.
+   * @returns - Detailed information about the problem.
+   */
+  public async findProblemById(id: string): Promise<ProblemDetailResponseDto> {
+    const problem = await this.prisma.problem.findUnique({
+      where: {
+        id,
+      },
+      select: {
+        id: true,
+        problemId: true,
+        title: true,
+        difficulty: true,
+        problemSlug: true,
+        description: true,
+        codeSnippets: true,
+        topics: { select: { topic: true } },
+        examples: { select: { inputText: true, outputText: true } },
+        constraints: { select: { constraint: true } },
+        hints: {
+          select: { hintText: true, orderIndex: true },
+          orderBy: { orderIndex: 'asc' },
+        },
+        testCases: {
+          where: { isPublic: true },
+          select: { input: true, expectedOutput: true },
+          orderBy: { orderIndex: 'asc' },
+        },
+        similarProblems: {
+          select: {
+            problemTo: {
+              select: {
+                title: true,
+                problemSlug: true,
+                description: true,
+                difficulty: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!problem) {
+      throw new NotFoundException(`Problem with id "${id}" not found`);
+    }
+
+    const mapped: ProblemDetailResponseDto = {
+      id: problem.id,
+      problemId: problem.problemId,
+      title: problem.title,
+      difficulty: problem.difficulty,
+      problemSlug: problem.problemSlug,
+      description: problem.description,
+      codeSnippets: this.mapCodeSnippets(problem.codeSnippets),
+      topics: problem.topics.map((t) => t.topic),
+      examples: problem.examples.map((e) => ({
+        inputText: e.inputText,
+        outputText: e.outputText,
+      })),
+      constraints: problem.constraints.map((c) => c.constraint),
+      hints: problem.hints.map((h) => ({
+        hintText: h.hintText,
+        orderIndex: h.orderIndex,
+      })),
+      testCases: problem.testCases.map((t) => ({
+        input: t.input,
+        expectedOutput: t.expectedOutput,
+      })),
+      similarProblems: problem.similarProblems.map((p) => p.problemTo),
+    };
+    return mapped;
+  }
+
   async createProblem(
     createProblemDto: CreateProblemDto,
   ): Promise<ProblemDetailResponseDto> {
