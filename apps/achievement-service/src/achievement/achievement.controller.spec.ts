@@ -461,7 +461,7 @@ describe('AchievementController', () => {
       const id = '1';
       const patchDto = {
         name: 'Updated Name',
-        describtion: 'Updated Description',
+        description: 'Updated Description',
         targetValue: 20,
       };
 
@@ -503,7 +503,7 @@ describe('AchievementController', () => {
       const id = '1';
       const patchDto = {
         name: 'New Name',
-        describtion: 'New Description',
+        description: 'New Description',
         iconUrl: '/new-icon.png',
         targetValue: 50,
       };

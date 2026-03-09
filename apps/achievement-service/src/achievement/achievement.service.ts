@@ -416,20 +416,10 @@ export class AchievementService {
             `User ${userId} unlocked achievement: ${achievement.name} (${achievement.code})!`,
           );
 
-          const alreadyUnlocked = await prisma.userAchievement.findUnique({
-            where: {
-              userId_achievementId: {
-                userId,
-                achievementId: achievement.id,
-              },
-            },
-          });
-          if (!alreadyUnlocked) {
-            this.eventBus.publish(
-              AI_PATTERNS.GENERATE_README,
-              new GenerateReadmeCommand(userId),
-            );
-          }
+          this.eventBus.publish(
+            AI_PATTERNS.GENERATE_README,
+            new GenerateReadmeCommand(userId),
+          );
         }
       }
     });

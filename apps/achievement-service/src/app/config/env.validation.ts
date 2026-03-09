@@ -7,4 +7,5 @@ export default Joi.object({
   INTERNAL_API_KEY: Joi.string().required(),
   PROBLEM_SERVICE_URL: Joi.string().uri().required(),
   ACHIEVEMENT_PORT: Joi.number().required(),
+  ACHIEVEMENT_DATABASE_URL: Joi.string().required(),
 });
