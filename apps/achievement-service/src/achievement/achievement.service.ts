@@ -7,12 +7,20 @@ import { Prisma } from '@prisma/client-achievement';
 import { GetAchievementProgressDto } from './dtos/get-achievement-progress.dto';
 import { PatchAchievementDto } from './dtos/patch-achievement.dto';
 import { PostAchievementDto } from './dtos/post-achievement.dto';
+import { SubmissionCompletedEnvelope } from './events/envelopes';
+import axios from 'axios';
+import { ConfigService } from '@nestjs/config';
+import { AchievementEventMapperService } from './achievement-event-mapper.service';
 
 @Injectable()
 export class AchievementService {
   private readonly logger = new Logger(AchievementService.name);
 
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly configService: ConfigService,
+    private readonly achievementEventMapperService: AchievementEventMapperService,
+  ) {}
 
   public async getAchievements(
     searchAchievementsDto: SearchAchievementsDto,
@@ -257,5 +265,123 @@ export class AchievementService {
     }
 
     return where;
+  }
+
+  public async handleSubmissionCompletedEvent(
+    envelope: SubmissionCompletedEnvelope,
+  ): Promise<void> {
+    this.logger.log(
+      `Handling submission completed event for user ${envelope.payload.userId}`,
+    );
+    try {
+      const { userId, language, problemId } = envelope.payload;
+
+      const problemDetails = await this.fetchProblemDetails(problemId);
+
+      const difficulty = problemDetails.difficulty;
+
+      // Map the submission event to potential achievement events
+      const eventTypes =
+        this.achievementEventMapperService.getAllEventTypesForSubmission(
+          language,
+          difficulty,
+        );
+
+      for (const eventType of eventTypes) {
+        await this.processAchievementEventType(userId, eventType);
+      }
+
+      this.logger.log(
+        `Processed submission completed event for user ${userId} with event types: ${eventTypes.join(
+          ', ',
+        )}`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Error handling submission completed event for user ${envelope.payload.userId}`,
+        error,
+      );
+      throw error;
+    }
+  }
+
+  private async fetchProblemDetails(problemId: string): Promise<any> {
+    try {
+      this.logger.log(`Fetching problem details for problem ID: ${problemId}`);
+      const response = await axios.get(
+        `${this.configService.get('PROBLEM_SERVICE_URL')}/problems/internal/id/${problemId}`,
+        {
+          headers: {
+            'x-internal-api-key': `${this.configService.get('INTERNAL_API_KEY')}`,
+          },
+        },
+      );
+      return response.data;
+    } catch (error) {
+      this.logger.error(
+        `Failed to fetch problem details for problem ${problemId}`,
+        error,
+      );
+      throw new Error('Failed to fetch problem details');
+    }
+  }
+
+  private async processAchievementEventType(
+    userId: string,
+    eventType: string,
+  ): Promise<void> {
+    await this.prismaService.$transaction(async (prisma) => {
+      // Find all achievements matching this event type
+      const achievements = await prisma.achievement.findMany({
+        where: { eventType },
+      });
+
+      for (const achievement of achievements) {
+        // Update or create user progress
+        const userProgress = await prisma.userProgress.upsert({
+          where: {
+            userId_achievementId: {
+              userId,
+              achievementId: achievement.id,
+            },
+          },
+          update: {
+            currentProgress: {
+              increment: 1,
+            },
+            updatedAt: new Date(),
+          },
+          create: {
+            userId,
+            achievementId: achievement.id,
+            currentProgress: 1,
+          },
+        });
+
+        this.logger.log(
+          `Updated progress for achievement ${achievement.code} (ID: ${achievement.id}) for user ${userId}. Current progress: ${userProgress.currentProgress}/${achievement.targetValue}`,
+        );
+        // Check if achievement should be unlocked
+        if (userProgress.currentProgress >= achievement.targetValue) {
+          await prisma.userAchievement.upsert({
+            where: {
+              userId_achievementId: {
+                userId,
+                achievementId: achievement.id,
+              },
+            },
+            update: {},
+            create: {
+              userId,
+              achievementId: achievement.id,
+            },
+          });
+
+          this.logger.log(
+            `User ${userId} unlocked achievement: ${achievement.name} (${achievement.code})!`,
+          );
+        }
+      }
+    });
   }
 }
