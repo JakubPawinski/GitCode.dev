@@ -19,8 +19,8 @@ async function bootstrap() {
   app.useGlobalFilters(new HttpExceptionFilter('notification-service'));
 
   app.enableCors({
-    	origin: '*',
-	credentials: true,
+    origin: 'http://localhost:3000',
+    credentials: true,
   });
 
   // Swagger setup
@@ -40,7 +40,7 @@ async function bootstrap() {
   SwaggerModule.setup('docs', app, document);
 
   const port = process.env.NOTIFICATION_PORT || 4003;
-  await app.listen(port);
+  await app.listen(port, '0.0.0.0');
 }
 
 bootstrap();
