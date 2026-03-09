@@ -67,7 +67,7 @@ describe('AchievementController', () => {
           provide: AchievementService,
           useValue: {
             getAchievements: jest.fn(),
-            getAchievedAchievemnts: jest.fn(),
+            getAchievedAchievements: jest.fn(),
             getUserAchievementProgress: jest.fn(),
             createAchievement: jest.fn(),
             updateAchievement: jest.fn(),
@@ -206,7 +206,7 @@ describe('AchievementController', () => {
         sortOrder: 'asc' as const,
       };
 
-      service.getAchievedAchievemnts.mockResolvedValueOnce(mockPaginatedResult);
+      service.getAchievedAchievements.mockResolvedValueOnce(mockPaginatedResult);
 
       const result = await controller.getUserAchievements(
         mockUserId,
@@ -214,7 +214,7 @@ describe('AchievementController', () => {
       );
 
       expect(result).toEqual(mockPaginatedResult);
-      expect(service.getAchievedAchievemnts).toHaveBeenCalledWith(
+      expect(service.getAchievedAchievements).toHaveBeenCalledWith(
         mockUserId,
         searchDto,
       );
@@ -240,7 +240,7 @@ describe('AchievementController', () => {
         },
       };
 
-      service.getAchievedAchievemnts.mockResolvedValueOnce(emptyResult);
+      service.getAchievedAchievements.mockResolvedValueOnce(emptyResult);
 
       const result = await controller.getUserAchievements(
         mockUserId,
@@ -259,11 +259,11 @@ describe('AchievementController', () => {
         sortOrder: 'asc' as const,
       };
 
-      service.getAchievedAchievemnts.mockResolvedValueOnce(mockPaginatedResult);
+      service.getAchievedAchievements.mockResolvedValueOnce(mockPaginatedResult);
 
       await controller.getUserAchievements(mockUserId, searchDto);
 
-      expect(service.getAchievedAchievemnts).toHaveBeenCalledWith(
+      expect(service.getAchievedAchievements).toHaveBeenCalledWith(
         mockUserId,
         expect.objectContaining({
           name: 'Beginner',
@@ -280,11 +280,11 @@ describe('AchievementController', () => {
         sortOrder: 'asc' as const,
       };
 
-      service.getAchievedAchievemnts.mockResolvedValueOnce(mockPaginatedResult);
+      service.getAchievedAchievements.mockResolvedValueOnce(mockPaginatedResult);
 
       await controller.getUserAchievements(differentUserId, searchDto);
 
-      expect(service.getAchievedAchievemnts).toHaveBeenCalledWith(
+      expect(service.getAchievedAchievements).toHaveBeenCalledWith(
         differentUserId,
         searchDto,
       );
@@ -393,7 +393,7 @@ describe('AchievementController', () => {
       const postDto = {
         code: 'test_achievement',
         name: 'Test Achievement',
-        describtion: 'Test Description',
+        description: 'Test Description',
         iconUrl: '/test.png',
         eventType: 'TEST_EVENT',
         targetValue: 5,
@@ -411,7 +411,7 @@ describe('AchievementController', () => {
       const postDto = {
         code: 'test_achievement',
         name: 'Test Achievement',
-        describtion: 'Test Description',
+        description: 'Test Description',
         iconUrl: '/test.png',
         eventType: 'TEST_EVENT',
         targetValue: 5,
@@ -433,7 +433,7 @@ describe('AchievementController', () => {
       const postDto = {
         code: 'new_achievement',
         name: 'New Achievement',
-        describtion: 'New Description',
+        description: 'New Description',
         iconUrl: '/new.png',
         eventType: 'NEW_EVENT',
         targetValue: 10,
@@ -496,7 +496,7 @@ describe('AchievementController', () => {
       const result = await controller.updateAchievement(id, patchDto);
 
       expect(result.name).toBe('Only Name Updated');
-      expect(result.describtion).toBe(mockAchievementDto.describtion);
+      expect(result.description).toBe(mockAchievementDto.description);
     });
 
     it('should update multiple fields', async () => {

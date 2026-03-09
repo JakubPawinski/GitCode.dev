@@ -138,44 +138,7 @@ export class ProblemService {
   }
 
   async findProblemBySlug(slug: string): Promise<ProblemDetailResponseDto> {
-    const problem = await this.prisma.problem.findUnique({
-      where: {
-        problemSlug: slug,
-      },
-      select: {
-        id: true,
-        problemId: true,
-        title: true,
-        difficulty: true,
-        problemSlug: true,
-        description: true,
-        codeSnippets: true,
-        topics: { select: { topic: true } },
-        examples: { select: { inputText: true, outputText: true } },
-        constraints: { select: { constraint: true } },
-        hints: {
-          select: { hintText: true, orderIndex: true },
-          orderBy: { orderIndex: 'asc' },
-        },
-        testCases: {
-          where: { isPublic: true },
-          select: { input: true, expectedOutput: true },
-          orderBy: { orderIndex: 'asc' },
-        },
-        similarProblems: {
-          select: {
-            problemTo: {
-              select: {
-                title: true,
-                problemSlug: true,
-                description: true,
-                difficulty: true,
-              },
-            },
-          },
-        },
-      },
-    });
+    const problem = await this.findProblemWithDetails({ problemSlug: slug });
 
     if (!problem) {
       throw new NotFoundException(`Problem with slug "${slug}" not found`);
@@ -209,16 +172,11 @@ export class ProblemService {
     return mapped;
   }
 
-  /**
-   * Get problem details by its unique ID.
-   * @param id - The unique identifier of the problem.
-   * @returns - Detailed information about the problem.
-   */
-  public async findProblemById(id: string): Promise<ProblemDetailResponseDto> {
-    const problem = await this.prisma.problem.findUnique({
-      where: {
-        id,
-      },
+  private async findProblemWithDetails(
+    where: any,
+  ): Promise<any> {
+    return await this.prisma.problem.findUnique({
+      where,
       select: {
         id: true,
         problemId: true,
@@ -253,6 +211,15 @@ export class ProblemService {
         },
       },
     });
+  }
+
+  /**
+   * Get problem details by its unique ID.
+   * @param id - The unique identifier of the problem.
+   * @returns - Detailed information about the problem.
+   */
+  public async findProblemById(id: string): Promise<ProblemDetailResponseDto> {
+    const problem = await this.findProblemWithDetails({ id });
 
     if (!problem) {
       throw new NotFoundException(`Problem with id "${id}" not found`);

@@ -55,7 +55,7 @@ export class AchievementService {
         id: achievement.id,
         code: achievement.code,
         name: achievement.name,
-        describtion: achievement.description,
+        description: achievement.description,
         iconUrl: achievement.iconUrl,
         eventType: achievement.eventType,
         targetValue: achievement.targetValue,
@@ -109,7 +109,7 @@ export class AchievementService {
         id: userAchievement.achievement.id,
         code: userAchievement.achievement.code,
         name: userAchievement.achievement.name,
-        describtion: userAchievement.achievement.description,
+        description: userAchievement.achievement.description,
         iconUrl: userAchievement.achievement.iconUrl,
         eventType: userAchievement.achievement.eventType,
         targetValue: userAchievement.achievement.targetValue,
@@ -158,7 +158,7 @@ export class AchievementService {
         id: userProgress.achievement.id,
         code: userProgress.achievement.code,
         name: userProgress.achievement.name,
-        describtion: userProgress.achievement.description,
+        description: userProgress.achievement.description,
         iconUrl: userProgress.achievement.iconUrl,
         eventType: userProgress.achievement.eventType,
         targetValue: userProgress.achievement.targetValue,
@@ -253,9 +253,9 @@ export class AchievementService {
       };
     }
 
-    if (searchAchievementsDto.describtion) {
+    if (searchAchievementsDto.description) {
       where.description = {
-        contains: searchAchievementsDto.describtion,
+        contains: searchAchievementsDto.description,
         mode: 'insensitive',
       };
     }

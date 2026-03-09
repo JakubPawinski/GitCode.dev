@@ -158,7 +158,7 @@ describe('AchievementService', () => {
       const postDto = {
         code: 'test_achievement',
         name: 'Test Achievement',
-        describtion: 'Test Description',
+        description: 'Test Description',
         iconUrl: '/test.png',
         eventType: 'TEST_EVENT',
         targetValue: 5,
@@ -183,7 +183,7 @@ describe('AchievementService', () => {
     it('should update an existing achievement', async () => {
       const patchDto = {
         name: 'Updated Name',
-        describtion: 'Updated Description',
+        description: 'Updated Description',
         iconUrl: '/updated.png',
         eventType: 'UPDATED_EVENT',
         targetValue: 10,
@@ -203,7 +203,7 @@ describe('AchievementService', () => {
       const result = await service.updateAchievement('1', patchDto);
 
       expect(result.name).toBe('Updated Name');
-      expect(result.describtion).toBe('Updated Description');
+      expect(result.description).toBe('Updated Description');
       expect(prismaMock.achievement.update).toHaveBeenCalledWith({
         where: { id: '1' },
         data: {
@@ -243,7 +243,7 @@ describe('AchievementService', () => {
 
       prismaMock.$transaction.mockResolvedValueOnce([mockUserAchievements, 1]);
 
-      const result = await service.getAchievedAchievemnts(mockUserId, {
+      const result = await service.getAchievedAchievements(mockUserId, {
         page: 1,
         limit: 10,
         sortBy: 'name' as const,
@@ -318,7 +318,7 @@ describe('AchievementService', () => {
 
       configService.get.mockReturnValueOnce('http://problem-service');
       mockedAxios.get.mockResolvedValueOnce({
-        data: { difficulty: 'MEDIUM' },
+        data: { data: { difficulty: 'MEDIUM' } },
       });
 
       achievementEventMapperService.getAllEventTypesForSubmission.mockReturnValueOnce(
@@ -380,7 +380,7 @@ describe('AchievementService', () => {
 
       configService.get.mockReturnValueOnce('http://problem-service');
       mockedAxios.get.mockResolvedValueOnce({
-        data: { difficulty: 'EASY' },
+        data: { data: { difficulty: 'EASY' } },
       });
 
       achievementEventMapperService.getAllEventTypesForSubmission.mockReturnValueOnce(
@@ -426,7 +426,7 @@ describe('AchievementService', () => {
 
       configService.get.mockReturnValueOnce('http://problem-service');
       mockedAxios.get.mockResolvedValueOnce({
-        data: { difficulty: 'MEDIUM' },
+        data: { data: { difficulty: 'MEDIUM' } },
       });
 
       achievementEventMapperService.getAllEventTypesForSubmission.mockReturnValueOnce(
@@ -472,7 +472,7 @@ describe('AchievementService', () => {
 
       configService.get.mockReturnValueOnce('http://problem-service');
       mockedAxios.get.mockResolvedValueOnce({
-        data: { difficulty: 'HARD' },
+        data: { data: { difficulty: 'HARD' } },
       });
 
       const eventTypes = [
