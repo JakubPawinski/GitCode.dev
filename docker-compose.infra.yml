@@ -167,6 +167,22 @@ services:
       - gitcodedev-network
     restart: unless-stopped
 
+  notification-redis:
+    image: redis:7-alpine
+    container_name: notification-redis-dev
+    ports:
+      - '${NOTIFICATION_REDIS_PORT}:6379'
+    volumes:
+      - notification-redis-data-dev:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - gitcodedev-network
+    restart: unless-stopped
+
   docker-daemon:
     image: docker:dind
     container_name: docker-daemon-dev
@@ -273,6 +289,7 @@ volumes:
   keycloak-db-data-dev:
   problem-db-data-dev:
   problem-redis-data-dev:
+  notification-redis-data-dev:
   problem-executions:
   notification-db-data-dev:
   ai-db-data-dev:
