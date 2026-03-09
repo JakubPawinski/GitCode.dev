@@ -20,7 +20,7 @@ import {
   getSchemaPath,
   ApiExtraModels,
 } from '@nestjs/swagger';
-import { AuthService } from './auth.service';
+import { AuthService } from './providers/auth.service';
 import {
   AuthResponseDto,
   UserDto,
