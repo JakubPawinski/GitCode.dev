@@ -78,6 +78,7 @@ http:
         - gateway
       middlewares:
         - strip-api
+      priority: 10
 
     ai-route:
       rule: PathPrefix(`/api/ai`)
@@ -92,7 +93,7 @@ http:
       service: frontend-service
       entryPoints:
         - gateway
-      priority: 1 
+      priority: 1
 
   services:
     auth-service:
@@ -119,6 +120,8 @@ http:
           - url: 'http://host.docker.internal:4002'
     notification-service:
       loadBalancer:
+        responseForwarding:
+          flushInterval: '-1'
         servers:
           - url: 'http://host.docker.internal:4003'
     github-service:
