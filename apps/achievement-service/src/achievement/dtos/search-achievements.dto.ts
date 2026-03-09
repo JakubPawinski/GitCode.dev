@@ -12,8 +12,8 @@ export class SearchAchievementsDto extends PaginationQueryDto {
   @MinLength(3)
   @IsOptional()
   @IsString()
-  @ApiProperty({ description: 'Filter by describtion', required: false })
-  describtion?: string;
+  @ApiProperty({ description: 'Filter by description', required: false })
+  description?: string;
 
   @IsOptional()
   @IsString()

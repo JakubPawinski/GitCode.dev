@@ -1,5 +1,5 @@
 import { IsInt } from 'class-validator';
-import { GetAchievementDto } from './get-achievemeent.dto';
+import { GetAchievementDto } from './get-achievement.dto';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class GetAchievementProgressDto extends GetAchievementDto {

@@ -64,10 +64,10 @@ export enum AppPermission {
   USER_PREFERENCE_UPDATE = 'user:preference:update', // Permission to update user preferences. Allows modifying existing settings, such as changing theme or updating notification rules.
 
   // --- Achievement permissions ---
-  VIEW_ACHIEVEMENTS = 'achievement:view', // Permission to view achievements and progress in the Achievement Service. Allows users to see their earned achievements, progress towards goals, and related statistics.
-  CREATE_ACHIEVEMENTS = 'achievement:create', // Permission to create achievements in the Achievement Service. Enables admins to define new achievements, criteria, and rewards for users.
-  UPDATE_ACHIEVEMENTS = 'achievement:update', // Permission to update achievements in the Achievement Service. Allows modifying existing achievements, criteria, or rewards.
-  DELETE_ACHIEVEMENTS = 'achievement:delete', // Permission to delete achievements in the Achievement Service. Enables removing achievements from the system when they are no longer relevant or need to be retired.
+  ACHIEVEMENTS_VIEW = 'achievement:view', // Permission to view achievements and progress in the Achievement Service. Allows users to see their earned achievements, progress towards goals, and related statistics.
+  ACHIEVEMENTS_CREATE = 'achievement:create', // Permission to create achievements in the Achievement Service. Enables admins to define new achievements, criteria, and rewards for users.
+  ACHIEVEMENTS_UPDATE = 'achievement:update', // Permission to update achievements in the Achievement Service. Allows modifying existing achievements, criteria, or rewards.
+  ACHIEVEMENTS_DELETE = 'achievement:delete', // Permission to delete achievements in the Achievement Service. Enables removing achievements from the system when they are no longer relevant or need to be retired.
 }
 
 export type AppPermissions = AppPermission[];

@@ -28,7 +28,7 @@ export class GetAchievementDto {
     description: 'Description of the achievement',
     example: 'Awarded for making the first commit',
   })
-  describtion: string;
+  description: string;
 
   @IsUrl()
   @ApiProperty({

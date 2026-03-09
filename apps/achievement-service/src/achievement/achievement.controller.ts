@@ -12,11 +12,8 @@ import {
 } from '@nestjs/common';
 import { AchievementService } from './achievement.service';
 import { SearchAchievementsDto } from './dtos/search-achievements.dto';
-import { GetAchievementDto } from './dtos/get-achievemeent.dto';
-import {
-  PaginatedResult,
-  AppPermission,
-} from '@gitcode/types';
+import { GetAchievementDto } from './dtos/get-achievement.dto';
+import { PaginatedResult, AppPermission } from '@gitcode/types';
 import { GetAchievementProgressDto } from './dtos/get-achievement-progress.dto';
 import { PostAchievementDto } from './dtos/post-achievement.dto';
 import { PatchAchievementDto } from './dtos/patch-achievement.dto';
@@ -53,7 +50,7 @@ export class AchievementController {
 
   @Get()
   @UseGuards(JwtAuthGuard, PermissionsGuards)
-  @RequirePermissions(AppPermission.VIEW_ACHIEVEMENTS)
+  @RequirePermissions(AppPermission.ACHIEVEMENTS_VIEW)
   @ApiBearerAuth('Bearer Auth')
   @ApiOperation({ summary: 'Get a list of all achievements' })
   @ApiResponse({
@@ -81,7 +78,7 @@ export class AchievementController {
 
   @Get('users/:userId')
   @UseGuards(JwtAuthGuard, PermissionsGuards)
-  @RequirePermissions(AppPermission.VIEW_ACHIEVEMENTS)
+  @RequirePermissions(AppPermission.ACHIEVEMENTS_VIEW)
   @ApiBearerAuth('Bearer Auth')
   @ApiOperation({
     summary: 'Get a list of achievements earned by a specific user',
@@ -107,7 +104,7 @@ export class AchievementController {
     @Param('userId') userId: string,
     @Query() searchAchievementsDto: SearchAchievementsDto,
   ): Promise<PaginatedResult<GetAchievementDto>> {
-    return this.achievementService.getAchievedAchievemnts(
+    return this.achievementService.getAchievedAchievements(
       userId,
       searchAchievementsDto,
     );
@@ -115,7 +112,7 @@ export class AchievementController {
 
   @Get('users/:userId/progress')
   @UseGuards(JwtAuthGuard, PermissionsGuards)
-  @RequirePermissions(AppPermission.VIEW_ACHIEVEMENTS)
+  @RequirePermissions(AppPermission.ACHIEVEMENTS_VIEW)
   @ApiBearerAuth('Bearer Auth')
   @ApiOperation({
     summary: 'Get the progress of a user towards earning achievements',
@@ -151,7 +148,7 @@ export class AchievementController {
 
   @Post()
   @UseGuards(JwtAuthGuard, PermissionsGuards)
-  @RequirePermissions(AppPermission.CREATE_ACHIEVEMENTS)
+  @RequirePermissions(AppPermission.ACHIEVEMENTS_CREATE)
   @ApiBearerAuth('Bearer Auth')
   @ApiOperation({ summary: 'Create a new achievement' })
   @ApiResponse({
@@ -172,7 +169,7 @@ export class AchievementController {
 
   @Patch(':id')
   @UseGuards(JwtAuthGuard, PermissionsGuards)
-  @RequirePermissions(AppPermission.UPDATE_ACHIEVEMENTS)
+  @RequirePermissions(AppPermission.ACHIEVEMENTS_UPDATE)
   @ApiBearerAuth('Bearer Auth')
   @ApiOperation({ summary: 'Update an existing achievement' })
   @ApiResponse({
@@ -194,7 +191,7 @@ export class AchievementController {
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard, PermissionsGuards)
-  @RequirePermissions(AppPermission.DELETE_ACHIEVEMENTS)
+  @RequirePermissions(AppPermission.ACHIEVEMENTS_DELETE)
   @ApiBearerAuth('Bearer Auth')
   @ApiOperation({ summary: 'Delete an achievement' })
   @ApiResponse({

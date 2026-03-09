@@ -3,7 +3,7 @@ import { AchievementController } from './achievement.controller';
 import { AchievementService } from './achievement.service';
 import { JwtAuthGuard, PermissionsGuards } from '@gitcode/auth';
 import { ResponseInterceptor } from '@gitcode/common';
-import { GetAchievementDto } from './dtos/get-achievemeent.dto';
+import { GetAchievementDto } from './dtos/get-achievement.dto';
 import { GetAchievementProgressDto } from './dtos/get-achievement-progress.dto';
 import { PaginatedResult } from '@gitcode/types';
 
@@ -15,7 +15,7 @@ describe('AchievementController', () => {
     id: '1',
     code: 'first_problem_solved',
     name: 'Algorithm Beginner',
-    describtion: 'Solve your first problem',
+    description: 'Solve your first problem',
     iconUrl: '/icons/first-problem.png',
     eventType: 'SUBMISSION_COMPLETED',
     targetValue: 1,
@@ -25,7 +25,7 @@ describe('AchievementController', () => {
     id: '1',
     code: 'first_problem_solved',
     name: 'Algorithm Beginner',
-    describtion: 'Solve your first problem',
+    description: 'Solve your first problem',
     iconUrl: '/icons/first-problem.png',
     targetValue: 1,
     progress: 1,
@@ -42,7 +42,7 @@ describe('AchievementController', () => {
       currentPage: 1,
       pageSize: 10,
       hasNextPage: false,
-      hasPreviousPage: false, 
+      hasPreviousPage: false,
     },
   };
 
@@ -54,8 +54,8 @@ describe('AchievementController', () => {
         totalPages: 1,
         currentPage: 1,
         pageSize: 10,
-        hasNextPage: false, 
-        hasPreviousPage: false, 
+        hasNextPage: false,
+        hasPreviousPage: false,
       },
     };
 
@@ -149,7 +149,7 @@ describe('AchievementController', () => {
           currentPage: 1,
           pageSize: 10,
           hasNextPage: false,
-          hasPreviousPage: false, 
+          hasPreviousPage: false,
         },
       };
 
@@ -177,7 +177,7 @@ describe('AchievementController', () => {
           currentPage: 2,
           pageSize: 5,
           hasNextPage: true,
-          hasPreviousPage: true, 
+          hasPreviousPage: true,
         },
       };
 
@@ -236,7 +236,7 @@ describe('AchievementController', () => {
           currentPage: 1,
           pageSize: 10,
           hasNextPage: false,
-          hasPreviousPage: false, 
+          hasPreviousPage: false,
         },
       };
 
@@ -369,7 +369,7 @@ describe('AchievementController', () => {
           totalPages: 1,
           currentPage: 1,
           pageSize: 10,
-          hasNextPage: false, 
+          hasNextPage: false,
           hasPreviousPage: false,
         },
       };

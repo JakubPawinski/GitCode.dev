@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { PaginatedResult } from '@gitcode/types';
-import { GetAchievementDto } from './dtos/get-achievemeent.dto';
+import { GetAchievementDto } from './dtos/get-achievement.dto';
 import { SearchAchievementsDto } from './dtos/search-achievements.dto';
 import { Prisma } from '@prisma/client-achievement';
 import { GetAchievementProgressDto } from './dtos/get-achievement-progress.dto';
@@ -71,7 +71,7 @@ export class AchievementService {
     };
   }
 
-  public async getAchievedAchievemnts(
+  public async getAchievedAchievements(
     userId: string,
     searchAchievementsDto: SearchAchievementsDto,
   ): Promise<PaginatedResult<GetAchievementDto>> {
@@ -184,7 +184,7 @@ export class AchievementService {
       data: {
         code: postAchievementDto.code,
         name: postAchievementDto.name,
-        description: postAchievementDto.describtion,
+        description: postAchievementDto.description,
         iconUrl: postAchievementDto.iconUrl,
         eventType: postAchievementDto.eventType,
         targetValue: postAchievementDto.targetValue,
@@ -195,7 +195,7 @@ export class AchievementService {
       id: achievement.id,
       code: achievement.code,
       name: achievement.name,
-      describtion: achievement.description,
+      description: achievement.description,
       iconUrl: achievement.iconUrl,
       eventType: achievement.eventType,
       targetValue: achievement.targetValue,
@@ -212,7 +212,7 @@ export class AchievementService {
       where: { id },
       data: {
         name: patchAchievementDto.name,
-        description: patchAchievementDto.describtion,
+        description: patchAchievementDto.description,
         iconUrl: patchAchievementDto.iconUrl,
         eventType: patchAchievementDto.eventType,
         targetValue: patchAchievementDto.targetValue,
@@ -223,7 +223,7 @@ export class AchievementService {
       id: achievement.id,
       code: achievement.code,
       name: achievement.name,
-      describtion: achievement.description,
+      description: achievement.description,
       iconUrl: achievement.iconUrl,
       eventType: achievement.eventType,
       targetValue: achievement.targetValue,
@@ -319,7 +319,7 @@ export class AchievementService {
           },
         },
       );
-      return response.data;
+      return response.data.data;
     } catch (error) {
       this.logger.error(
         `Failed to fetch problem details for problem ${problemId}`,
@@ -365,7 +365,7 @@ export class AchievementService {
           `Updated progress for achievement ${achievement.code} (ID: ${achievement.id}) for user ${userId}. Current progress: ${userProgress.currentProgress}/${achievement.targetValue}`,
         );
         // Check if achievement should be unlocked
-        if (userProgress.currentProgress >= achievement.targetValue) {
+        if (userProgress.currentProgress === achievement.targetValue) {
           await prisma.userAchievement.upsert({
             where: {
               userId_achievementId: {
@@ -384,12 +384,20 @@ export class AchievementService {
             `User ${userId} unlocked achievement: ${achievement.name} (${achievement.code})!`,
           );
 
-          // Send generate readme command
-          this.eventBus.publish(
-            AI_PATTERNS.GENERATE_README,
-            new GenerateReadmeCommand(userId),
-          );
-          
+          const alreadyUnlocked = await prisma.userAchievement.findUnique({
+            where: {
+              userId_achievementId: {
+                userId,
+                achievementId: achievement.id,
+              },
+            },
+          });
+          if (!alreadyUnlocked) {
+            this.eventBus.publish(
+              AI_PATTERNS.GENERATE_README,
+              new GenerateReadmeCommand(userId),
+            );
+          }
         }
       }
     });

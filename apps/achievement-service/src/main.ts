@@ -21,7 +21,7 @@ async function bootstrap() {
   );
 
   // Global exception filter
-  app.useGlobalFilters(new HttpExceptionFilter('notification-service'));
+  app.useGlobalFilters(new HttpExceptionFilter('achievement-service'));
 
   app.enableCors({
     origin: '*',
