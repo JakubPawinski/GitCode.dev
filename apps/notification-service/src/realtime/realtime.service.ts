@@ -30,7 +30,7 @@ export class RealtimeService implements OnModuleInit, OnModuleDestroy {
 
     // Initialize Redis connections
     const redisUrl =
-      this.configService.get<string>('redis.url') || 'redis://localhost:6381';
+      this.configService.get<string>('NOTIFICATION_REDIS_URL') || 'redis://localhost:6381';
     // Separate connections are required for publishing and subscribing
     this.publisher = new Redis(redisUrl);
     this.subscriber = new Redis(redisUrl);
