@@ -5,7 +5,7 @@ import { JwtAuthGuard, PermissionsGuards } from '@gitcode/auth';
 import { ResponseInterceptor } from '@gitcode/common';
 import { GetAchievementDto } from './dtos/get-achievemeent.dto';
 import { GetAchievementProgressDto } from './dtos/get-achievement-progress.dto';
-import { PaginatedResult, AppPermission } from '@gitcode/types';
+import { PaginatedResult } from '@gitcode/types';
 
 describe('AchievementController', () => {
   let controller: AchievementController;
