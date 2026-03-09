@@ -11,6 +11,8 @@ import { SubmissionCompletedEnvelope } from './events/envelopes';
 import axios from 'axios';
 import { ConfigService } from '@nestjs/config';
 import { AchievementEventMapperService } from './achievement-event-mapper.service';
+import { EventBus } from '@gitcode/messaging';
+import { AI_PATTERNS, GenerateReadmeCommand } from '@gitcode/contracts';
 
 @Injectable()
 export class AchievementService {
@@ -20,6 +22,7 @@ export class AchievementService {
     private readonly prismaService: PrismaService,
     private readonly configService: ConfigService,
     private readonly achievementEventMapperService: AchievementEventMapperService,
+    private readonly eventBus: EventBus,
   ) {}
 
   public async getAchievements(
@@ -380,6 +383,13 @@ export class AchievementService {
           this.logger.log(
             `User ${userId} unlocked achievement: ${achievement.name} (${achievement.code})!`,
           );
+
+          // Send generate readme command
+          this.eventBus.publish(
+            AI_PATTERNS.GENERATE_README,
+            new GenerateReadmeCommand(userId),
+          );
+          
         }
       }
     });
