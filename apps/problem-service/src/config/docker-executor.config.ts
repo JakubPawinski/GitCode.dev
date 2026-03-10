@@ -56,9 +56,12 @@ def normalize_output(value):
     """Treat empty collections as None for comparison"""
     if value == [] or value == '' or value == {}:
         return None
-    # Parsuj stringowe reprezentacje None/null
     if isinstance(value, str) and value.lower() in ('none', 'null'):
         return None
+    if isinstance(value, str) and value.lower() == 'true':
+        return True
+    if isinstance(value, str) and value.lower() == 'false':
+        return False
     return value
 
 with open('/app/test_cases.json', 'r') as f:
@@ -130,6 +133,12 @@ function normalizeOutput(value) {
 
   if (typeof value === 'string' && (value.toLowerCase() === 'none' || value.toLowerCase() === 'null')) {
     return null;
+  }
+  if (typeof value === 'string' && value.toLowerCase() === 'true') {
+    return true;
+  }
+  if (typeof value === 'string' && value.toLowerCase() === 'false') {
+    return false;
   }
   return value;
 }
