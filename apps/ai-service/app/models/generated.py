@@ -80,6 +80,10 @@ class AppPermission(StrEnum):
     user_manage = "user:manage"
     user_preference_read = "user:preference:read"
     user_preference_update = "user:preference:update"
+    achievement_view = "achievement:view"
+    achievement_create = "achievement:create"
+    achievement_update = "achievement:update"
+    achievement_delete = "achievement:delete"
 
 
 class AppPermissions(RootModel[list[AppPermission]]):
@@ -125,6 +129,21 @@ class EventBus(BaseModel):
     )
 
 
+class FileCommittedEvent(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+    branch: str
+    commitSha: str
+    commitUrl: str
+    committedAt: str
+    filePaths: list[str]
+    message: str
+    repositoryName: str
+    submissionId: str | None = None
+    userId: str
+
+
 class FriendshipAcceptedEvent(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
@@ -156,6 +175,12 @@ class FriendshipRequestedEvent(BaseModel):
     requestId: str
     requesterId: str
     requesterUsername: str
+
+
+class GITHUBPATTERNS(StrEnum):
+    github_file_committed = "github.file.committed"
+    github_repo_created = "github.repo.created"
+    github_readme_updated = "github.readme.updated"
 
 
 class GenerateReadmeCommand(BaseModel):
@@ -215,6 +240,7 @@ class SUBMISSIONPATTERNS(StrEnum):
     submission_created = "submission.created"
     submission_updated = "submission.updated"
     submission_completed = "submission.completed"
+    submission_failed = "submission.failed"
 
 
 class SubmissionAnalyzedEvent(BaseModel):
@@ -243,6 +269,19 @@ class SubmissionBaseEvent(BaseModel):
 
 
 class SubmissionCompletedEvent(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+    attemptId: str
+    code: str
+    language: str
+    problemDescription: str
+    problemId: str
+    submissionId: str
+    userId: str
+
+
+class SubmissionFailedEvent(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
     )
@@ -362,6 +401,7 @@ class EventEnvelopeDto(BaseModel):
     correlationId: str | None = None
     event: str
     eventId: str
+    metadata: Any | None = None
     occurredOn: str
     payload: T2
 
@@ -373,6 +413,7 @@ class EventEnvelopeMixin(BaseModel):
     correlationId: str | None = None
     event: str
     eventId: str
+    metadata: Any | None = None
     occurredOn: str
     payload: T3
 
