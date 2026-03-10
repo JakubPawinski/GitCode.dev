@@ -322,9 +322,11 @@ export class AchievementService {
           difficulty,
         );
 
-      for (const eventType of eventTypes) {
-        await this.processAchievementEventType(userId, eventType);
-      }
+      await Promise.all(
+        eventTypes.map((eventType) =>
+          this.processAchievementEventType(userId, eventType),
+        ),
+      );
 
       this.logger.log(
         `Processed submission completed event for user ${userId} with event types: ${eventTypes.join(
@@ -371,56 +373,77 @@ export class AchievementService {
         where: { eventType },
       });
 
-      for (const achievement of achievements) {
-        // Update or create user progress
-        const userProgress = await prisma.userProgress.upsert({
-          where: {
-            userId_achievementId: {
-              userId,
-              achievementId: achievement.id,
-            },
-          },
-          update: {
-            currentProgress: {
-              increment: 1,
-            },
-            updatedAt: new Date(),
-          },
-          create: {
-            userId,
-            achievementId: achievement.id,
-            currentProgress: 1,
-          },
-        });
-
+      if (achievements.length === 0) {
         this.logger.log(
-          `Updated progress for achievement ${achievement.code} (ID: ${achievement.id}) for user ${userId}. Current progress: ${userProgress.currentProgress}/${achievement.targetValue}`,
+          `No achievements found for event type ${eventType}, skipping progress update for user ${userId}.`,
         );
-        // Check if achievement should be unlocked
-        if (userProgress.currentProgress === achievement.targetValue) {
-          await prisma.userAchievement.upsert({
+        return;
+      }
+
+      const userProgressUpdates = await Promise.all(
+        achievements.map((achievement) => {
+          return prisma.userProgress.upsert({
             where: {
               userId_achievementId: {
                 userId,
                 achievementId: achievement.id,
               },
             },
-            update: {},
+            update: {
+              currentProgress: {
+                increment: 1,
+              },
+              updatedAt: new Date(),
+            },
             create: {
               userId,
               achievementId: achievement.id,
+              currentProgress: 1,
+            },
+            select: {
+              achievementId: true,
+              currentProgress: true,
+              achievement: {
+                select: {
+                  targetValue: true,
+                  code: true,
+                  name: true,
+                },
+              },
             },
           });
+        }),
+      );
 
-          this.logger.log(
-            `User ${userId} unlocked achievement: ${achievement.name} (${achievement.code})!`,
-          );
+      const unlockedAchievements = [];
 
-          this.eventBus.publish(
-            AI_PATTERNS.GENERATE_README,
-            new GenerateReadmeCommand(userId),
-          );
+      userProgressUpdates.forEach((achievement) => {
+        if (
+          achievement.currentProgress >= achievement.achievement.targetValue
+        ) {
+          unlockedAchievements.push(achievement);
         }
+      });
+
+      if (unlockedAchievements.length > 0) {
+        await prisma.userAchievement.createMany({
+          data: unlockedAchievements.map((achievement) => ({
+            userId,
+            achievementId: achievement.achievementId,
+          })),
+          skipDuplicates: true,
+        });
+
+        this.logger.log(
+          `User ${userId} unlocked achievements: ${unlockedAchievements
+            .map((a) => a.achievement.code)
+            .join(', ')}!`,
+        );
+
+        this.eventBus.publish(
+          AI_PATTERNS.GENERATE_README,
+          new GenerateReadmeCommand(userId),
+        );
       }
     });
   }
