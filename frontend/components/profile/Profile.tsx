@@ -6,8 +6,8 @@ import { Error } from '../error/Error'
 import { Loader } from '../loading/Loader'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { usePostCreateRepository } from '@/hooks/api/use-post-create-repository'
-import { useGetRepository } from '@/hooks/api/use-get-repository'
+import { usePostCreateRepository } from '@/hooks/github/use-post-create-repository'
+import { useGetRepository } from '@/hooks/github/use-get-repository'
 
 interface UserStatsProps {
   activityHeatmap: any[]
@@ -62,7 +62,6 @@ export const Profile = () => {
     error: repoError,
   } = useGetRepository()
 
-  console.log(repoData)
   const {
     postMutation,
     data: repositoryData,

@@ -96,27 +96,34 @@ export default function Home() {
           <Search onQueryChange={setQuery} />
           <div className="border-accent/40 h-8 w-px border-l"></div>
           <button
+            data-testid="sort-button"
             onClick={() => {
               setSortClicked((previous: boolean) => !previous)
-              if (filterClicked) setFilterClicked(false)
+              setFilterClicked(false)
             }}
-            className="text-foreground hover:text-accent flex items-center gap-2 transition-all duration-300"
+            className="hover:bg-primary/20 rounded-lg p-2 transition-all duration-300"
           >
-            <ArrowDownUp size={20} />
-            <span className="font-semibold">Sort</span>
+            <ArrowDownUp />
+          </button>
+          <button
+            data-testid="filter-button"
+            onClick={() => {
+              setFilterClicked((previous: boolean) => !previous)
+              setSortClicked(false)
+            }}
+            className="hover:bg-primary/20 rounded-lg p-2 transition-all duration-300"
+          >
+            <Funnel />
           </button>
           {sortClicked && (
-            <Sort
-              selectedSortOrder={sortOrder}
-              onSortOrderChange={setSortOrder}
-            />
+            <Sort onSortChange={setSortOrder} selectedSort={sortOrder} />
           )}
 
           <div className="border-accent/40 h-8 w-px border-l"></div>
           <button
             onClick={() => {
               setFilterClicked((previous: boolean) => !previous)
-              if (sortClicked) setSortClicked(false)
+              setSortClicked(false)
             }}
             className="text-foreground hover:text-accent flex items-center gap-2 transition-all duration-300"
           >

@@ -10,7 +10,7 @@ import { Brain } from 'lucide-react'
 import { ProfileLink } from './ProfileLink'
 import { useAuth } from '@/contexts/auth/AuthContext'
 import { useParams } from 'next/navigation'
-import { useGetAiTutorHistory } from '@/hooks/api/use-get-ai-tutor-history'
+import { useGetAiTutorHistory } from '@/hooks/ai/use-get-ai-tutor-history'
 import { AiTutorContextProvider } from '@/contexts/ai/AiTutorContext'
 interface NavbarSubmitProps {
   onSubmit: () => void

@@ -3,7 +3,7 @@ import { NotificationProvider } from '@/contexts/notification/NotificationContex
 import './globals.css'
 import { Interceptor } from '@/api/Interceptor'
 import { HomeNavbar } from '@/components/navbar/HomeNavbar'
-import { SSEProvider } from '@/components/providers/SSEProvider'
+// import { SSEProvider } from '@/components/providers/SSEProvider'
 
 export default function RootLayout({
   children,
@@ -17,7 +17,7 @@ export default function RootLayout({
           <NotificationProvider>
             <Interceptor>
               <HomeNavbar />
-              <SSEProvider>{children}</SSEProvider>
+              {children}
             </Interceptor>
           </NotificationProvider>
         </AuthProvider>

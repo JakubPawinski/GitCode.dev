@@ -22,6 +22,7 @@ export const ProblemStats = () => {
   if (loading) return <Loader />
   if (error) return <Error {...error} />
   if (!data) return null
+  console.log(data)
 
   const stats = [
     {

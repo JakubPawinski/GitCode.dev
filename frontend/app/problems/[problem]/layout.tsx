@@ -21,7 +21,7 @@ import { useEffect, useState } from 'react'
 import { socket } from '@/ws/socket'
 import { LeftProblemNavbar } from '@/components/navbar/LeftProblemNavbar'
 import { AiTutorAside } from '@/components/aside/AiTutorAside'
-import { useGetAiTutorHistory } from '@/hooks/api/use-get-ai-tutor-history'
+import { useGetAiTutorHistory } from '@/hooks/ai/use-get-ai-tutor-history'
 import {
   AiSendMessageProvider,
   MessageDataProps,

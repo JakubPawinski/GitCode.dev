@@ -5,7 +5,7 @@ import { NotepadText, Clock8, Sparkles } from 'lucide-react'
 import { SubmissionResultLink } from './SubmissionResultLink'
 import { ChartNoAxesCombined } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
-import { usePostCommit } from '@/hooks/api/use-post-commit'
+import { usePostCommit } from '@/hooks/github/use-post-commit'
 import { useAiSendMessageContext } from '@/contexts/ai/AiSendMessageContext'
 import { useAuth } from '@/contexts/auth/AuthContext'
 

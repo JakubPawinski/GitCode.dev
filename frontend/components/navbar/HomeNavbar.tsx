@@ -32,7 +32,7 @@ export const HomeNavbar = () => {
           <span className="text-xl font-bold">GitCode.dev</span>
         </Link>
       </div>
-      <UserMenu user={user} />
+      {/* <UserMenu user={user} /> */}
       <div className="flex items-center gap-4">
         <NotificationBell />
         <ProfileLink {...user} />

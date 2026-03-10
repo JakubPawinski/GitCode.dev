@@ -2,43 +2,27 @@
 import { createContext, ReactNode, useContext } from 'react'
 export interface AiTutorContextProps {
   tutorData: {
-    sessionId?: number | string
-    createdAt?: string
     messages: {
       role: string
       content: string
-      createdAt?: string
+      createdAt: string
     }[]
   }
-  messageLoading: boolean
-  messageError: any
+  tutorLoading: boolean
+  tutorError: any
+  children?: ReactNode
 }
 
 export const AiTutorContext = createContext<AiTutorContextProps | null>(null)
 
 export const AiTutorContextProvider = ({
-  children,
   tutorData,
-  messageLoading,
-  messageError,
-}: {
-  children: ReactNode
-  tutorData: {
-    sessionId?: number | string
-    createdAt?: string
-    messages: {
-      role: string
-      content: string
-      createdAt?: string
-    }[]
-  }
-  messageLoading: boolean
-  messageError: any
-}) => {
+  tutorLoading,
+  tutorError,
+  children,
+}: AiTutorContextProps) => {
   return (
-    <AiTutorContext.Provider
-      value={{ tutorData, messageLoading, messageError }}
-    >
+    <AiTutorContext.Provider value={{ tutorData, tutorLoading, tutorError }}>
       {children}
     </AiTutorContext.Provider>
   )
