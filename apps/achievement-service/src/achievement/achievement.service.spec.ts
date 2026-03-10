@@ -6,6 +6,7 @@ import { AchievementEventMapperService } from './achievement-event-mapper.servic
 import { EventBus } from '@gitcode/messaging';
 import axios from 'axios';
 import { SubmissionCompletedEnvelope } from './events/envelopes';
+import { AI_PATTERNS } from '@gitcode/contracts';
 
 jest.mock('axios');
 const mockedAxios = axios as jest.Mocked<typeof axios>;
@@ -46,6 +47,7 @@ describe('AchievementService', () => {
         findUnique: jest.fn(),
         create: jest.fn(),
         upsert: jest.fn(),
+        createMany: jest.fn(),
         count: jest.fn(),
       },
       userProgress: {
@@ -303,7 +305,18 @@ describe('AchievementService', () => {
       ...overrides,
     });
 
-    it('should process submission completed event successfully', async () => {
+    it('should handle error when fetching problem details fails', async () => {
+      const envelope = createSubmissionEnvelope();
+
+      configService.get.mockReturnValueOnce('http://problem-service');
+      mockedAxios.get.mockRejectedValueOnce(new Error('Network error'));
+
+      await expect(
+        service.handleSubmissionCompletedEvent(envelope),
+      ).rejects.toThrow('Failed to fetch problem details');
+    });
+
+    it('should process submission completed event without unlocking if target not reached', async () => {
       const envelope = createSubmissionEnvelope({
         payload: {
           userId: mockUserId,
@@ -322,50 +335,36 @@ describe('AchievementService', () => {
       });
 
       achievementEventMapperService.getAllEventTypesForSubmission.mockReturnValueOnce(
-        [
-          'SUBMISSION_COMPLETED',
-          'SUBMISSION_COMPLETED_JAVASCRIPT',
-          'SUBMISSION_COMPLETED_MEDIUM',
-        ],
+        ['SUBMISSION_COMPLETED'],
       );
 
       const mockTransaction = jest.fn(async (callback) => {
         return callback(prismaMock);
       });
-      prismaMock.$transaction.mockImplementationOnce(mockTransaction);
+      prismaMock.$transaction.mockImplementation(mockTransaction);
 
-      prismaMock.achievement.findMany.mockResolvedValueOnce([mockAchievement]);
+      prismaMock.achievement.findMany.mockResolvedValue([mockAchievement]);
 
-      const mockUserProgress = {
-        id: '1',
-        userId: mockUserId,
+      const mockUserProgressInfo = {
         achievementId: '1',
         currentProgress: 1,
-        updatedAt: new Date(),
+        achievement: {
+          targetValue: 2,
+          code: mockAchievement.code,
+          name: mockAchievement.name,
+        },
       };
 
-      prismaMock.userProgress.upsert.mockResolvedValueOnce(mockUserProgress);
+      prismaMock.userProgress.upsert.mockResolvedValue(mockUserProgressInfo);
+      prismaMock.userAchievement.createMany.mockClear();
 
       await service.handleSubmissionCompletedEvent(envelope);
 
-      expect(
-        achievementEventMapperService.getAllEventTypesForSubmission,
-      ).toHaveBeenCalledWith('javascript', 'MEDIUM');
-      expect(mockedAxios.get).toHaveBeenCalled();
+      expect(prismaMock.userAchievement.createMany).not.toHaveBeenCalled();
+      expect(eventBus.publish).not.toHaveBeenCalled();
     });
 
-    it('should handle error when fetching problem details fails', async () => {
-      const envelope = createSubmissionEnvelope();
-
-      configService.get.mockReturnValueOnce('http://problem-service');
-      mockedAxios.get.mockRejectedValueOnce(new Error('Network error'));
-
-      await expect(
-        service.handleSubmissionCompletedEvent(envelope),
-      ).rejects.toThrow('Failed to fetch problem details');
-    });
-
-    it('should unlock achievement when target value is reached', async () => {
+    it('should unlock achievement when target value is reached and publish single event', async () => {
       const envelope = createSubmissionEnvelope({
         payload: {
           userId: mockUserId,
@@ -394,70 +393,42 @@ describe('AchievementService', () => {
 
       prismaMock.achievement.findMany.mockResolvedValueOnce([mockAchievement]);
 
-      const mockUserProgress = {
-        id: '1',
-        userId: mockUserId,
+      const mockUserProgressInfo = {
         achievementId: '1',
         currentProgress: 1,
-        updatedAt: new Date(),
+        achievement: {
+          targetValue: 1,
+          code: mockAchievement.code,
+          name: mockAchievement.name,
+        },
       };
 
-      prismaMock.userProgress.upsert.mockResolvedValueOnce(mockUserProgress);
-      prismaMock.userAchievement.upsert.mockResolvedValueOnce({
-        id: '1',
-        userId: mockUserId,
-        achievementId: '1',
-        unlockedAt: new Date(),
-      });
-
-      await service.handleSubmissionCompletedEvent(envelope);
-
-      expect(prismaMock.userAchievement.upsert).toHaveBeenCalled();
-      expect(eventBus.publish).toHaveBeenCalled();
-    });
-
-    it('should not unlock achievement when target value is not reached', async () => {
-      const envelope = createSubmissionEnvelope();
-
-      const achievementWithHighTarget = {
-        ...mockAchievement,
-        targetValue: 50,
-      };
-
-      configService.get.mockReturnValueOnce('http://problem-service');
-      mockedAxios.get.mockResolvedValueOnce({
-        data: { data: { difficulty: 'MEDIUM' } },
-      });
-
-      achievementEventMapperService.getAllEventTypesForSubmission.mockReturnValueOnce(
-        ['SUBMISSION_COMPLETED'],
+      prismaMock.userProgress.upsert.mockResolvedValueOnce(
+        mockUserProgressInfo,
       );
 
-      const mockTransaction = jest.fn(async (callback) => {
-        return callback(prismaMock);
-      });
-      prismaMock.$transaction.mockImplementationOnce(mockTransaction);
-
-      prismaMock.achievement.findMany.mockResolvedValueOnce([
-        achievementWithHighTarget,
-      ]);
-
-      const mockUserProgress = {
-        id: '1',
-        userId: mockUserId,
-        achievementId: '1',
-        currentProgress: 1,
-        updatedAt: new Date(),
-      };
-
-      prismaMock.userProgress.upsert.mockResolvedValueOnce(mockUserProgress);
+      prismaMock.userAchievement.createMany.mockResolvedValueOnce({ count: 1 });
 
       await service.handleSubmissionCompletedEvent(envelope);
 
-      expect(prismaMock.userAchievement.upsert).not.toHaveBeenCalled();
+      expect(prismaMock.userAchievement.createMany).toHaveBeenCalledWith({
+        data: [
+          {
+            userId: mockUserId,
+            achievementId: '1',
+          },
+        ],
+        skipDuplicates: true,
+      });
+
+      expect(eventBus.publish).toHaveBeenCalledTimes(1);
+      expect(eventBus.publish).toHaveBeenCalledWith(
+        AI_PATTERNS.GENERATE_README,
+        expect.objectContaining({ userId: mockUserId }),
+      );
     });
 
-    it('should process multiple event types for single submission', async () => {
+    it('should process multiple event types and publish ONLY ONE event if multiple achievements are unlocked', async () => {
       const envelope = createSubmissionEnvelope({
         payload: {
           userId: mockUserId,
@@ -492,19 +463,25 @@ describe('AchievementService', () => {
 
       prismaMock.achievement.findMany.mockResolvedValue([mockAchievement]);
 
-      const mockUserProgress = {
-        id: '1',
-        userId: mockUserId,
+      const mockUserProgressInfo = {
         achievementId: '1',
         currentProgress: 1,
-        updatedAt: new Date(),
+        achievement: {
+          targetValue: 1,
+          code: mockAchievement.code,
+          name: mockAchievement.name,
+        },
       };
 
-      prismaMock.userProgress.upsert.mockResolvedValue(mockUserProgress);
+      prismaMock.userProgress.upsert.mockResolvedValue(mockUserProgressInfo);
+
+      eventBus.publish.mockClear();
 
       await service.handleSubmissionCompletedEvent(envelope);
 
       expect(prismaMock.$transaction).toHaveBeenCalledTimes(3);
+
+      expect(eventBus.publish).toHaveBeenCalledTimes(1);
     });
   });
 

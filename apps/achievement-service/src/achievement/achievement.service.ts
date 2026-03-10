@@ -25,6 +25,10 @@ export class AchievementService {
     private readonly eventBus: EventBus,
   ) {}
 
+  public getHealth() {
+    return { status: 'Achievement Service is healthy' };
+  }
+
   public async getAchievements(
     searchAchievementsDto: SearchAchievementsDto,
   ): Promise<PaginatedResult<GetAchievementDto>> {
@@ -322,11 +326,21 @@ export class AchievementService {
           difficulty,
         );
 
-      await Promise.all(
-        eventTypes.map((eventType) =>
-          this.processAchievementEventType(userId, eventType),
-        ),
-      );
+      const allUnlockedAchievements =
+        await this.processAllAchievementEventTypes(userId, eventTypes);
+
+      if (allUnlockedAchievements.length > 0) {
+        this.logger.log(
+          `User ${userId} unlocked ${allUnlockedAchievements.length} achievement(s): ${allUnlockedAchievements
+            .map((a) => a.code)
+            .join(', ')}!`,
+        );
+
+        this.eventBus.publish(
+          AI_PATTERNS.GENERATE_README,
+          new GenerateReadmeCommand(userId),
+        );
+      }
 
       this.logger.log(
         `Processed submission completed event for user ${userId} with event types: ${eventTypes.join(
@@ -363,10 +377,29 @@ export class AchievementService {
     }
   }
 
+  private async processAllAchievementEventTypes(
+    userId: string,
+    eventTypes: string[],
+  ): Promise<Array<{ code: string; name: string }>> {
+    const allUnlockedAchievements: Array<{ code: string; name: string }> = [];
+
+    await Promise.all(
+      eventTypes.map((eventType) =>
+        this.processAchievementEventType(userId, eventType).then((unlocked) => {
+          allUnlockedAchievements.push(...unlocked);
+        }),
+      ),
+    );
+
+    return allUnlockedAchievements;
+  }
+
   private async processAchievementEventType(
     userId: string,
     eventType: string,
-  ): Promise<void> {
+  ): Promise<Array<{ code: string; name: string }>> {
+    const unlockedAchievements: Array<{ code: string; name: string }> = [];
+
     await this.prismaService.$transaction(async (prisma) => {
       // Find all achievements matching this event type
       const achievements = await prisma.achievement.findMany({
@@ -415,36 +448,29 @@ export class AchievementService {
         }),
       );
 
-      const unlockedAchievements = [];
+      const toUnlock = userProgressUpdates.filter(
+        (achievement) =>
+          achievement.currentProgress === achievement.achievement.targetValue,
+      );
 
-      userProgressUpdates.forEach((achievement) => {
-        if (
-          achievement.currentProgress >= achievement.achievement.targetValue
-        ) {
-          unlockedAchievements.push(achievement);
-        }
-      });
-
-      if (unlockedAchievements.length > 0) {
+      if (toUnlock.length > 0) {
         await prisma.userAchievement.createMany({
-          data: unlockedAchievements.map((achievement) => ({
+          data: toUnlock.map((achievement) => ({
             userId,
             achievementId: achievement.achievementId,
           })),
           skipDuplicates: true,
         });
 
-        this.logger.log(
-          `User ${userId} unlocked achievements: ${unlockedAchievements
-            .map((a) => a.achievement.code)
-            .join(', ')}!`,
-        );
-
-        this.eventBus.publish(
-          AI_PATTERNS.GENERATE_README,
-          new GenerateReadmeCommand(userId),
+        unlockedAchievements.push(
+          ...toUnlock.map((a) => ({
+            code: a.achievement.code,
+            name: a.achievement.name,
+          })),
         );
       }
     });
+
+    return unlockedAchievements;
   }
 }

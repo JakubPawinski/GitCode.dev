@@ -48,6 +48,19 @@ import {
 export class AchievementController {
   constructor(private readonly achievementService: AchievementService) {}
 
+  @Get('health')
+  @ApiOperation({ summary: 'Health check endpoint' })
+  @ApiResponse({
+    status: 200,
+    description: 'Service is healthy',
+    schema: {
+      $ref: getSchemaPath(ApiResponseDto),
+    },
+  })
+  public healthCheck(): { status: string } {
+    return this.achievementService.getHealth();
+  }
+
   @Get()
   @UseGuards(JwtAuthGuard, PermissionsGuards)
   @RequirePermissions(AppPermission.ACHIEVEMENTS_VIEW)
