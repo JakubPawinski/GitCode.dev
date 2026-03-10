@@ -10,7 +10,7 @@ export interface AuthContextProps {
   user: UserProps
 }
 
-function AuthCallback() {
+export function AuthCallback() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const success = searchParams.get('success')
@@ -25,7 +25,7 @@ function AuthCallback() {
   return <Loader />
 }
 
-export default function AuthPage() {
+export function AuthPage() {
   return (
     <Suspense fallback={<Loader />}>
       <AuthCallback />

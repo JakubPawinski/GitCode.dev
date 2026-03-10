@@ -3,9 +3,8 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { useAuth } from '@/contexts/auth/AuthContext'
-import { UserMenu } from './UserMenu'
-import { ProfileLink } from './ProfileLink'
 import { NotificationBell } from '../notification/NotificationBell'
+import { UserMenu } from './UserMenu'
 
 export const HomeNavbar = () => {
   const { problem } = useParams()
@@ -32,10 +31,9 @@ export const HomeNavbar = () => {
           <span className="text-xl font-bold">GitCode.dev</span>
         </Link>
       </div>
-      {/* <UserMenu user={user} /> */}
       <div className="flex items-center gap-4">
         <NotificationBell />
-        <ProfileLink {...user} />
+        <UserMenu user={user} />
       </div>
     </nav>
   )

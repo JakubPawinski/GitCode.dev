@@ -1,6 +1,6 @@
 from typing import AsyncGenerator
 from app.services.chat_history.chat_history_service import ChatHistoryService
-from app.services.llm.providers.gemini import GeminiClient
+from app.services.llm.providers.open_router import OpenRouterClient
 from app.exceptions import (
     SessionNotFoundError,
     UnauthorizedSessionError,
@@ -14,7 +14,7 @@ class TutorService:
     def __init__(self, db: AsyncSession):
         self.db = db
         self.history_service = ChatHistoryService(db)
-        self.llm_client = GeminiClient()
+        self.llm_client = OpenRouterClient()
     
     async def stream_chat_response(
         self,
@@ -23,6 +23,7 @@ class TutorService:
         code: str,
         message: str,
         problem_description: str,
+        model: str = None
     ) -> AsyncGenerator[str, None]:
         """
         Streams chat response from the AI tutor with robust error handling.
@@ -84,7 +85,8 @@ class TutorService:
                     code=code,
                     problem_description=problem_description,
                     chat_history=formatted_history,
-                    user_message=message
+                    user_message=message,
+                    model=model
                 ):
                     full_response += chunk
                     yield chunk

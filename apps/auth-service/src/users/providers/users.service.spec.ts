@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { PrismaService } from '../../prisma/prisma.service';
-import { AuthService } from '../../auth/auth.service';
+import { AuthService } from '../../auth/providers/auth.service';
 import {
   PatchProfileDto,
   PatchPreferencesDto,

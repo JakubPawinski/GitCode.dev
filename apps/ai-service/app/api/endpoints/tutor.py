@@ -26,6 +26,7 @@ async def chat_with_tutor(
     user: AuthenticatedUser = Depends(RequiredPermission(AppPermission.ai_tutor_chat)),
     db: AsyncSession = Depends(get_session)
 ):
+    model = request.model or settings.DEFAULT_MODEL
     try:
     # Fetch problem description from problem service
         async with httpx.AsyncClient() as client:
@@ -59,6 +60,7 @@ async def chat_with_tutor(
                 code=request.code,
                 message=request.message,
                 problem_description=problem_description,
+                model=model
             ):
                 yield f"data: {json.dumps({'text': chunk, 'done': False})}\n\n"
             

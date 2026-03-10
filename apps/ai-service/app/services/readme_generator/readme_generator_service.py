@@ -1,7 +1,7 @@
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from pathlib import Path
 from app.models.ai_readme_content import AIReadmeContent
-from app.services.llm.providers.gemini import GeminiClient
+from app.services.llm.providers.open_router import OpenRouterClient
 import logging
 
 logger = logging.getLogger(__name__)
@@ -15,7 +15,7 @@ class ReadmeGeneratorService:
             trim_blocks=True,
             lstrip_blocks=True
         )
-        self.llm_client = GeminiClient()
+        self.llm_client = OpenRouterClient()
     
     async def generate_readme(
         self,
@@ -32,7 +32,7 @@ class ReadmeGeneratorService:
         # Normalize stats data (ensure proper structure)
         normalized_stats = self._normalize_stats(stats_data)
         
-        # Generate AI content based on stats using Gemini
+        # Generate AI content based on stats using OpenRouter
         ai_content = await self.llm_client.generate_readme_content(normalized_stats)
         
         # Convert AI content to dict if it's a Pydantic model

@@ -18,7 +18,13 @@ import {
   getSchemaPath,
 } from '@nestjs/swagger';
 import { ProblemService } from './problem.service';
-import { InternalService, JwtAuthGuard, User } from '@gitcode/auth';
+import {
+  InternalService,
+  JwtAuthGuard,
+  RequirePermissions,
+  PermissionsGuards,
+  User,
+} from '@gitcode/auth';
 import type { AuthenticatedUser } from '@gitcode/types';
 import {
   ProblemResponseDto,
@@ -33,7 +39,7 @@ import {
   ProblemPaginationQueryDto,
 } from './dto';
 
-import { PaginatedResult } from '@gitcode/types';
+import { AppPermission, PaginatedResult } from '@gitcode/types';
 import { ApiResponseDto, PaginatedResponseDto } from '@gitcode/common';
 
 @ApiTags('Problems')
@@ -65,7 +71,8 @@ export class ProblemController {
    * @returns A paginated list of problems.
    */
   @Get()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PermissionsGuards)
+  @RequirePermissions(AppPermission.PROBLEM_READ)
   @ApiBearerAuth('Bearer Auth')
   @ApiOperation({ summary: 'Get paginated problems list' })
   @ApiResponse({
@@ -92,7 +99,11 @@ export class ProblemController {
   }
 
   @Get('user/progress')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PermissionsGuards)
+  @RequirePermissions(
+    AppPermission.PROBLEM_READ,
+    AppPermission.SUBMISSION_READ_SELF,
+  )
   @ApiBearerAuth('Bearer Auth')
   @ApiOperation({ summary: 'Get user progress on problems' })
   @ApiResponse({
@@ -119,8 +130,9 @@ export class ProblemController {
   }
 
   @Get('recommendations')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PermissionsGuards)
   @ApiBearerAuth('Bearer Auth')
+  @RequirePermissions(AppPermission.PROBLEM_READ)
   @ApiOperation({ summary: 'Get recommended problems for user' })
   @ApiResponse({
     status: 200,
@@ -201,8 +213,43 @@ export class ProblemController {
     return this.problemService.findProblemBySlug(slug);
   }
 
+  /**
+   * Internal endpoint to get problem details by id using internal service
+   * @param id - The id identifier of the problem.
+   * @returns - Detailed information about the problem.
+   */
+  @Get('internal/id/:id')
+  @InternalService()
+  @ApiOperation({ summary: 'Get problem details by id - Internal endpoint' })
+  @ApiResponse({
+    status: 200,
+    description: 'Detailed problem information',
+    schema: {
+      allOf: [
+        { $ref: getSchemaPath(ApiResponseDto) },
+        {
+          properties: {
+            data: {
+              $ref: getSchemaPath(ProblemDetailResponseDto),
+            },
+          },
+        },
+      ],
+    },
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Problem not found',
+  })
+  public findProblemByIdInternal(
+    @Param('id') id: string,
+  ): Promise<ProblemDetailResponseDto> {
+    return this.problemService.findProblemById(id);
+  }
+
   @Get(':slug')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PermissionsGuards)
+  @RequirePermissions(AppPermission.PROBLEM_READ)
   @ApiBearerAuth('Bearer Auth')
   @ApiOperation({ summary: 'Get problem details by slug' })
   @ApiResponse({
@@ -230,7 +277,8 @@ export class ProblemController {
   }
 
   @Get(':slug/stats')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PermissionsGuards)
+  @RequirePermissions(AppPermission.PROBLEM_READ)
   @ApiBearerAuth('Bearer Auth')
   @ApiOperation({ summary: 'Get problem statistics' })
   @ApiResponse({
@@ -258,7 +306,8 @@ export class ProblemController {
   }
 
   @Get(':slug/submissions')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PermissionsGuards)
+  @RequirePermissions(AppPermission.SUBMISSION_READ_SELF)
   @ApiBearerAuth('Bearer Auth')
   @ApiOperation({ summary: 'Get user submissions for a problem' })
   @ApiResponse({
@@ -288,11 +337,13 @@ export class ProblemController {
     const userId = user.id;
     return this.problemService.getUserProblemSubmissions(slug, userId);
   }
-  //ADMIN ENDPOINTS
-  //TODO MAKE SURE USER HAS ROLE ADMIN
+
+  // ADMIN ENDPOINTS
+
   @Post()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PermissionsGuards)
   @ApiBearerAuth('Bearer Auth')
+  @RequirePermissions(AppPermission.PROBLEM_CREATE)
   @ApiOperation({ summary: 'Create new problem (Admin only)' })
   @ApiResponse({
     status: 201,
@@ -321,7 +372,8 @@ export class ProblemController {
   }
 
   @Patch(':id')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PermissionsGuards)
+  @RequirePermissions(AppPermission.PROBLEM_UPDATE)
   @ApiBearerAuth('Bearer Auth')
   @ApiOperation({ summary: 'Update problem (Admin only)' })
   @ApiResponse({
@@ -356,7 +408,8 @@ export class ProblemController {
   }
 
   @Delete(':id')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PermissionsGuards)
+  @RequirePermissions(AppPermission.PROBLEM_DELETE)
   @ApiBearerAuth('Bearer Auth')
   @ApiOperation({ summary: 'Delete problem (Admin only)' })
   @ApiResponse({

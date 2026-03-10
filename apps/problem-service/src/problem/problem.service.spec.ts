@@ -186,6 +186,51 @@ describe('ProblemService', () => {
     });
   });
 
+  describe('findProblemById', () => {
+    it('should return problem by id', async () => {
+      jest.spyOn(prisma.problem, 'findUnique').mockResolvedValue({
+        id: '1',
+        problemId: '1',
+        title: 'Two Sum',
+        difficulty: 'EASY',
+        problemSlug: 'two-sum',
+        description: 'Find two numbers that add up to target',
+        topics: [{ topic: 'Array' }],
+        examples: [{ inputText: 'Input', outputText: 'Output' }],
+        constraints: [{ constraint: 'Constraint 1' }],
+        hints: [{ hintText: 'Hint 1', orderIndex: 0 }],
+        testCases: [{ input: '[]', expectedOutput: '[]' }],
+        similarProblems: [
+          {
+            problemTo: {
+              title: 'Three Sum',
+              problemSlug: 'three-sum',
+              difficulty: 'MEDIUM',
+              description: 'desc',
+            },
+          },
+        ],
+      } as any);
+
+      const result = await service.findProblemById('1');
+
+      expect(result.title).toBe('Two Sum');
+      expect(result.topics).toContain('Array');
+      expect(prisma.problem.findUnique).toHaveBeenCalledWith({
+        where: { id: '1' },
+        select: expect.any(Object),
+      });
+    });
+
+    it('should throw NotFoundException when problem not found by id', async () => {
+      jest.spyOn(prisma.problem, 'findUnique').mockResolvedValue(null);
+
+      await expect(service.findProblemById('nonexistent')).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+  });
+
   describe('createProblem', () => {
     it('should create a new problem', async () => {
       const createDto = {

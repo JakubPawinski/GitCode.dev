@@ -23,6 +23,8 @@ module.exports = {
   authServiceHealthUrl: `${process.env.AUTH_SERVICE_URL}/auth/health`,
   problemServiceHealthUrl: `${process.env.PROBLEM_SERVICE_URL}/problems/health`,
   notificationServiceHealthUrl: `${process.env.NOTIFICATION_SERVICE_URL}/notifications/health`,
+  aiServiceHealthUrl: `${process.env.AI_SERVICE_URL}/health`,
+  achievementServiceHealthUrl: `${process.env.ACHIEVEMENT_SERVICE_URL}/achievements/health`,
 
   apiGatewaySpec: {
     openapi: '3.0.0',
@@ -55,6 +57,11 @@ module.exports = {
     {
       name: 'AI Service',
       url: `${process.env.AI_SERVICE_URL}/openapi.json`,
+      pathPrefix: '/api',
+    },
+    {
+      name: 'Achievement Service',
+      url: `${process.env.ACHIEVEMENT_SERVICE_URL}/docs-json`,
       pathPrefix: '/api',
     },
   ],

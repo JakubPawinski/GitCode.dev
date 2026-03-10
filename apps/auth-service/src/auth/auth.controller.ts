@@ -20,17 +20,23 @@ import {
   getSchemaPath,
   ApiExtraModels,
 } from '@nestjs/swagger';
-import { AuthService } from './auth.service';
+import { AuthService } from './providers/auth.service';
 import {
   AuthResponseDto,
   UserDto,
   LogoutResponseDto,
 } from './dto/auth-response.dto';
 import { ApiResponseDto } from '@gitcode/common';
-import { JwtAuthGuard, InternalService } from '@gitcode/auth';
+import {
+  JwtAuthGuard,
+  InternalService,
+  RequirePermissions,
+  PermissionsGuards,
+} from '@gitcode/auth';
 import { RedisService } from '../redis/redis.service';
 import { AppService } from '../app.service';
 import { GitHubTokenDto } from './dto/github-token.dto';
+import { AppPermission } from '@gitcode/types';
 
 @Controller('auth')
 @ApiTags('Authentication')
@@ -314,8 +320,9 @@ export class AuthController {
   }
 
   @Get('me')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PermissionsGuards)
   @ApiBearerAuth('Bearer Auth')
+  @RequirePermissions(AppPermission.USER_READ_SELF)
   @ApiOperation({ summary: 'Get current user profile' })
   @ApiResponse({
     status: 200,
@@ -353,8 +360,9 @@ export class AuthController {
   }
 
   @Get('account')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PermissionsGuards)
   @ApiBearerAuth('Bearer Auth')
+  @RequirePermissions(AppPermission.USER_READ_SELF)
   @ApiOperation({ summary: 'Initiate account update via Keycloak' })
   @ApiResponse({
     status: 302,
@@ -366,7 +374,8 @@ export class AuthController {
   }
 
   @Get('account/callback')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PermissionsGuards)
+  @RequirePermissions(AppPermission.USER_UPDATE_SELF)
   @ApiOperation({ summary: 'Handle account update callback from Keycloak' })
   @ApiResponse({
     status: 302,

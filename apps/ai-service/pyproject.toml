@@ -34,6 +34,7 @@ readme = 'README.md'
   greenlet = "^3.3.1"
   psycopg2 = "^2.9.11"
   pyjwt = "^2.11.0"
+  openai = "^2.23.0"
 
 
 

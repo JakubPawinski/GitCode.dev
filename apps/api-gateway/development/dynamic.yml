@@ -78,10 +78,26 @@ http:
         - gateway
       middlewares:
         - strip-api
+      priority: 10
 
     ai-route:
       rule: PathPrefix(`/api/ai`)
       service: ai-service
+      entryPoints:
+        - gateway
+      middlewares:
+        - strip-api
+
+    frontend-route:
+      rule: PathPrefix(`/`)
+      service: frontend-service
+      entryPoints:
+        - gateway
+      priority: 1
+
+    achievement-route:
+      rule: PathPrefix(`/api/achievements`)
+      service: achievement-service
       entryPoints:
         - gateway
       middlewares:
@@ -112,6 +128,8 @@ http:
           - url: 'http://host.docker.internal:4002'
     notification-service:
       loadBalancer:
+        responseForwarding:
+          flushInterval: '-1'
         servers:
           - url: 'http://host.docker.internal:4003'
     github-service:
@@ -122,6 +140,14 @@ http:
       loadBalancer:
         servers:
           - url: 'http://host.docker.internal:4006'
+    frontend-service:
+      loadBalancer:
+        servers:
+          - url: 'http://host.docker.internal:3000'
+    achievement-service:
+      loadBalancer:
+        servers:
+          - url: 'http://host.docker.internal:4005'
 
   middlewares:
     strip-api:
