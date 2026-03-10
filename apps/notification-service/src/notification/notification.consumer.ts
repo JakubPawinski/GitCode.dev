@@ -389,7 +389,7 @@ export class NotificationConsumer {
       userId: event.payload.userId,
       type: NotificationType.SYSTEM,
       kind: NotificationKind.SUBMISSION_FAILED,
-      severity: NotificationSeverity.INFO,
+      severity: NotificationSeverity.ERROR,
       payload: {
         title: 'Submission Failed',
         message: `Your submission has failed for the following reason`,
