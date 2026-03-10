@@ -138,10 +138,45 @@ export class ProblemService {
   }
 
   async findProblemBySlug(slug: string): Promise<ProblemDetailResponseDto> {
-    const problem = await this.prisma.problem.findUnique({
-      where: {
-        problemSlug: slug,
-      },
+    const problem = await this.findProblemWithDetails({ problemSlug: slug });
+
+    if (!problem) {
+      throw new NotFoundException(`Problem with slug "${slug}" not found`);
+    }
+
+    const mapped: ProblemDetailResponseDto = {
+      id: problem.id,
+      problemId: problem.problemId,
+      title: problem.title,
+      difficulty: problem.difficulty,
+      problemSlug: problem.problemSlug,
+      description: problem.description,
+      codeSnippets: this.mapCodeSnippets(problem.codeSnippets),
+      topics: problem.topics.map((t) => t.topic),
+      examples: problem.examples.map((e) => ({
+        inputText: e.inputText,
+        outputText: e.outputText,
+      })),
+      constraints: problem.constraints.map((c) => c.constraint),
+      hints: problem.hints.map((h) => ({
+        hintText: h.hintText,
+        orderIndex: h.orderIndex,
+      })),
+      testCases: problem.testCases.map((t) => ({
+        input: t.input,
+        expectedOutput: t.expectedOutput,
+      })),
+      similarProblems: problem.similarProblems.map((p) => p.problemTo),
+    };
+
+    return mapped;
+  }
+
+  private async findProblemWithDetails(
+    where: any,
+  ): Promise<any> {
+    return await this.prisma.problem.findUnique({
+      where,
       select: {
         id: true,
         problemId: true,
@@ -176,9 +211,18 @@ export class ProblemService {
         },
       },
     });
+  }
+
+  /**
+   * Get problem details by its unique ID.
+   * @param id - The unique identifier of the problem.
+   * @returns - Detailed information about the problem.
+   */
+  public async findProblemById(id: string): Promise<ProblemDetailResponseDto> {
+    const problem = await this.findProblemWithDetails({ id });
 
     if (!problem) {
-      throw new NotFoundException(`Problem with slug "${slug}" not found`);
+      throw new NotFoundException(`Problem with id "${id}" not found`);
     }
 
     const mapped: ProblemDetailResponseDto = {
@@ -205,7 +249,6 @@ export class ProblemService {
       })),
       similarProblems: problem.similarProblems.map((p) => p.problemTo),
     };
-
     return mapped;
   }
 

@@ -213,6 +213,40 @@ export class ProblemController {
     return this.problemService.findProblemBySlug(slug);
   }
 
+  /**
+   * Internal endpoint to get problem details by id using internal service
+   * @param id - The id identifier of the problem.
+   * @returns - Detailed information about the problem.
+   */
+  @Get('internal/id/:id')
+  @InternalService()
+  @ApiOperation({ summary: 'Get problem details by id - Internal endpoint' })
+  @ApiResponse({
+    status: 200,
+    description: 'Detailed problem information',
+    schema: {
+      allOf: [
+        { $ref: getSchemaPath(ApiResponseDto) },
+        {
+          properties: {
+            data: {
+              $ref: getSchemaPath(ProblemDetailResponseDto),
+            },
+          },
+        },
+      ],
+    },
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Problem not found',
+  })
+  public findProblemByIdInternal(
+    @Param('id') id: string,
+  ): Promise<ProblemDetailResponseDto> {
+    return this.problemService.findProblemById(id);
+  }
+
   @Get(':slug')
   @UseGuards(JwtAuthGuard, PermissionsGuards)
   @RequirePermissions(AppPermission.PROBLEM_READ)

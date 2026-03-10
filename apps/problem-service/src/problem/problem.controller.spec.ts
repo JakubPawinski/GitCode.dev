@@ -29,6 +29,7 @@ describe('ProblemController', () => {
     createProblem: jest.fn(),
     updateProblem: jest.fn(),
     deleteProblem: jest.fn(),
+    findProblemById: jest.fn(),
   };
   const mockConfigService = {
     get: jest.fn(),
@@ -262,6 +263,38 @@ describe('ProblemController', () => {
 
       expect(mockProblemService.deleteProblem).toHaveBeenCalledWith(id);
       expect(result).toBe(expected);
+    });
+  });
+
+  describe('findProblemByIdInternal', () => {
+    it('fetches details by id', async () => {
+      const id = '1';
+      const expected: ProblemResponseDto = {
+        id: '1',
+        problemId: '1',
+        title: 'Two Sum',
+        difficulty: 'EASY',
+        problemSlug: 'two-sum',
+        description: 'Find two numbers',
+        topics: [],
+        similarProblems: [],
+      };
+      mockProblemService.findProblemById.mockResolvedValue(expected);
+
+      const result = await controller.findProblemByIdInternal(id);
+
+      expect(mockProblemService.findProblemById).toHaveBeenCalledWith(id);
+      expect(result).toBe(expected);
+    });
+
+    it('throws NotFoundException when problem not found', async () => {
+      const id = 'nonexistent';
+      mockProblemService.findProblemById.mockRejectedValue(
+        new Error('Not Found'),
+      );
+
+      await expect(controller.findProblemByIdInternal(id)).rejects.toThrow();
+      expect(mockProblemService.findProblemById).toHaveBeenCalledWith(id);
     });
   });
 });

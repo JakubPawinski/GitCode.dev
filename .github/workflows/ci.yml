@@ -58,6 +58,7 @@ jobs:
           PROBLEM_DATABASE_URL: 'postgres://problem_user:problem_password@localhost:5432/problem_db'
           NOTIFICATION_DATABASE_URL: 'postgres://notification_user:notification_password@localhost:5434/notification_db'
           GITHUB_DATABASE_URL: 'postgres://github_user:github_password@localhost:5435/github_db'
+          ACHIEVEMENT_DATABASE_URL: 'postgres://achievement_user:achievement_password@localhost:5436/achievement_db'
       # Nx Cloud recommends fixes for failures to help you get CI green faster. Learn more: https://nx.dev/ci/features/self-healing-ci
       - run: npx nx fix-ci
         if: always()
