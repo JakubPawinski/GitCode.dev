@@ -95,6 +95,14 @@ http:
         - gateway
       priority: 1
 
+    achievement-route:
+      rule: PathPrefix(`/api/achievements`)
+      service: achievement-service
+      entryPoints:
+        - gateway
+      middlewares:
+        - strip-api
+
   services:
     auth-service:
       loadBalancer:
@@ -136,6 +144,10 @@ http:
       loadBalancer:
         servers:
           - url: 'http://host.docker.internal:3000'
+    achievement-service:
+      loadBalancer:
+        servers:
+          - url: 'http://host.docker.internal:4005'
 
   middlewares:
     strip-api:
