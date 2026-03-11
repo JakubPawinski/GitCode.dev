@@ -9,7 +9,7 @@
     "start:infra": "docker compose -f docker-compose.infra.yml up -d",
     "start:infra-prod": "docker compose -f docker-compose.infra.prod.yml up -d",
     "stop:infra": "docker compose -f docker-compose.infra.yml down",
-    "dev": "npm run start:infra && npm run nx:daemon && NX_DAEMON=true npx nx run-many -t serve -p auth-service problem-service swagger-docs notification-service ai-service github-service achievement-service",
+    "dev": "npm run start:infra && npm run nx:daemon && cross-env NX_DAEMON=true npx nx run-many -t serve -p auth-service problem-service swagger-docs notification-service ai-service github-service achievement-service",
     "prod": "npm run start:infra-prod && npx nx run-many -t serve -p auth-service problem-service swagger-docs notification-service ai-service github-service achievement-service",
     "seed": "ts-node apps/achievement-service/prisma/seed.ts"
   },
@@ -78,7 +78,8 @@
     "typescript-json-schema": "^0.67.1",
     "vite": "^7.2.6",
     "wait-on": "^9.0.3",
-    "webpack-cli": "^5.1.4"
+    "webpack-cli": "^5.1.4",
+    "cross-env": "10.1.0"
   },
   "dependencies": {
     "@golevelup/nestjs-rabbitmq": "^6.1.0",
