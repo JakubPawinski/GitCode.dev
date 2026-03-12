@@ -21,31 +21,29 @@ export const ProblemStats = () => {
   })
   if (loading) return <Loader />
   if (error) return <Error {...error} />
-  if (!data) return null
-  console.log(data)
 
   const stats = [
     {
       label: 'Acceptance Rate',
-      value: `${data.acceptanceRate.toFixed(2)}%`,
+      value: `${(data?.acceptanceRate ?? 0).toFixed(2)}%`,
     },
     {
       label: 'Total Submissions',
-      value: data.totalSubmissions.toLocaleString(),
+      value: (data?.totalSubmissions ?? 0).toLocaleString(),
     },
     {
       label: 'Accepted Submissions',
-      value: data.acceptedSubmissions.toLocaleString(),
+      value: (data?.acceptedSubmissions ?? 0).toLocaleString(),
     },
     {
       label: 'Avg. Execution Time',
-      value: `${data.avgExecutionTime.toFixed(0)} ms`,
+      value: `${(data?.avgExecutionTime ?? 0).toFixed(0)} ms`,
     },
     {
       label: 'Avg. Memory Used',
-      value: data.avgMemoryUsed
+      value: data?.avgMemoryUsed
         ? `${(data.avgMemoryUsed / 1024).toFixed(2)} KB`
-        : 'N/A',
+        : '0.00 KB',
     },
   ]
 
@@ -72,7 +70,7 @@ export const ProblemStats = () => {
         ))}
       </div>
       <div className="text-foreground/60 mt-6 text-right text-xs">
-        Last updated: {new Date(data.updatedAt).toLocaleString()}
+        Last updated: {data ? new Date(data.updatedAt).toLocaleString() : 'N/A'}
       </div>
     </div>
   )

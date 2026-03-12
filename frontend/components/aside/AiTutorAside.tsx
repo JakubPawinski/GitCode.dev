@@ -26,9 +26,9 @@ export const AiTutorAside = () => {
       keepDirtyValues: true,
     },
   })
-  const { tutorData, tutorLoading, tutorError } = useAiTutorContext()
+  const { messages } = useAiTutorContext()
 
-  const [messages, setMessages] = useState<Message[]>(tutorData.messages)
+  const [tutorMessages, setTutorMessages] = useState<Message[]>(messages)
 
   const messageRef = useRef<null | HTMLElement>(null)
 
@@ -45,7 +45,7 @@ export const AiTutorAside = () => {
         role: 'assistant',
         content: parsedMessage,
       }
-      setMessages((previous: Message[]) => [...previous, tutorMessage])
+      setTutorMessages((previous: Message[]) => [...previous, tutorMessage])
       queueMicrotask(() => {
         messageRef.current?.scrollTo({ top: messageRef.current.scrollHeight })
       })
@@ -65,7 +65,7 @@ export const AiTutorAside = () => {
       role: 'user',
       content: message.message,
     }
-    setMessages((previous: Message[]) => [...previous, newMessage])
+    setTutorMessages((previous: Message[]) => [...previous, newMessage])
     queueMicrotask(() => {
       messageRef.current?.scrollTo({ top: messageRef.current.scrollHeight })
     })
@@ -95,12 +95,13 @@ export const AiTutorAside = () => {
           ref={messageRef}
         >
           <div className="flex flex-col gap-3">
-            {messages.length === 0 ? (
+            {tutorMessages.length === 0 ? (
               <div className="text-foreground/60 text-sm">
-                No messages yet. Ask something about this problem or your code.
+                No tutorMessages yet. Ask something about this problem or your
+                code.
               </div>
             ) : (
-              messages.map((message, index) => (
+              tutorMessages.map((message, index) => (
                 <div
                   key={index}
                   className={`flex ${
@@ -119,9 +120,6 @@ export const AiTutorAside = () => {
                 </div>
               ))
             )}
-            {tutorLoading && <Loader />}
-            {tutorError && <Error {...error} />}
-
             {error && (
               <div className="text-destructive text-sm">
                 Failed to get a response from the tutor.

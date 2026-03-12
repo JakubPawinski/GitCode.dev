@@ -1,28 +1,21 @@
 'use client'
-import { createContext, ReactNode, useContext } from 'react'
+import { createContext, PropsWithChildren, useContext } from 'react'
 export interface AiTutorContextProps {
-  tutorData: {
-    messages: {
-      role: string
-      content: string
-      createdAt: string
-    }[]
-  }
-  tutorLoading: boolean
-  tutorError: any
-  children?: ReactNode
+  messages: {
+    role: string
+    content: string
+    createdAt: string
+  }[]
 }
 
 export const AiTutorContext = createContext<AiTutorContextProps | null>(null)
 
 export const AiTutorContextProvider = ({
-  tutorData,
-  tutorLoading,
-  tutorError,
+  messages,
   children,
-}: AiTutorContextProps) => {
+}: PropsWithChildren<AiTutorContextProps>) => {
   return (
-    <AiTutorContext.Provider value={{ tutorData, tutorLoading, tutorError }}>
+    <AiTutorContext.Provider value={{ messages }}>
       {children}
     </AiTutorContext.Provider>
   )

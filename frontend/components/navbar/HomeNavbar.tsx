@@ -1,18 +1,17 @@
 'use client'
 import Image from 'next/image'
 import Link from 'next/link'
-import { useParams } from 'next/navigation'
-import { useAuth } from '@/contexts/auth/AuthContext'
+import { useParams, usePathname } from 'next/navigation'
 import { NotificationBell } from '../notification/NotificationBell'
 import { UserMenu } from './UserMenu'
 
 export const HomeNavbar = () => {
   const { problem } = useParams()
-  const { data } = useAuth()
 
-  if (problem || !data) return null
+  const pathname = usePathname()
+  const isRootPage = pathname === '/'
 
-  const { user } = data
+  if (problem) return null
 
   return (
     <nav className="border-primary/30 flex h-12 items-center justify-between border-b bg-transparent px-6 shadow-lg">
@@ -31,10 +30,12 @@ export const HomeNavbar = () => {
           <span className="text-xl font-bold">GitCode.dev</span>
         </Link>
       </div>
-      <div className="flex items-center gap-4">
-        <NotificationBell />
-        <UserMenu user={user} />
-      </div>
+      {!isRootPage && (
+        <div className="flex items-center gap-4">
+          <NotificationBell />
+          <UserMenu />
+        </div>
+      )}
     </nav>
   )
 }

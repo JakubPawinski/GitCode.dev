@@ -17,7 +17,7 @@ import { ProblemLinkProps } from '@/components/problem/ProblemLink'
 import { useAuth } from '@/contexts/auth/AuthContext'
 import { useParams } from 'next/navigation'
 import { useOnSocket } from '@/hooks/socket/use-on-socket'
-import { useEffect, useState } from 'react'
+import { ReactNode, useEffect, useState } from 'react'
 import { socket } from '@/ws/socket'
 import { LeftProblemNavbar } from '@/components/navbar/LeftProblemNavbar'
 import { AiTutorAside } from '@/components/aside/AiTutorAside'
@@ -26,7 +26,10 @@ import {
   AiSendMessageProvider,
   MessageDataProps,
 } from '@/contexts/ai/AiSendMessageContext'
-import { AiTutorContextProvider } from '@/contexts/ai/AiTutorContext'
+import {
+  AiTutorContextProps,
+  AiTutorContextProvider,
+} from '@/contexts/ai/AiTutorContext'
 
 export interface ProblemDataProps {
   id: string
@@ -51,11 +54,7 @@ interface SubmissionDataProps {
   submissionId: string
 }
 
-export default function ProblemLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default function ProblemLayout({ children }: { children: ReactNode }) {
   const [aiTutorOpen, setAiTutorOpen] = useState<boolean>(false)
   const defaultLanguage = availableLanguages[0]
 
@@ -76,17 +75,9 @@ export default function ProblemLayout({
     'submission_analyzed',
   ]
 
-  const params = useParams()
-  const problem = params.problem as string
+  const { problem } = useParams()
 
   const { messages } = useOnSocket({ rooms, socket })
-
-  // Debug
-  useEffect(() => {
-    if (messages?.submission_analyzed) {
-      console.log('AI Analysis event received:', messages.submission_analyzed)
-    }
-  }, [messages?.submission_analyzed])
 
   const {
     data: problemData,
@@ -98,7 +89,9 @@ export default function ProblemLayout({
     data: tutorData,
     loading: tutorLoading,
     error: tutorError,
-  } = useGetAiTutorHistory({ problem })
+  } = useGetAiTutorHistory<Partial<AiTutorContextProps>>({
+    problem: problem as string,
+  })
 
   const { postMutation, data, loading, error } =
     usePostSubmission<SubmissionDataProps>()
@@ -125,7 +118,10 @@ export default function ProblemLayout({
   if (problemError) {
     return <Error {...problemError} />
   }
+  if (tutorError) return <Error {...tutorError} />
+
   if (!problemData) return null
+  if (!tutorData) return null
 
   const { id, testCases } = problemData
 
@@ -145,18 +141,7 @@ export default function ProblemLayout({
 
   return (
     <AiSendMessageProvider messageData={messageData}>
-      <AiTutorContextProvider
-        tutorData={
-          tutorData as {
-            messages: {
-              role: string
-              content: string
-            }[]
-          }
-        }
-        messageLoading={tutorLoading}
-        messageError={tutorError}
-      >
+      <AiTutorContextProvider>
         <ProblemProvider problemData={problemData}>
           <div className="flex h-screen overflow-hidden">
             <form className="text-foreground flex h-screen flex-1 flex-col">
@@ -189,6 +174,7 @@ export default function ProblemLayout({
                 </div>
               </section>
             </form>
+
             {aiTutorOpen && <AiTutorAside />}
           </div>
         </ProblemProvider>

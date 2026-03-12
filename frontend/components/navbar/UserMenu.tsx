@@ -2,56 +2,27 @@
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { LogOut, UserRound } from 'lucide-react'
-import { UserProps } from '@/components/user/User'
 import { UserImage } from '@/components/user/UserImage'
 import { usePostLogout } from '@/hooks/auth/use-post-logout'
 import { Loader } from '../loading/Loader'
 import { Error } from '../error/Error'
-import { api } from '@/api/axios'
 import { useAuth } from '@/contexts/auth/AuthContext'
-type UserMenuProps = {
-  user: UserProps
-}
 
-export const UserMenu = ({ user }: UserMenuProps) => {
+export const UserMenu = () => {
   const [open, setOpen] = useState(false)
-  const rootRef = useRef<HTMLDivElement | null>(null)
   const router = useRouter()
-  const { setData } = useAuth()
+  const { data, setData } = useAuth()
+  if (!data) return null
 
-  const profileHref = useMemo(
-    () => `/profile/${user.username}`,
-    [user.username]
-  )
+  const { user } = data
 
-  const { postMutation, data, loading, error } = usePostLogout()
+  const profileHref = useMemo(() => {
+    return `/profile/${user.username}`
+  }, [user.username])
 
-  useEffect(() => {
-    if (!open) return
-
-    const onMouseDown = (event: MouseEvent) => {
-      const target = event.target as Node | null
-      if (!target) return
-      if (!rootRef.current?.contains(target)) {
-        setOpen(false)
-      }
-    }
-
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setOpen(false)
-      }
-    }
-
-    document.addEventListener('mousedown', onMouseDown)
-    document.addEventListener('keydown', onKeyDown)
-    return () => {
-      document.removeEventListener('mousedown', onMouseDown)
-      document.removeEventListener('keydown', onKeyDown)
-    }
-  }, [open])
+  const { postMutation, loading, error } = usePostLogout()
 
   if (loading) {
     return <Loader />
@@ -60,18 +31,16 @@ export const UserMenu = ({ user }: UserMenuProps) => {
     return <Error {...error} />
   }
 
-  // const logout = async () => {
-  //   postMutation().then(() => {
-  //     setData(null)
-  //     delete api.defaults.headers.common.Authorization
-  //     setOpen(false)
-  //     router.replace('/login')
-  //     router.refresh()
-  //   })
-  // }
+  const logout = async () => {
+    postMutation()
+    setData(null)
+    setOpen(false)
+    router.replace('/login')
+    router.refresh()
+  }
 
   return (
-    <div ref={rootRef} className="relative flex items-center">
+    <div className="relative flex items-center">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -109,7 +78,6 @@ export const UserMenu = ({ user }: UserMenuProps) => {
               <UserRound size={18} className="text-foreground/70" />
               <span>Go to profile</span>
             </Link>
-            {/* 
             <button
               role="menuitem"
               type="button"
@@ -118,7 +86,7 @@ export const UserMenu = ({ user }: UserMenuProps) => {
             >
               <LogOut size={18} className="text-foreground/70" />
               <span>Log out</span>
-            </button> */}
+            </button>
           </div>
         </div>
       )}

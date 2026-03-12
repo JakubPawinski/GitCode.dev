@@ -116,7 +116,10 @@ export default function Home() {
             <Funnel />
           </button>
           {sortClicked && (
-            <Sort onSortChange={setSortOrder} selectedSort={sortOrder} />
+            <Sort
+              onSortOrderChange={setSortOrder}
+              selectedSortOrder={sortOrder}
+            />
           )}
 
           <div className="border-accent/40 h-8 w-px border-l"></div>

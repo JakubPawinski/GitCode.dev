@@ -1,6 +1,6 @@
 'use client'
 
-import { Login } from '@/components/login/Login'
+import { Login } from '@/components/auth/Login'
 import { useAuth } from '@/contexts/auth/AuthContext'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
