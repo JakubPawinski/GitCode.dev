@@ -247,6 +247,12 @@ export class NotificationService implements OnModuleInit {
     const rows = await this.prismaService.notificationPreference.findMany({
       where: { userId },
     });
+
+    // If there is no preferences set default preferences and return
+    if (rows.length === 0) {
+      return this.setDefaultPreferences(userId);
+    }
+
     const preferencesMap: Record<NotificationType, ChannelType[]> = {} as any;
 
     // Map database rows to preferences map
