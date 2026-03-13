@@ -1,7 +1,9 @@
+'use client'
 import { Example, ExampleProps } from './Example'
 import { Constraint } from './Constraint'
 import { Hint, HintProps } from './Hint'
 import { Topic } from './Topic'
+import { useMemo } from 'react'
 
 export interface DescriptionProps {
   problemId: string
@@ -12,7 +14,6 @@ export interface DescriptionProps {
   topics: string[]
   hints: HintProps[]
 }
-// export type DescriptionProps = Partial<ProblemDataProps>
 
 export const Description = ({
   problemId,
@@ -23,6 +24,10 @@ export const Description = ({
   topics,
   hints,
 }: DescriptionProps) => {
+  const croppedDescription = useMemo(
+    () => description.slice(0, description.lastIndexOf('.')),
+    [description]
+  )
   return (
     <div className="border-primary/20 rounded-xl border bg-transparent p-6 shadow-2xl backdrop-blur-sm">
       <header className="border-primary/30 mb-6 border-b pb-4">
@@ -38,7 +43,7 @@ export const Description = ({
             </span>
           </h2>
           <p className="text-foreground text-base leading-relaxed">
-            {description}
+            {croppedDescription}.
           </p>
         </div>
       </section>

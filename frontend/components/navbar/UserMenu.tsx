@@ -1,46 +1,57 @@
 'use client'
 
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { LogOut, UserRound } from 'lucide-react'
 import { UserImage } from '@/components/user/UserImage'
 import { usePostLogout } from '@/hooks/auth/use-post-logout'
-import { Loader } from '../loading/Loader'
-import { Error } from '../error/Error'
 import { useAuth } from '@/contexts/auth/AuthContext'
 
 export const UserMenu = () => {
   const [open, setOpen] = useState(false)
-  const router = useRouter()
-  const { data, setData } = useAuth()
-  if (!data) return null
+  const rootRef = useRef<HTMLDivElement | null>(null)
+  const { data } = useAuth()
 
   const { user } = data
 
-  const profileHref = useMemo(() => {
-    return `/profile/${user.username}`
-  }, [user.username])
+  const profileHref = useMemo(
+    () => `/profile/${user.username}`,
+    [user.username]
+  )
 
-  const { postMutation, loading, error } = usePostLogout()
+  const { postMutation } = usePostLogout()
 
-  if (loading) {
-    return <Loader />
-  }
-  if (error) {
-    return <Error {...error} />
-  }
+  useEffect(() => {
+    if (!open) return
+
+    const onMouseDown = (event: MouseEvent) => {
+      const target = event.target as Node | null
+      if (!target) return
+      if (!rootRef.current?.contains(target)) {
+        setOpen(false)
+      }
+    }
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', onMouseDown)
+    document.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.removeEventListener('mousedown', onMouseDown)
+      document.removeEventListener('keydown', onKeyDown)
+    }
+  }, [open])
 
   const logout = async () => {
     postMutation()
-    setData(null)
-    setOpen(false)
-    router.replace('/login')
-    router.refresh()
   }
 
   return (
-    <div className="relative flex items-center">
+    <div ref={rootRef} className="relative flex items-center">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}

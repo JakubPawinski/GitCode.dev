@@ -35,7 +35,7 @@ export interface AttemptDetails {
   failedTestsDetails: TestResult[]
 }
 
-export const useGetAttemptDetails = (attemptId: string) => {
+export const useGetAttemptDetails = ({ attemptId }: { attemptId: string }) => {
   const [data, setData] = useState<AttemptDetails>()
   const [loading, setLoading] = useState<boolean>(false)
   const [error, setError] = useState<any>()

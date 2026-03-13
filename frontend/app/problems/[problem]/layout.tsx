@@ -51,12 +51,14 @@ export interface ProblemDataProps {
 }
 
 interface SubmissionDataProps {
-  submissionId: string
+  id: string
 }
 
 export default function ProblemLayout({ children }: { children: ReactNode }) {
   const [aiTutorOpen, setAiTutorOpen] = useState<boolean>(false)
   const defaultLanguage = availableLanguages[0]
+
+  const [codeSnippet, setCodeSnippet] = useState<string>('')
 
   const { data: authData } = useAuth()
 
@@ -66,7 +68,7 @@ export default function ProblemLayout({ children }: { children: ReactNode }) {
     if (!socket.connected) {
       socket.connect()
     }
-  }, [authData?.user.id])
+  }, [authData])
 
   const rooms = [
     'attempt_update',
@@ -89,20 +91,20 @@ export default function ProblemLayout({ children }: { children: ReactNode }) {
     data: tutorData,
     loading: tutorLoading,
     error: tutorError,
-  } = useGetAiTutorHistory<Partial<AiTutorContextProps>>({
+  } = useGetAiTutorHistory<Omit<AiTutorContextProps, 'sessionId'>>({
     problem: problem as string,
   })
 
   const { postMutation, data, loading, error } =
     usePostSubmission<SubmissionDataProps>()
 
-  const { control, handleSubmit, watch } = useForm<EditorType>({
+  const { control, handleSubmit, watch, reset } = useForm<EditorType>({
     resolver: zodResolver(editorSchema),
 
     defaultValues: {
       language: defaultLanguage,
-      blueprint: '',
-      code: '',
+      blueprint: codeSnippet,
+      code: codeSnippet,
     },
     resetOptions: {
       keepDirtyValues: true,
@@ -112,16 +114,32 @@ export default function ProblemLayout({ children }: { children: ReactNode }) {
   const selectedLanguage = watch('language')
   const currentCode = watch('code')
 
-  if (problemLoading) {
+  useEffect(() => {
+    if (problemData) {
+      const snippet = problemData.codeSnippets[selectedLanguage]
+      setCodeSnippet(snippet)
+      reset({
+        language: selectedLanguage,
+        blueprint: snippet,
+        code: snippet,
+      })
+    }
+  }, [problemData, selectedLanguage])
+
+  if (problemLoading || tutorLoading) {
     return <Loader />
   }
+
   if (problemError) {
     return <Error {...problemError} />
   }
-  if (tutorError) return <Error {...tutorError} />
+  if (tutorError) {
+    return <Error {...tutorError} />
+  }
 
-  if (!problemData) return null
-  if (!tutorData) return null
+  if (!problemData || !tutorData) return null
+
+  const { messages: tutorMessages } = tutorData
 
   const { id, testCases } = problemData
 
@@ -138,10 +156,9 @@ export default function ProblemLayout({ children }: { children: ReactNode }) {
     code: currentCode,
     problemSlug: problem as string,
   }
-
   return (
     <AiSendMessageProvider messageData={messageData}>
-      <AiTutorContextProvider>
+      <AiTutorContextProvider messages={tutorMessages}>
         <ProblemProvider problemData={problemData}>
           <div className="flex h-screen overflow-hidden">
             <form className="text-foreground flex h-screen flex-1 flex-col">
@@ -154,8 +171,8 @@ export default function ProblemLayout({ children }: { children: ReactNode }) {
               <section className="flex flex-grow gap-4 overflow-hidden p-4">
                 <div className="border-primary/20 flex min-w-0 flex-1 flex-col rounded-lg border bg-transparent p-4">
                   <LeftProblemNavbar
-                    submissionId={data?.submissionId}
-                    submissionMessages={messages}
+                    attemptId={data?.id}
+                    attemptMessages={messages}
                   />
                   <div className="custom-scrollbar mt-4 overflow-y-auto">
                     {children}

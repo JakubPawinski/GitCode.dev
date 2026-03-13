@@ -1,17 +1,17 @@
 import { Check, X } from 'lucide-react'
 import Link from 'next/link'
 import { Loader } from '../loading/Loader'
-interface SubmissionResultLinkProps {
+interface AttemptResultLinkProps {
   basePath: string
   status: string
-  submissionId: string
+  attemptId: string
 }
 
-export const SubmissionResultLink = ({
+export const AttemptResultLink = ({
   status,
-  submissionId,
+  attemptId,
   basePath,
-}: SubmissionResultLinkProps) => {
+}: AttemptResultLinkProps) => {
   const normalizedStatus = status?.toLowerCase()
   const isRunning = normalizedStatus === 'running'
   const isPassed =
@@ -35,7 +35,7 @@ export const SubmissionResultLink = ({
 
   return (
     <Link
-      href={`${basePath}/submissions/${submissionId}`}
+      href={`${basePath}/attempts/${attemptId}`}
       className={`hover:text-foreground flex items-center gap-2 rounded-md px-4 py-2 transition-all duration-300 ${accentClass}`}
     >
       {isRunning ? (

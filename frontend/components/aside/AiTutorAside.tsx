@@ -4,8 +4,6 @@ import { Controller, useForm } from 'react-hook-form'
 import { ChatSchema, ChatSchemaType } from '@/config/chat-config'
 import { useAiSendMessageContext } from '@/contexts/ai/AiSendMessageContext'
 import { useAiTutorContext } from '@/contexts/ai/AiTutorContext'
-import { Loader } from '../loading/Loader'
-import { Error } from '../error/Error'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 
@@ -39,18 +37,20 @@ export const AiTutorAside = () => {
       messageRef.current?.scrollTo({ top: messageRef.current.scrollHeight })
     })
     if (data) {
-      const croppedData = (data as string).slice(6)
-      const parsedMessage = JSON.parse(croppedData).text
       const tutorMessage = {
         role: 'assistant',
-        content: parsedMessage,
+        content: data,
       }
       setTutorMessages((previous: Message[]) => [...previous, tutorMessage])
       queueMicrotask(() => {
         messageRef.current?.scrollTo({ top: messageRef.current.scrollHeight })
       })
     }
-  }, [data])
+    if (error)
+      queueMicrotask(() => {
+        messageRef.current?.scrollTo({ top: messageRef.current.scrollHeight })
+      })
+  }, [data, error])
 
   const onSubmit = (message: ChatSchemaType) => {
     const trimmed = message.message.trim()
@@ -97,8 +97,7 @@ export const AiTutorAside = () => {
           <div className="flex flex-col gap-3">
             {tutorMessages.length === 0 ? (
               <div className="text-foreground/60 text-sm">
-                No tutorMessages yet. Ask something about this problem or your
-                code.
+                No messages yet. Ask something about this problem or your code.
               </div>
             ) : (
               tutorMessages.map((message, index) => (

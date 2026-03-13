@@ -11,7 +11,10 @@ import { ProfileLink } from './ProfileLink'
 import { useAuth } from '@/contexts/auth/AuthContext'
 import { useParams } from 'next/navigation'
 import { useGetAiTutorHistory } from '@/hooks/ai/use-get-ai-tutor-history'
-import { AiTutorContextProvider } from '@/contexts/ai/AiTutorContext'
+import {
+  AiTutorContextProps,
+  AiTutorContextProvider,
+} from '@/contexts/ai/AiTutorContext'
 interface NavbarSubmitProps {
   onSubmit: () => void
   setAiTutorOpen: Dispatch<SetStateAction<boolean>>
@@ -30,17 +33,20 @@ export const PrimaryProblemNavbar = ({
   if (!data) return null
 
   const { user } = data
-  const params = useParams()
-  const problemSlug = params.problem!.toString()
+  const { problem } = useParams()
 
   const {
     data: tutorData,
     loading: tutorLoading,
     error: tutorError,
-  } = useGetAiTutorHistory({ problem: problemSlug })
+  } = useGetAiTutorHistory<AiTutorContextProps>({ problem: problem as string })
+
+  if (tutorLoading) return <Loader />
+  if (tutorError) return <Error {...tutorError} />
+  if (!tutorData) return null
 
   return (
-    <AiTutorContextProvider tutorData={tutorData}>
+    <AiTutorContextProvider messages={tutorData.messages}>
       <nav className="border-primary/30 grid h-22 grid-cols-3 items-center border-b bg-transparent px-4 shadow-lg">
         <div className="flex items-center gap-6">
           <Link

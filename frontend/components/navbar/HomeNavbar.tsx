@@ -8,9 +8,6 @@ import { UserMenu } from './UserMenu'
 export const HomeNavbar = () => {
   const { problem } = useParams()
 
-  const pathname = usePathname()
-  const isRootPage = pathname === '/'
-
   if (problem) return null
 
   return (
@@ -30,12 +27,10 @@ export const HomeNavbar = () => {
           <span className="text-xl font-bold">GitCode.dev</span>
         </Link>
       </div>
-      {!isRootPage && (
-        <div className="flex items-center gap-4">
-          <NotificationBell />
-          <UserMenu />
-        </div>
-      )}
+      <div className="flex items-center gap-4">
+        <NotificationBell />
+        <UserMenu />
+      </div>
     </nav>
   )
 }

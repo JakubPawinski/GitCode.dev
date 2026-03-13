@@ -3,6 +3,7 @@ import { NotificationProvider } from '@/contexts/notification/NotificationContex
 import './globals.css'
 import { Interceptor } from '@/api/Interceptor'
 import { ReactNode } from 'react'
+import { SSEProvider } from '@/components/providers/SSEProvider'
 
 export default function RootLayout({
   children,
@@ -14,7 +15,9 @@ export default function RootLayout({
       <body className="from-background via-background to-primary/100 text-foreground bg-background h-screen">
         <AuthProvider>
           <Interceptor>
-            <NotificationProvider>{children}</NotificationProvider>
+            <NotificationProvider>
+              <SSEProvider>{children}</SSEProvider>
+            </NotificationProvider>
           </Interceptor>
         </AuthProvider>
       </body>

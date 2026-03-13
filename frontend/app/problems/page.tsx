@@ -44,7 +44,7 @@ export default function Home() {
     difficulty: difficulty,
     topic: topic,
     sortOrder: sortOrder,
-    query: debouncedQuery,
+    search: debouncedQuery,
     page: page,
     limit: LIMIT,
   }
@@ -61,7 +61,7 @@ export default function Home() {
     if (!pageRef.current) return
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && !loading) {
+        if (entries[0].isIntersecting) {
           setPage((previous) => previous + 1)
         }
       },
@@ -70,7 +70,7 @@ export default function Home() {
     observer.observe(pageRef.current)
 
     return () => observer.disconnect()
-  }, [pageRef.current, loading])
+  }, [pageRef.current])
 
   useEffect(() => {
     if (!data) return

@@ -14,7 +14,7 @@ export const Loader = ({ size = 48, center = true }: LoaderProps) => {
   if (!center) return spinner
 
   return (
-    <div className="flex h-full w-full items-center justify-center">
+    <div className="absolute flex h-full w-full items-center justify-center">
       {spinner}
     </div>
   )

@@ -2,26 +2,22 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { NotepadText, Clock8, Sparkles } from 'lucide-react'
-import { SubmissionResultLink } from './SubmissionResultLink'
 import { ChartNoAxesCombined } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { usePostCommit } from '@/hooks/github/use-post-commit'
 import { useAiSendMessageContext } from '@/contexts/ai/AiSendMessageContext'
-import { useAuth } from '@/contexts/auth/AuthContext'
+import { AttemptResultLink } from './AttemptResultLink'
 
 interface NavbarProps {
-  submissionId?: string
-  submissionMessages: any
-  onCommitConfirm?: (submissionId: string, commitMessage?: string) => void
+  attemptId?: string
+  attemptMessages: any
 }
 
 export const LeftProblemNavbar = ({
-  submissionId,
-  submissionMessages,
-  onCommitConfirm,
+  attemptId,
+  attemptMessages,
 }: NavbarProps) => {
   const { postMutation, data, loading, error } = usePostCommit()
-  const auth = useAuth()
   const { messageData } = useAiSendMessageContext()
 
   const pathname = usePathname()
@@ -33,18 +29,18 @@ export const LeftProblemNavbar = ({
   const lastPromptedSubmissionId = useRef<string | undefined>(undefined)
 
   const status =
-    submissionMessages?.submission_complete?.status ??
-    submissionMessages?.submission_analyzed?.status ??
-    submissionMessages?.attempt_update?.status
+    attemptMessages?.submission_complete?.status ??
+    attemptMessages?.submission_analyzed?.status ??
+    attemptMessages?.attempt_update?.status
 
   useEffect(() => {
-    if (!submissionId) return
+    if (!attemptId) return
     if (status !== 'success') return
 
-    if (lastPromptedSubmissionId.current === submissionId) return
-    lastPromptedSubmissionId.current = submissionId
+    if (lastPromptedSubmissionId.current === attemptId) return
+    lastPromptedSubmissionId.current = attemptId
     setIsCommitModalOpen(true)
-  }, [status, submissionId])
+  }, [status, attemptId])
 
   useEffect(() => {
     if (!isCommitModalOpen) return
@@ -59,7 +55,7 @@ export const LeftProblemNavbar = ({
     if (!data) return
     setIsCommitModalOpen(false)
   }, [data, isCommitModalOpen])
-  const aiAnalysis = submissionMessages?.submission_analyzed
+  const aiAnalysis = attemptMessages?.submission_analyzed
   const hasAiAnalysis = !!aiAnalysis?.attemptId
 
   const linkClasses =
@@ -103,11 +99,11 @@ export const LeftProblemNavbar = ({
           <span className="tracking-wide">Stats</span>
         </Link>
 
-        {submissionId && status && (
-          <SubmissionResultLink
+        {attemptId && status && (
+          <AttemptResultLink
             basePath={basePath}
             status={status}
-            submissionId={submissionId}
+            attemptId={attemptId}
           />
         )}
 
