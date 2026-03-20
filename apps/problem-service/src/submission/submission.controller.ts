@@ -206,8 +206,8 @@ export class SubmissionController {
 
   /**
    * Get extended user statistics for README generation and charts
-   * @param userId - ID of the user
    * @returns - Extended user statistics with all metrics
+   * @param user - Authenticated user fetched from JWT token by guards
    */
   @Get('stats/extended')
   @ApiBearerAuth('Bearer Auth')
