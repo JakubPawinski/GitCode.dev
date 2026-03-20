@@ -598,31 +598,31 @@ export class SubmissionService {
       now.getDate(),
     );
 
-    // Fetch all user submissions with related data
-    const submissions = await this.prisma.userSubmission.findMany({
-      where: { userId },
-      include: {
-        problem: {
-          include: {
-            topics: true,
+    // Fetch all submissions and all feedbacks
+    const [submissions, allFeedbacks] = await Promise.all([
+      this.prisma.userSubmission.findMany({
+        where: { userId },
+        include: {
+          problem: {
+            include: {
+              topics: true,
+            },
           },
-        },
-        attempts: {
-          include: {
-            feedbacks: true,
+          attempts: {
+            include: {
+              feedbacks: true,
+            },
+            orderBy: { createdAt: 'desc' },
           },
-          orderBy: { createdAt: 'desc' },
+          feedbacks: true,
         },
-        feedbacks: true,
-      },
-    });
-
-    // Fetch all AI feedbacks for user
-    const allFeedbacks = await this.prisma.aIFeedback.findMany({
-      where: {
-        submission: { userId },
-      },
-    });
+      }),
+      this.prisma.aIFeedback.findMany({
+        where: {
+          submission: { userId },
+        },
+      })
+    ])
 
     // Base statistics
     const allAttempts = submissions.flatMap((s) => s.attempts);
