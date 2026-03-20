@@ -1,13 +1,13 @@
 [tool.coverage.run]
 branch = true
-source = [ "ai_service" ]
+source = [ "app" ]
 
 [tool.coverage.report]
 exclude_lines = ['if TYPE_CHECKING:']
 show_missing = true
 
 [tool.pytest.ini_options]
-addopts = "--cov --cov-fail-under=70 --cov-report html:'../../coverage/apps/ai-service/html' --cov-report xml:'../../coverage/apps/ai-service/coverage.xml' --junitxml='../../reports/apps/ai-service/unittests/junit.xml' --html='../../reports/apps/ai-service/unittests/html/index.html'"
+addopts = "--cov=app --cov-fail-under=70 --cov-report html:'../../coverage/apps/ai-service/html' --cov-report xml:'../../coverage/apps/ai-service/coverage.xml' --junitxml='../../reports/apps/ai-service/unittests/junit.xml' --html='../../reports/apps/ai-service/unittests/html/index.html'"
 
 [tool.poetry]
 name = "ai-service"
