@@ -3,7 +3,6 @@ import {
   Logger,
   BadRequestException,
   HttpException,
-  HttpStatus,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Octokit } from '@octokit/rest';
@@ -32,7 +31,9 @@ export class RepositoryService {
     );
   }
 
-  async getRepository(userId: string): Promise<RepositoryResponseDto | void> {
+  async getRepository(
+    userId: string,
+  ): Promise<{ repository: RepositoryResponseDto | null }> {
     try {
       const token = await this.tokenService.getGitHubTokenForUser(userId);
       const octokit = new Octokit({ auth: token });
@@ -49,8 +50,7 @@ export class RepositoryService {
       });
 
       if (!dbRepo) {
-        // Not in database, return 204 No Content
-        throw new HttpException(null, HttpStatus.NO_CONTENT);
+        return { repository: null };
       }
 
       // Verify on GitHub
@@ -62,11 +62,13 @@ export class RepositoryService {
         });
 
         return {
-          name: githubRepo.name,
-          fullName: githubRepo.full_name,
-          htmlUrl: githubRepo.html_url,
-          isPrivate: githubRepo.private,
-          created: false,
+          repository: {
+            name: githubRepo.name,
+            fullName: githubRepo.full_name,
+            htmlUrl: githubRepo.html_url,
+            isPrivate: githubRepo.private,
+            created: false,
+          },
         };
       } catch (error) {
         if (error.status === 404) {
@@ -74,7 +76,7 @@ export class RepositoryService {
           await this.prisma.repository.delete({
             where: { id: dbRepo.id },
           });
-          throw new HttpException(null, HttpStatus.NO_CONTENT);
+          return { repository: null };
         }
         throw error;
       }
