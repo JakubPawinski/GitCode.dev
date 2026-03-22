@@ -73,7 +73,7 @@
       "prisma-db-push": {
         "executor": "nx:run-commands",
         "options": {
-          "command": "npx prisma db push --skip-generate --config=apps/notification-service/prisma.config.ts"
+          "command": "npx prisma db push --config=apps/notification-service/prisma.config.ts"
         }
       },
       "serve": {
