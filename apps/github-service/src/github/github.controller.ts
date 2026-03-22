@@ -38,13 +38,21 @@ export class GithubController {
   @ApiOperation({ summary: 'Get user repository if exists' })
   @ApiResponse({
     status: 200,
-    type: RepositoryResponseDto,
-    description: 'Repository found',
+    schema: {
+      properties: {
+        repository: {
+          oneOf: [
+            { $ref: '#/components/schemas/RepositoryResponseDto' },
+            { type: 'null' },
+          ],
+        },
+      },
+    },
+    description: 'Repository found or null if not exists',
   })
-  @ApiResponse({ status: 204, description: 'Repository does not exist' })
   async getRepository(
     @User() user: AuthenticatedUser,
-  ): Promise<RepositoryResponseDto | void> {
+  ): Promise<{ repository: RepositoryResponseDto | null }> {
     return this.repositoryService.getRepository(user.id);
   }
 
