@@ -29,42 +29,66 @@ jobs:
           --health-retries 5
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
         with:
           filter: tree:0
           fetch-depth: 0
 
-      - uses: actions/setup-node@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: 'npm'
 
-      - uses: actions/setup-python@v4
+      - name: Setup Python
+        uses: actions/setup-python@v4
         with:
-          python-version: '3.14'
+          python-version: '3.12'
           cache: 'pip'
 
-      - name: Install Poetry
+      - name: Create databases
+        run: |
+          for db in auth_db problem_db notification_db github_db achievement_db; do
+            PGPASSWORD=test_password psql -h localhost -U test_user -d test_db -c "CREATE DATABASE $db;" || true
+          done
+
+      - name: Prepare python environment
         run: |
           curl -sSL https://install.python-poetry.org | python3 -
           echo "$HOME/.local/bin" >> $GITHUB_PATH
+          poetry self add poetry-plugin-export
 
-      - name: Install Poetry Export Plugin
-        run: poetry self add poetry-plugin-export
+      - name: Install dependencies
+        run: |
+          npm ci
+          cd apps/ai-service
+          poetry install --no-interaction --no-root
 
-      - name: Install AI Service dependencies
-        working-directory: apps/ai-service
-        run: poetry install --no-interaction --no-root
+      - name: Generate Prisma client
+        run: npx nx run-many -t prisma-generate
 
-      - run: npm ci
-      - uses: nrwl/nx-set-shas@v4
-
-      - run: npx nx affected -t lint test build typecheck --no-cloud --parallel --max-parallel=5
+      - name: Push Prisma schemas to databases
+        run: npx nx run-many -t prisma-db-push
         env:
-          AUTH_DATABASE_URL: 'postgres://test_user:test_password@localhost:5432/test_db'
-          PROBLEM_DATABASE_URL: 'postgres://test_user:test_password@localhost:5432/test_db'
-          NOTIFICATION_DATABASE_URL: 'postgres://test_user:test_password@localhost:5432/test_db'
-          GITHUB_DATABASE_URL: 'postgres://test_user:test_password@localhost:5432/test_db'
-          ACHIEVEMENT_DATABASE_URL: 'postgres://test_user:test_password@localhost:5432/test_db'
-      - run: npx nx fix-ci
+          AUTH_DATABASE_URL: 'postgres://test_user:test_password@localhost:5432/auth_db'
+          PROBLEM_DATABASE_URL: 'postgres://test_user:test_password@localhost:5432/problem_db'
+          NOTIFICATION_DATABASE_URL: 'postgres://test_user:test_password@localhost:5432/notification_db'
+          GITHUB_DATABASE_URL: 'postgres://test_user:test_password@localhost:5432/github_db'
+          ACHIEVEMENT_DATABASE_URL: 'postgres://test_user:test_password@localhost:5432/achievement_db'
+
+      - name: Set SHAs for affected projects
+        uses: nrwl/nx-set-shas@v4
+
+      - name: Run affected tests and linters
+        run: npx nx affected -t lint test build typecheck --parallel --max-parallel=5
+        env:
+          AUTH_DATABASE_URL: 'postgres://test_user:test_password@localhost:5432/auth_db'
+          PROBLEM_DATABASE_URL: 'postgres://test_user:test_password@localhost:5432/problem_db'
+          NOTIFICATION_DATABASE_URL: 'postgres://test_user:test_password@localhost:5432/notification_db'
+          GITHUB_DATABASE_URL: 'postgres://test_user:test_password@localhost:5432/github_db'
+          ACHIEVEMENT_DATABASE_URL: 'postgres://test_user:test_password@localhost:5432/achievement_db'
+
+      - name: Fix CI issues
+        run: npx nx fix-ci
         if: always()
