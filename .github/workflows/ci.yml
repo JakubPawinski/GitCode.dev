@@ -67,6 +67,12 @@ jobs:
 
       - name: Generate Prisma client
         run: npx nx run-many -t prisma-generate --no-cloud
+        env:
+          AUTH_DATABASE_URL: 'postgres://test_user:test_password@localhost:5432/auth_db'
+          PROBLEM_DATABASE_URL: 'postgres://test_user:test_password@localhost:5432/problem_db'
+          NOTIFICATION_DATABASE_URL: 'postgres://test_user:test_password@localhost:5432/notification_db'
+          GITHUB_DATABASE_URL: 'postgres://test_user:test_password@localhost:5432/github_db'
+          ACHIEVEMENT_DATABASE_URL: 'postgres://test_user:test_password@localhost:5432/achievement_db'
 
       - name: Push Prisma schemas to databases
         run: npx nx run-many -t prisma-db-push --no-cloud
