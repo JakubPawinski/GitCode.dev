@@ -479,23 +479,23 @@ export class NotificationService implements OnModuleInit {
     }
 
     // Update the notification to mark it as read
-    await this.prismaService.notification.update({
+    const updatedNotification = await this.prismaService.notification.update({
       where: { id: notification.id },
       data: { isRead: true },
     });
 
     // Map to GetNotificationDto and return
     return {
-      id: notification.id,
-      userId: notification.userId,
-      kind: notification.kind as NotificationKind,
-      type: notification.type,
-      severity: notification.severity,
-      payload: notification.payload as unknown as NotificationPayload,
-      channelsSent: notification.channelsSent,
-      createdAt: notification.createdAt,
-      updatedAt: notification.updatedAt,
-      isRead: notification.isRead,
+      id: updatedNotification.id,
+      userId: updatedNotification.userId,
+      kind: updatedNotification.kind as NotificationKind,
+      type: updatedNotification.type,
+      severity: updatedNotification.severity,
+      payload: updatedNotification.payload as unknown as NotificationPayload,
+      channelsSent: updatedNotification.channelsSent,
+      createdAt: updatedNotification.createdAt,
+      updatedAt: updatedNotification.updatedAt,
+      isRead: updatedNotification.isRead,
     };
   }
 
