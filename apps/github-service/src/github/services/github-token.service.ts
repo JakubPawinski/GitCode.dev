@@ -40,6 +40,10 @@ export class GithubTokenService {
 
       return githubToken.accessToken;
     } catch (error) {
+      if (error instanceof UnauthorizedException) {
+        throw error;
+      }
+
       this.logger.error(
         `Failed to fetch GitHub token for user ${userId}: ${error.message}`,
       );
