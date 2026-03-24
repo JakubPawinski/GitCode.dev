@@ -114,11 +114,13 @@ describe('RepositoryService', () => {
       const result = await service.getRepository(mockUserId);
 
       expect(result).toEqual({
-        name: mockGithubRepo.name,
-        fullName: mockGithubRepo.full_name,
-        htmlUrl: mockGithubRepo.html_url,
-        isPrivate: mockGithubRepo.private,
-        created: false,
+        repository: {
+          name: mockGithubRepo.name,
+          fullName: mockGithubRepo.full_name,
+          htmlUrl: mockGithubRepo.html_url,
+          isPrivate: mockGithubRepo.private,
+          created: false,
+        },
       });
 
       expect(tokenService.getGitHubTokenForUser).toHaveBeenCalledWith(
@@ -134,16 +136,15 @@ describe('RepositoryService', () => {
       });
     });
 
-    it('should throw HttpException when repository does not exist in database', async () => {
+    it('should return null repository when repository does not exist in database', async () => {
       tokenService.getGitHubTokenForUser.mockResolvedValue(mockToken);
       prisma.repository.findUnique.mockResolvedValue(null);
 
-      await expect(service.getRepository(mockUserId)).rejects.toThrow(
-        HttpException,
-      );
+      const result = await service.getRepository(mockUserId);
+      expect(result).toEqual({ repository: null });
     });
 
-    it('should clean up database when repo exists in DB but not on GitHub', async () => {
+    it('should clean up database and return null when repo exists in DB but not on GitHub', async () => {
       const mockOctokit = {
         users: {
           getAuthenticated: jest.fn().mockResolvedValue({
@@ -165,9 +166,8 @@ describe('RepositoryService', () => {
       prisma.repository.findUnique.mockResolvedValue(mockDbRepository);
       prisma.repository.delete.mockResolvedValue(mockDbRepository);
 
-      await expect(service.getRepository(mockUserId)).rejects.toThrow(
-        HttpException,
-      );
+      const result = await service.getRepository(mockUserId);
+      expect(result).toEqual({ repository: null });
 
       expect(prisma.repository.delete).toHaveBeenCalledWith({
         where: { id: mockDbRepository.id },
