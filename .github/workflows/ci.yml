@@ -12,53 +12,89 @@ permissions:
 jobs:
   main:
     runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_DB: test_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
         with:
           filter: tree:0
           fetch-depth: 0
 
-      # This enables task distribution via Nx Cloud
-      # Run this command as early as possible, before dependencies are installed
-      # Learn more at https://nx.dev/ci/reference/nx-cloud-cli#npx-nxcloud-startcirun
-      # Uncomment this line to enable task distribution
-      # - run: npx nx start-ci-run --distribute-on="3 linux-medium-js" --stop-agents-after="build"
-
-      # Cache node_modules
-      - uses: actions/setup-node@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: 'npm'
 
-      - uses: actions/setup-python@v4
+      - name: Setup Python
+        uses: actions/setup-python@v4
         with:
-          python-version: '3.14'
+          python-version: '3.12'
           cache: 'pip'
 
-      - name: Install Poetry
+      - name: Create databases
+        run: |
+          for db in auth_db problem_db notification_db github_db achievement_db; do
+            PGPASSWORD=test_password psql -h localhost -U test_user -d test_db -c "CREATE DATABASE $db;" || true
+          done
+
+      - name: Prepare python environment
         run: |
           curl -sSL https://install.python-poetry.org | python3 -
           echo "$HOME/.local/bin" >> $GITHUB_PATH
+          poetry self add poetry-plugin-export
 
-      - name: Install Poetry Export Plugin
-        run: poetry self add poetry-plugin-export
+      - name: Install dependencies
+        run: |
+          npm ci
+          cd apps/ai-service
+          poetry install --no-interaction --no-root
 
-      - name: Install AI Service dependencies
-        working-directory: apps/ai-service
-        run: poetry install --no-interaction --no-root
-
-      - run: npm ci
-      - uses: nrwl/nx-set-shas@v4
-
-      # Prepend any command with "nx-cloud record --" to record its logs to Nx Cloud
-      # - run: npx nx-cloud record -- echo Hello World
-      - run: npx nx affected -t lint test build typecheck --no-cloud --exclude='@gitcode/ai-service'
+      - name: Generate Prisma client
+        run: npx nx run-many -t prisma-generate --no-cloud
         env:
-          AUTH_DATABASE_URL: 'postgres://auth_user:auth_password@localhost:5432/auth_db'
-          PROBLEM_DATABASE_URL: 'postgres://problem_user:problem_password@localhost:5432/problem_db'
-          NOTIFICATION_DATABASE_URL: 'postgres://notification_user:notification_password@localhost:5434/notification_db'
-          GITHUB_DATABASE_URL: 'postgres://github_user:github_password@localhost:5435/github_db'
-          ACHIEVEMENT_DATABASE_URL: 'postgres://achievement_user:achievement_password@localhost:5436/achievement_db'
-      # Nx Cloud recommends fixes for failures to help you get CI green faster. Learn more: https://nx.dev/ci/features/self-healing-ci
-      - run: npx nx fix-ci
+          AUTH_DATABASE_URL: 'postgres://test_user:test_password@localhost:5432/auth_db'
+          PROBLEM_DATABASE_URL: 'postgres://test_user:test_password@localhost:5432/problem_db'
+          NOTIFICATION_DATABASE_URL: 'postgres://test_user:test_password@localhost:5432/notification_db'
+          GITHUB_DATABASE_URL: 'postgres://test_user:test_password@localhost:5432/github_db'
+          ACHIEVEMENT_DATABASE_URL: 'postgres://test_user:test_password@localhost:5432/achievement_db'
+
+      - name: Push Prisma schemas to databases
+        run: npx nx run-many -t prisma-db-push --no-cloud
+        env:
+          AUTH_DATABASE_URL: 'postgres://test_user:test_password@localhost:5432/auth_db'
+          PROBLEM_DATABASE_URL: 'postgres://test_user:test_password@localhost:5432/problem_db'
+          NOTIFICATION_DATABASE_URL: 'postgres://test_user:test_password@localhost:5432/notification_db'
+          GITHUB_DATABASE_URL: 'postgres://test_user:test_password@localhost:5432/github_db'
+          ACHIEVEMENT_DATABASE_URL: 'postgres://test_user:test_password@localhost:5432/achievement_db'
+
+      - name: Set SHAs for affected projects
+        uses: nrwl/nx-set-shas@v4
+
+      - name: Run affected tests and linters
+        run: npx nx affected -t lint test build typecheck --parallel --max-parallel=5 --no-cloud
+        env:
+          AUTH_DATABASE_URL: 'postgres://test_user:test_password@localhost:5432/auth_db'
+          PROBLEM_DATABASE_URL: 'postgres://test_user:test_password@localhost:5432/problem_db'
+          NOTIFICATION_DATABASE_URL: 'postgres://test_user:test_password@localhost:5432/notification_db'
+          GITHUB_DATABASE_URL: 'postgres://test_user:test_password@localhost:5432/github_db'
+          ACHIEVEMENT_DATABASE_URL: 'postgres://test_user:test_password@localhost:5432/achievement_db'
+
+      - name: Fix CI issues
+        run: npx nx fix-ci
         if: always()

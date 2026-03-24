@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as dotenv from 'dotenv';
-dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
+dotenv.config({ path: path.resolve('.env') });
 
 const connectionString = process.env.PROBLEM_DATABASE_URL;
 console.log('Using database connection string:', connectionString);
@@ -55,6 +55,8 @@ async function main() {
 
     const filePath = path.join(
       process.cwd(),
+      'apps',
+      'problem-service',
       'resources',
       'merged_problems.json',
     );
