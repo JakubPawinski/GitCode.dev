@@ -31,7 +31,7 @@ export class CommitConsumer {
     this.logger.log(`Readme generated event received: ${event.payload.userId}`);
     this.logger.debug(`Readme content: ${JSON.stringify(event.payload)}`);
     try {
-      this.commitService.updateReadme(
+      await this.commitService.updateReadme(
         event.payload.userId,
         event.payload.readmeContent,
       );

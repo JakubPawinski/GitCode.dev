@@ -100,7 +100,7 @@
       },
       "test": {
         "options": {
-          "passWithNoTests": true
+          "coverage": true
         }
       }
     }
