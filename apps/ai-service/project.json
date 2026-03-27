@@ -57,14 +57,6 @@
         "cwd": "apps/ai-service"
       }
     },
-    "lint": {
-      "executor": "@nxlv/python:run-commands",
-      "outputs": ["{workspaceRoot}/reports/apps/ai-service/pylint.txt"],
-      "options": {
-        "command": "poetry run flake8 app tests --output-file=../../reports/apps/ai-service/pylint.txt",
-        "cwd": "apps/ai-service"
-      }
-    },
     "test": {
       "executor": "@nxlv/python:run-commands",
       "outputs": [
