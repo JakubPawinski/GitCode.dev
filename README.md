@@ -4,24 +4,7 @@
 
 # GitCode.dev — Solve, Commit, Grow
 
-<img src="https://img.shields.io/badge/Node.js-≥22-339933?logo=node.js&amp;logoColor=white" alt="Node.js ≥22">
-
-<img src="https://img.shields.io/badge/Next.js-Frontend-black?logo=next.js&amp;logoColor=white" alt="Next.js">
-
-<img src="https://img.shields.io/badge/NestJS-Backend-E0234E?logo=nestjs&amp;logoColor=white" alt="NestJS">
-
-<img src="https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker&amp;logoColor=white" alt="Dockerized">
-
-<img src="https://img.shields.io/badge/Monorepo-Nx-143055?logo=nx&amp;logoColor=white" alt="Nx">
-
-<img src="https://img.shields.io/badge/Prisma-ORM-2D3748?logo=prisma&amp;logoColor=white" alt="Prisma">
-
-<img src="https://img.shields.io/badge/PostgreSQL-4169E1?logo=postgresql&amp;logoColor=white" alt="PostgreSQL">
-
-<img src="https://img.shields.io/badge/Auth-Keycloak-4D4D4D?logo=keycloak&amp;logoColor=white" alt="Keycloak">
-
-[![CI/CD](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-2088FF?logo=github&logoColor=white)](https://github.com/features/actions)
-<img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT">
+<img src="https://img.shields.io/badge/Node.js-≥22-339933?logo=node.js&amp;logoColor=white" alt="Node.js ≥22"> <img src="https://img.shields.io/badge/Next.js-Frontend-black?logo=next.js&amp;logoColor=white" alt="Next.js"> <img src="https://img.shields.io/badge/NestJS-Backend-E0234E?logo=nestjs&amp;logoColor=white" alt="NestJS"> <img src="https://img.shields.io/badge/FastAPI-AI%20Service-05998B?logo=fastapi&amp;logoColor=white" alt="FastAPI AI Service"> <img src="https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker&amp;logoColor=white" alt="Dockerized"> <img src="https://img.shields.io/badge/Monorepo-Nx-143055?logo=nx&amp;logoColor=white" alt="Nx"> <img src="https://img.shields.io/badge/Prisma-ORM-2D3748?logo=prisma&amp;logoColor=white" alt="Prisma"> <img src="https://img.shields.io/badge/PostgreSQL-4169E1?logo=postgresql&amp;logoColor=white" alt="PostgreSQL"> <img src="https://img.shields.io/badge/Auth-Keycloak-4D4D4D?logo=keycloak&amp;logoColor=white" alt="Keycloak"> <img src="https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-2088FF?logo=github-actions&amp;logoColor=white" alt="CI/CD">
 
 > **"A platform that turns coding challenges into your real GitHub portfolio."**
 >
@@ -84,17 +67,17 @@ To run GitCode.dev locally, follow these steps:
 
 GitCode.dev is built using a **microservices architecture**, organized as an **Nx Monorepo**. Each service is containerized and responsible for a specific domain.
 
-| Service                  | Description                                                       |              Documentation               |
-| :----------------------- | :---------------------------------------------------------------- | :--------------------------------------: |
-| **API Gateway**          | Entry point for all client requests (routing, rate limiting).     |        [Link](apps/api-gateway/)         |
-| **Auth Service**         | Manages user sessions and integration with Keycloak/GitHub.       |  [README](apps/auth-service/README.md)   |
-| **Problem Service**      | Manages coding tasks, test cases, and difficulty levels.          | [README](apps/problem-service/README.md) |
-| **AI Service**           | Python-based service for code analysis, feedback, and hints.      |   [README](apps/ai-service/README.md)    |
-| **GitHub Service**       | Responsible for committing and pushing solutions to users' repos. |       [Link](apps/github-service/)       |
-| **Notification Service** | Handles real-time alerts and email notifications.                 |    [Link](apps/notification-service/)    |
-| **Swagger API Docs**     | Auto-generated API documentation for backend services.            |        [Link](apps/swagger-docs/)        |
-| **Shared Libraries**     | Common utilities, types, and interfaces.                          |           [Link](libs/shared/)           |
-| **Frontend**             | Next.js application for user interface and interaction.           |    [README](apps/frontend/README.md)     |
+| Service                  | Description                                                       |                 Documentation                 |
+| :----------------------- | :---------------------------------------------------------------- | :-------------------------------------------: |
+| **API Gateway**          | Entry point for all client requests (routing, rate limiting).     |           [Link](apps/api-gateway/)           |
+| **Auth Service**         | Manages user sessions and integration with Keycloak/GitHub.       |     [README](apps/auth-service/README.md)     |
+| **Problem Service**      | Manages coding tasks, test cases, and difficulty levels.          |   [README](apps/problem-service/README.md)    |
+| **AI Service**           | Python-based service for code analysis, feedback, and hints.      |      [README](apps/ai-service/README.md)      |
+| **GitHub Service**       | Responsible for committing and pushing solutions to users' repos. |    [README](apps/github-service/README.md)    |
+| **Notification Service** | Handles real-time alerts and email notifications.                 | [README](apps/notification-service/README.md) |
+| **Swagger API Docs**     | Auto-generated API documentation for backend services.            |     [README](apps/swagger-docs/README.md)     |
+| **Shared Libraries**     | Common utilities, types, and interfaces.                          |         [README](packages/README.md)          |
+| **Frontend**             | Next.js application for user interface and interaction.           |         [README](frontend/README.md)          |
 
 [↑ Back to Top](#gitcodedev--solve-commit-grow)
 
@@ -121,7 +104,7 @@ GitCode.dev is built using a **microservices architecture**, organized as an **N
 - **Containerization:** Docker & Docker Compose
 - **CI/CD:** GitHub Actions
 
-## [↑ Back to Top](#gitcodedev--solve-commit-grow)
+[↑ Back to Top](#gitcodedev--solve-commit-grow)
 
 ## 🧱 Project Goals
 
@@ -130,7 +113,7 @@ GitCode.dev is built using a **microservices architecture**, organized as an **N
 - Integrate **AI mentorship** into everyday coding practice.
 - Provide an extendable architecture for future research and development.
 
-## [↑ Back to Top](#gitcodedev--solve-commit-grow)
+[↑ Back to Top](#gitcodedev--solve-commit-grow)
 
 ## 🧾 License
 
