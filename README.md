@@ -21,6 +21,7 @@
 - [🏗️ Architecture & Microservices](#️-architecture--microservices)
 - [⚙️ Tech Stack](#️-tech-stack)
 - [🧱 Project Goals](#-project-goals)
+- [📸 Screenshots](#-screenshots)
 - [🧾 License](#-license)
 - [💬 Authors](#-authors)
 
