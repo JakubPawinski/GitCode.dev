@@ -115,6 +115,10 @@ GitCode.dev is built using a **microservices architecture**, organized as an **N
 
 [↑ Back to Top](#gitcodedev--solve-commit-grow)
 
+## 📸 Screenshots
+
+[↑ Back to Top](#gitcodedev--solve-commit-grow)
+
 ## 🧾 License
 
 MIT License — freely available for educational and research use.
