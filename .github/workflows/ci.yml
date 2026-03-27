@@ -47,6 +47,9 @@ jobs:
           python-version: '3.12'
           cache: 'pip'
 
+      - name: Setup test environment variables
+        run: cp .env.test .env
+
       - name: Create databases
         run: |
           for db in auth_db problem_db notification_db github_db achievement_db; do
@@ -67,33 +70,15 @@ jobs:
 
       - name: Generate Prisma client
         run: npx nx run-many -t prisma-generate --no-cloud
-        env:
-          AUTH_DATABASE_URL: 'postgres://test_user:test_password@localhost:5432/auth_db'
-          PROBLEM_DATABASE_URL: 'postgres://test_user:test_password@localhost:5432/problem_db'
-          NOTIFICATION_DATABASE_URL: 'postgres://test_user:test_password@localhost:5432/notification_db'
-          GITHUB_DATABASE_URL: 'postgres://test_user:test_password@localhost:5432/github_db'
-          ACHIEVEMENT_DATABASE_URL: 'postgres://test_user:test_password@localhost:5432/achievement_db'
 
       - name: Push Prisma schemas to databases
         run: npx nx run-many -t prisma-db-push --no-cloud
-        env:
-          AUTH_DATABASE_URL: 'postgres://test_user:test_password@localhost:5432/auth_db'
-          PROBLEM_DATABASE_URL: 'postgres://test_user:test_password@localhost:5432/problem_db'
-          NOTIFICATION_DATABASE_URL: 'postgres://test_user:test_password@localhost:5432/notification_db'
-          GITHUB_DATABASE_URL: 'postgres://test_user:test_password@localhost:5432/github_db'
-          ACHIEVEMENT_DATABASE_URL: 'postgres://test_user:test_password@localhost:5432/achievement_db'
 
       - name: Set SHAs for affected projects
         uses: nrwl/nx-set-shas@v4
 
       - name: Run affected tests and linters
         run: npx nx affected -t lint test build typecheck --parallel --max-parallel=5 --no-cloud
-        env:
-          AUTH_DATABASE_URL: 'postgres://test_user:test_password@localhost:5432/auth_db'
-          PROBLEM_DATABASE_URL: 'postgres://test_user:test_password@localhost:5432/problem_db'
-          NOTIFICATION_DATABASE_URL: 'postgres://test_user:test_password@localhost:5432/notification_db'
-          GITHUB_DATABASE_URL: 'postgres://test_user:test_password@localhost:5432/github_db'
-          ACHIEVEMENT_DATABASE_URL: 'postgres://test_user:test_password@localhost:5432/achievement_db'
 
       - name: Fix CI issues
         run: npx nx fix-ci
