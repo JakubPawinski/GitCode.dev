@@ -112,6 +112,10 @@ describe('SubmissionService', () => {
               create: jest.fn(),
               findMany: jest.fn(),
             },
+            aIFeedback: {
+              create: jest.fn(),
+              findMany: jest.fn().mockResolvedValue([]),
+            },
           },
         },
         {
@@ -119,6 +123,7 @@ describe('SubmissionService', () => {
           useValue: {
             notifyAttemptUpdate: jest.fn(),
             notifyTestResult: jest.fn(),
+            notifySubmissionAnalyzed: jest.fn(),
           },
         },
         {
@@ -608,6 +613,151 @@ describe('SubmissionService', () => {
           userId: 'different-user',
         },
       });
+    });
+  });
+  describe('handleAiAnalysisResult', () => {
+    it('should save AI feedback when submission exists', async () => {
+      jest
+        .spyOn(prisma.userSubmission, 'findUnique')
+        .mockResolvedValue({ userId: mockUserId } as any);
+      jest.spyOn(prisma.aIFeedback, 'create').mockResolvedValue({} as any);
+
+      await service.handleAiAnalysisResult(mockSubmissionId, {
+        attemptId: mockAttemptId,
+        content: 'Refactor this loop',
+        feedbackType: 'CODE_REVIEW',
+        severity: 'WARNING',
+      } as any);
+
+      expect(prisma.aIFeedback.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          submissionId: mockSubmissionId,
+          attemptId: mockAttemptId,
+          content: 'Refactor this loop',
+          severity: 'WARNING',
+        }),
+      });
+    });
+
+    it('should silently ignore if submission is not found', async () => {
+      jest.spyOn(prisma.userSubmission, 'findUnique').mockResolvedValue(null);
+      jest.spyOn(prisma.aIFeedback, 'create');
+
+      await service.handleAiAnalysisResult('unknown-id', {
+        attemptId: mockAttemptId,
+        content: 'Test',
+      } as any);
+
+      expect(prisma.aIFeedback.create).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('getUserStatsExtended', () => {
+    it('should calculate and return extended user stats', async () => {
+      const currentDate = new Date();
+      const yesterday = new Date(currentDate);
+      yesterday.setDate(yesterday.getDate() - 1);
+
+      const mockSubmissions = [
+        {
+          id: 'sub-1',
+          userId: mockUserId,
+          isSolved: true,
+          problemId: 'prob-1',
+          problem: { difficulty: 'EASY', topics: 'arrays,hash-tables' },
+          attempts: [
+            {
+              status: 'success',
+              executionTime: 100,
+              memoryUsed: 50,
+              language: 'python',
+              createdAt: currentDate,
+            },
+            {
+              status: 'failed',
+              executionTime: 110,
+              memoryUsed: 60,
+              language: 'javascript',
+              createdAt: yesterday,
+            },
+          ],
+          feedbacks: [
+            { feedbackType: 'PERFORMANCE', severity: 'WARNING' },
+            { feedbackType: 'STYLE', severity: 'INFO' },
+          ],
+        },
+        {
+          id: 'sub-2',
+          userId: mockUserId,
+          isSolved: true,
+          problemId: 'prob-2',
+          problem: { difficulty: 'MEDIUM', topics: 'trees,dfs' },
+          attempts: [
+            {
+              status: 'success',
+              executionTime: 150,
+              memoryUsed: 80,
+              language: 'python',
+              createdAt: currentDate,
+            },
+          ],
+          feedbacks: [],
+        },
+      ];
+
+      jest
+        .spyOn(prisma.userSubmission, 'findMany')
+        .mockResolvedValue(mockSubmissions as any);
+      jest.spyOn(prisma.aIFeedback, 'findMany').mockResolvedValue([] as any); // Mock this specifically if needed
+
+      const result = await service.getUserStatsExtended(mockUserId);
+
+      // Verify basic shape is populated properly
+      expect(result).toBeDefined();
+
+      // Test overview stats (flat properties on the result)
+      expect(result.totalSubmissions).toBe(3);
+      expect(result.problemsSolved).toBe(2);
+
+      // Test Language Stats
+      expect(result.languageStats.length).toBeGreaterThan(0);
+      expect(result.languageStats.some((l) => l.language === 'python')).toBe(
+        true,
+      );
+
+      // Test Difficulty (keys in DifficultyBreakdownDto are lowercase)
+      expect(result.difficultyBreakdown).toBeDefined();
+      expect(result.difficultyBreakdown.easy).toBeGreaterThanOrEqual(0);
+      expect(result.difficultyBreakdown.medium).toBeGreaterThanOrEqual(0);
+
+      // Test Streaks & Heatmap
+      expect(result.streak).toBeDefined();
+      expect(result.activityHeatmap).toBeDefined();
+
+      // Test Feedbacks (keys match the DTO)
+      expect(result.aiFeedbackByType).toBeDefined();
+      expect(result.aiFeedbackBySeverity).toBeDefined();
+      expect(result.aiFeedbackBySeverity.warning).toBeGreaterThanOrEqual(0);
+
+      // Verify that Prisma was called correctly
+      expect(prisma.userSubmission.findMany).toHaveBeenCalledWith({
+        where: { userId: mockUserId },
+        include: expect.any(Object),
+      });
+    });
+
+    it('should return default empty structure when user has no submissions', async () => {
+      jest.spyOn(prisma.userSubmission, 'findMany').mockResolvedValue([]);
+      jest.spyOn(prisma.aIFeedback, 'findMany').mockResolvedValue([] as any);
+
+      const result = await service.getUserStatsExtended(mockUserId);
+
+      expect(result).toBeDefined();
+      expect(result.totalSubmissions).toBe(0);
+      expect(result.successRate).toBe(0);
+      expect(result.difficultyBreakdown.easy).toBe(0);
+      expect(result.languageStats).toEqual([]);
+      expect(result.streak.currentStreak).toBe(0);
     });
   });
 });
