@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./docs/images/logo.png" alt="GitCode.dev Logo" width="200" />
+  <img src="./docs/images/gitcode_logo.png" alt="GitCode.dev Logo" width="200" />
 </p>
 
 # GitCode.dev — Solve, Commit, Grow
