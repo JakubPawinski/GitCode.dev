@@ -68,17 +68,17 @@ To run GitCode.dev locally, follow these steps:
 
 GitCode.dev is built using a **microservices architecture**, organized as an **Nx Monorepo**. Each service is containerized and responsible for a specific domain.
 
-| Service                  | Description                                                       |                 Documentation                 |
-| :----------------------- | :---------------------------------------------------------------- | :-------------------------------------------: |
-| **API Gateway**          | Entry point for all client requests (routing, rate limiting).     |           [Link](apps/api-gateway/)           |
-| **Auth Service**         | Manages user sessions and integration with Keycloak/GitHub.       |     [README](apps/auth-service/README.md)     |
-| **Problem Service**      | Manages coding tasks, test cases, and difficulty levels.          |   [README](apps/problem-service/README.md)    |
-| **AI Service**           | Python-based service for code analysis, feedback, and hints.      |      [README](apps/ai-service/README.md)      |
-| **GitHub Service**       | Responsible for committing and pushing solutions to users' repos. |    [README](apps/github-service/README.md)    |
-| **Notification Service** | Handles real-time alerts and email notifications.                 | [README](apps/notification-service/README.md) |
-| **Swagger API Docs**     | Auto-generated API documentation for backend services.            |     [README](apps/swagger-docs/README.md)     |
-| **Shared Libraries**     | Common utilities, types, and interfaces.                          |         [README](packages/README.md)          |
-| **Frontend**             | Next.js application for user interface and interaction.           |         [README](frontend/README.md)          |
+| Service                  | Description                                                                      |                 Documentation                 |
+| :----------------------- | :------------------------------------------------------------------------------- | :-------------------------------------------: |
+| **API Gateway**          | Entry point for all client requests (routing, rate limiting). Built with Traefik |     [README](apps/api-gateway/README.md)      |
+| **Auth Service**         | Manages user sessions and integration with Keycloak/GitHub.                      |     [README](apps/auth-service/README.md)     |
+| **Problem Service**      | Manages coding tasks, test cases, and difficulty levels.                         |   [README](apps/problem-service/README.md)    |
+| **AI Service**           | Python-based service for code analysis, feedback, and hints.                     |      [README](apps/ai-service/README.md)      |
+| **GitHub Service**       | Responsible for committing and pushing solutions to users' repos.                |    [README](apps/github-service/README.md)    |
+| **Notification Service** | Handles real-time alerts and email notifications.                                | [README](apps/notification-service/README.md) |
+| **Swagger API Docs**     | Auto-generated API documentation for backend services.                           |     [README](apps/swagger-docs/README.md)     |
+| **Shared Libraries**     | Common utilities, types, and interfaces.                                         |         [README](packages/README.md)          |
+| **Frontend**             | Next.js application for user interface and interaction.                          |         [README](frontend/README.md)          |
 
 [↑ Back to Top](#gitcodedev--solve-commit-grow)
 
