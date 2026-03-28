@@ -1,6 +1,6 @@
 'use client'
 import { availableLanguages } from '@/consts/editor/languages'
-import { useGetSubmissions } from '@/hooks/api/use-get-submissions'
+import { useGetSubmissions } from '@/hooks/api/submissions/use-get-submissions'
 import { Loader } from '../loading/Loader'
 import { Error } from '../error/Error'
 

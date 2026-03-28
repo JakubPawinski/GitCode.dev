@@ -1,13 +1,12 @@
 'use client'
 import { Editor } from '@/components/editor/Editor'
-import { PrimaryProblemNavbar } from '@/components/navbar/PrimaryProblemNavbar'
-import { usePostSubmission } from '@/hooks/api/use-post-submission'
+import { usePostSubmission } from '@/hooks/api/submissions/use-post-submission'
 import { useForm } from 'react-hook-form'
 import { editorSchema, EditorType } from '@/config/editor-config'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { availableLanguages } from '@/consts/editor/languages'
 import { TestCaseScreen } from '@/components/tests/TestCaseScreen'
-import { useGetProblem } from '@/hooks/api/use-get-problem'
+import { useGetProblem } from '@/hooks/api/problems/use-get-problem'
 import { ProblemProvider } from '@/contexts/problem/ProblemContext'
 import { ExampleProps } from '@/components/problem/Example'
 import { HintProps } from '@/components/problem/Hint'
@@ -30,6 +29,8 @@ import {
   AiTutorContextProps,
   AiTutorContextProvider,
 } from '@/contexts/ai/AiTutorContext'
+import { AiAnalysisContextProvider } from '@/contexts/ai/AiAnalysisContext'
+import { PrimaryProblemNavbar } from '@/components/navbar/PrimaryProblemNavbar'
 
 export interface ProblemDataProps {
   id: string
@@ -156,45 +157,50 @@ export default function ProblemLayout({ children }: { children: ReactNode }) {
     code: currentCode,
     problemSlug: problem as string,
   }
+  console.log(messages)
   return (
     <AiSendMessageProvider messageData={messageData}>
       <AiTutorContextProvider messages={tutorMessages}>
-        <ProblemProvider problemData={problemData}>
-          <div className="flex h-screen overflow-hidden">
-            <form className="text-foreground flex h-screen flex-1 flex-col">
-              <PrimaryProblemNavbar
-                onSubmit={handleSubmit(onSubmit)}
-                setAiTutorOpen={setAiTutorOpen}
-                submissionLoading={loading}
-                submissionError={error}
-              />
-              <section className="flex flex-grow gap-4 overflow-hidden p-4">
-                <div className="border-primary/20 flex min-w-0 flex-1 flex-col rounded-lg border bg-transparent p-4">
-                  <LeftProblemNavbar
-                    attemptId={data?.id}
-                    attemptMessages={messages}
-                  />
-                  <div className="custom-scrollbar mt-4 overflow-y-auto">
-                    {children}
-                  </div>
-                </div>
-                <div className="flex min-w-0 flex-1 flex-col gap-4">
-                  <div className="h-3/5">
-                    <Editor
-                      control={control}
-                      selectedLanguage={selectedLanguage}
+        <AiAnalysisContextProvider
+          attemptId={messages?.attempt_update.attemptId}
+        >
+          <ProblemProvider problemData={problemData}>
+            <div className="flex h-screen overflow-hidden">
+              <form className="text-foreground flex h-screen flex-1 flex-col">
+                <PrimaryProblemNavbar
+                  onSubmit={handleSubmit(onSubmit)}
+                  setAiTutorOpen={setAiTutorOpen}
+                  submissionLoading={loading}
+                  submissionError={error}
+                />
+                <section className="flex flex-grow gap-4 overflow-hidden p-4">
+                  <div className="border-primary/20 flex min-w-0 flex-1 flex-col rounded-lg border bg-transparent p-4">
+                    <LeftProblemNavbar
+                      attemptId={data?.id}
+                      attemptMessages={messages}
                     />
+                    <div className="custom-scrollbar mt-4 overflow-y-auto">
+                      {children}
+                    </div>
                   </div>
-                  <div className="border-primary/20 h-2/5 rounded-lg border bg-transparent">
-                    <TestCaseScreen testCases={testCases} />
+                  <div className="flex min-w-0 flex-1 flex-col gap-4">
+                    <div className="h-3/5">
+                      <Editor
+                        control={control}
+                        selectedLanguage={selectedLanguage}
+                      />
+                    </div>
+                    <div className="border-primary/20 h-2/5 rounded-lg border bg-transparent">
+                      <TestCaseScreen testCases={testCases} />
+                    </div>
                   </div>
-                </div>
-              </section>
-            </form>
+                </section>
+              </form>
 
-            {aiTutorOpen && <AiTutorAside />}
-          </div>
-        </ProblemProvider>
+              {aiTutorOpen && <AiTutorAside />}
+            </div>
+          </ProblemProvider>
+        </AiAnalysisContextProvider>
       </AiTutorContextProvider>
     </AiSendMessageProvider>
   )

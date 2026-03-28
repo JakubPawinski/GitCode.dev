@@ -70,12 +70,12 @@ export const Description = ({
       </div>
       <footer className="my-4">
         <div>
-          {hints?.map((hint, index) => (
+          {hints.map((hint, index) => (
             <Hint key={`${hint}-${index}`} {...hint} />
           ))}
         </div>
         <div>
-          {topics?.map((topic, index) => (
+          {topics.map((topic, index) => (
             <Topic key={`${topic}-${index}`} topic={topic} />
           ))}
         </div>

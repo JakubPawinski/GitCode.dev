@@ -1,15 +1,17 @@
 'use client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { NotepadText, Clock8, Sparkles } from 'lucide-react'
+import { NotepadText, Clock8 } from 'lucide-react'
 import { ChartNoAxesCombined } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { usePostCommit } from '@/hooks/github/use-post-commit'
 import { useAiSendMessageContext } from '@/contexts/ai/AiSendMessageContext'
 import { AttemptResultLink } from './AttemptResultLink'
+import { useRouter } from 'next/navigation'
 
 interface NavbarProps {
   attemptId?: string
+  submissionId?: string
   attemptMessages: any
 }
 
@@ -19,6 +21,8 @@ export const LeftProblemNavbar = ({
 }: NavbarProps) => {
   const { postMutation, data, loading, error } = usePostCommit()
   const { messageData } = useAiSendMessageContext()
+
+  const router = useRouter()
 
   const pathname = usePathname()
   const pathParts = pathname.split('/')
@@ -82,6 +86,11 @@ export const LeftProblemNavbar = ({
     postMutation({ payload })
   }
 
+  useEffect(() => {
+    if (attemptId && !isCommitModalOpen) {
+      router.push(`${basePath}/attempts/${attemptId}`)
+    }
+  }, [attemptId, isCommitModalOpen])
   return (
     <div>
       <nav className="border-primary/30 flex items-center gap-4 border-b bg-transparent p-3">
@@ -105,17 +114,6 @@ export const LeftProblemNavbar = ({
             status={status}
             attemptId={attemptId}
           />
-        )}
-
-        {hasAiAnalysis && (
-          <Link
-            href={`${basePath}/submissions/${aiAnalysis.attemptId}`}
-            className="flex items-center gap-2 rounded-md bg-gradient-to-r from-purple-500/20 to-blue-500/20 px-4 py-2 text-purple-400 transition-all duration-300 hover:from-purple-500/30 hover:to-blue-500/30"
-            title="View AI Analysis"
-          >
-            <Sparkles size={20} className="animate-pulse" />
-            <span className="tracking-wide">AI Analysis</span>
-          </Link>
         )}
       </nav>
 

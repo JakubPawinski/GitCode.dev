@@ -15,6 +15,8 @@ import {
   AiTutorContextProps,
   AiTutorContextProvider,
 } from '@/contexts/ai/AiTutorContext'
+import { NotificationBell } from '../notification/NotificationBell'
+import { UserMenu } from './UserMenu'
 interface NavbarSubmitProps {
   onSubmit: () => void
   setAiTutorOpen: Dispatch<SetStateAction<boolean>>
@@ -47,7 +49,7 @@ export const PrimaryProblemNavbar = ({
 
   return (
     <AiTutorContextProvider messages={tutorData.messages}>
-      <nav className="border-primary/30 grid h-22 grid-cols-3 items-center border-b bg-transparent px-4 shadow-lg">
+      <nav className="border-primary/30 grid grid-cols-3 items-center border-b bg-transparent px-4 py-2 shadow-lg">
         <div className="flex items-center gap-6">
           <Link
             href="/"
@@ -97,8 +99,9 @@ export const PrimaryProblemNavbar = ({
             <div className="font-semibold tracking-wider">AI Tutor</div>
           </div>
         </div>
-        <div className="flex justify-end">
-          <ProfileLink {...user} />
+        <div className="flex items-center justify-end gap-4">
+          <NotificationBell />
+          <UserMenu />
         </div>
         {submissionError && <Error {...submissionError} />}
       </nav>

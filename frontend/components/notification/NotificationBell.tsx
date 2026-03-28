@@ -12,7 +12,6 @@ export const NotificationBell = () => {
   const { notifications, unreadCount, markAsRead, markAllAsRead, clearAll } =
     useNotifications()
 
-  // Close on click outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -29,12 +28,10 @@ export const NotificationBell = () => {
   const handleNotificationClick = (notification: any) => {
     markAsRead(notification.id)
 
-    // Navigate based on notification kind
     if (
       notification.kind === 'SUBMISSION_ANALYZED' &&
       notification.payload.attemptId
     ) {
-      // TODO: Get problem slug from context or notification
       router.push(
         `/problems/two-sum/submissions/${notification.payload.attemptId}`
       )
@@ -53,10 +50,9 @@ export const NotificationBell = () => {
 
   return (
     <div className="relative" ref={dropdownRef}>
-      {/* Bell Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="hover:bg-primary/10 relative rounded-lg p-2 transition-colors"
+        className="hover:bg-primary/10 relative cursor-pointer rounded-lg p-2 transition-colors"
       >
         <Bell className="h-5 w-5" />
         {unreadCount > 0 && (

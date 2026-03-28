@@ -1,5 +1,5 @@
 'use client'
-import { useGetProblemStats } from '@/hooks/api/use-get-problem-stats'
+import { useGetProblemStats } from '@/hooks/api/problems/use-get-problem-stats'
 import { useParams } from 'next/navigation'
 import { Loader } from '../loading/Loader'
 import { Error } from '../error/Error'

@@ -7,11 +7,13 @@ import { UserMenu } from './UserMenu'
 
 export const HomeNavbar = () => {
   const { problem } = useParams()
+  const pathname = usePathname()
+  const isLoginPage = pathname.includes('/login')
 
-  if (problem) return null
+  if (problem || isLoginPage) return null
 
   return (
-    <nav className="border-primary/30 flex h-12 items-center justify-between border-b bg-transparent px-6 shadow-lg">
+    <nav className="border-primary/30 flex items-center justify-between border-b bg-transparent px-4 py-2 shadow-lg">
       <div className="flex items-center gap-6">
         <Link
           href="/"

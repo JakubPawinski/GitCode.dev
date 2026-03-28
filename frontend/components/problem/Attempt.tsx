@@ -2,10 +2,12 @@
 
 import { Error } from '@/components/error/Error'
 import { Loader } from '@/components/loading/Loader'
+import { useAiAnalysisContext } from '@/contexts/ai/AiAnalysisContext'
+
 import {
   useGetAttemptDetails,
   TestResult,
-} from '@/hooks/api/use-get-attempt-details'
+} from '@/hooks/api/submissions/use-get-attempt-details'
 import { useParams } from 'next/navigation'
 import {
   CheckCircle,

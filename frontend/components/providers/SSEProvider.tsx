@@ -1,12 +1,12 @@
 'use client'
 
 import { useNotifications } from '@/contexts/notification/NotificationContext'
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, ReactNode } from 'react'
 import { Notification } from '@/types/notification'
 import { ToastContainer } from '../notification/ToastContainer'
 import { useNotificationSSE } from '@/hooks/sse/use-notification-sse'
 
-export const SSEProvider = ({ children }: { children: React.ReactNode }) => {
+export const SSEProvider = ({ children }: { children: ReactNode }) => {
   const { messages } = useNotificationSSE()
   const { addNotification } = useNotifications()
   const [latestNotification, setLatestNotification] =
@@ -19,7 +19,6 @@ export const SSEProvider = ({ children }: { children: React.ReactNode }) => {
       try {
         const parsed: Notification = JSON.parse(lastMessage)
 
-        // Avoid duplicates
         if (!processedIds.current.has(parsed.id)) {
           processedIds.current.add(parsed.id)
           addNotification(parsed)

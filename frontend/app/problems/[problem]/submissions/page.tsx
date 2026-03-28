@@ -5,7 +5,7 @@ import {
   SubmissionLink,
   SubmissionLinkProps,
 } from '@/components/submission/SubmissionLink'
-import { useGetSubmissions } from '@/hooks/api/use-get-submissions'
+import { useGetSubmissions } from '@/hooks/api/submissions/use-get-submissions'
 import { useParams } from 'next/navigation'
 
 interface DataProps {

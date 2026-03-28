@@ -1,49 +1,21 @@
 'use client'
 import { useAuth } from '@/contexts/auth/AuthContext'
 import { UserImage } from '../user/UserImage'
-import { useGetUserStats } from '@/hooks/api/use-get-user-stats'
+import {
+  useGetUserStats,
+  UserStatsProps,
+} from '@/hooks/api/profile/use-get-user-stats'
 import { Error } from '../error/Error'
 import { Loader } from '../loading/Loader'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { usePostCreateRepository } from '@/hooks/github/use-post-create-repository'
-import { useGetRepository } from '@/hooks/github/use-get-repository'
-
-interface UserStatsProps {
-  activityHeatmap: any[]
-
-  consistencyScore: number
-  difficultyBreakdown: {
-    easy: number
-    medium: number
-    hard: number
-    total: number
-  }
-
-  languageStats: any[]
-  performanceMetrics: {
-    avgExecutionTime: number | null
-    avgMemoryUsed: number | null
-    bestExecutionTime: number | null
-    bestMemoryUsed: number | null
-    executionTimePercentile: number | null
-    [key: string]: any
-  }
-  problemsAttempted: number
-  problemsSolved: number
-
-  streak: {
-    currentStreak: number
-    longestStreak: number
-    lastActivityDate: string | null
-    activeToday: boolean
-  }
-
-  successRate: number
-  topicStats: any[]
-  totalSubmissions: number
-  weeklyActivity: any[]
-}
+import {
+  RepositoryDataProps,
+  useGetRepository,
+} from '@/hooks/github/use-get-repository'
+import { getHeatmapColor } from '@/utils/heatmapColor'
+import { monthFormat } from '@/utils/monthFormat'
 
 export const Profile = () => {
   const { data } = useAuth()
@@ -60,7 +32,7 @@ export const Profile = () => {
     data: repoData,
     loading: repoLoading,
     error: repoError,
-  } = useGetRepository()
+  } = useGetRepository<RepositoryDataProps>()
 
   const {
     postMutation,
@@ -69,19 +41,10 @@ export const Profile = () => {
     loading: repositoryLoading,
   } = usePostCreateRepository()
 
-  const repositoryErrorMessage =
-    repositoryError?.response?.data?.message ??
-    repositoryError?.message ??
-    (typeof repositoryError === 'string' ? repositoryError : null)
-
-  const repoErrorMessage =
-    repoError?.response?.data?.message ??
-    repoError?.message ??
-    (typeof repoError === 'string' ? repoError : null)
-
   if (error) return <Error {...error} />
-  if (loading) return <Loader />
-  if (!statsData) return null
+  if (repoError) return <Error {...repoError} />
+  if (loading || repoLoading) return <Loader />
+  if (!statsData || !repoData) return null
 
   const {
     totalSubmissions,
@@ -102,84 +65,11 @@ export const Profile = () => {
     Math.max(0, (problemsSolved / Math.max(1, totalProblemsMock)) * 100)
   )
 
-  const formatDate = (date: Date) => {
-    return date.toISOString().split('T')[0]
-  }
+  const { months: monthsData, maxSubmissionsInView } = monthFormat({
+    activityHeatmap,
+  })
 
-  const getMonthsData = () => {
-    const heatmap = activityHeatmap || []
-    const map = new Map<string, number>()
-
-    heatmap.forEach((item: any) => {
-      if (!item || !item.date) return
-      const dateKey = String(item.date).split('T')[0]
-      const rawCount =
-        item.count ?? item.submissions ?? item.totalSubmissions ?? item.value
-      const count =
-        typeof rawCount === 'number'
-          ? rawCount
-          : typeof rawCount === 'string'
-            ? Number(rawCount)
-            : 0
-      if (!Number.isFinite(count) || count <= 0) return
-      map.set(dateKey, (map.get(dateKey) || 0) + count)
-    })
-
-    const now = new Date()
-    const start = new Date(now.getFullYear(), 0, 1)
-
-    const months: {
-      key: string
-      label: string
-      year: number
-      days: { date: string; count: number }[]
-    }[] = []
-
-    for (let i = 0; i < 12; i++) {
-      const monthDate = new Date(start.getFullYear(), start.getMonth() + i, 1)
-      const year = monthDate.getFullYear()
-      const monthIndex = monthDate.getMonth()
-      const nextMonth = new Date(year, monthIndex + 1, 1)
-      const daysInMonth = Math.round(
-        (nextMonth.getTime() - monthDate.getTime()) / 86400000
-      )
-
-      const days: { date: string; count: number }[] = []
-      for (let day = 1; day <= daysInMonth; day++) {
-        const date = new Date(year, monthIndex, day)
-        const dateKey = formatDate(date)
-        days.push({ date: dateKey, count: map.get(dateKey) || 0 })
-      }
-
-      months.push({
-        key: `${year}-${String(monthIndex + 1).padStart(2, '0')}`,
-        label: monthDate.toLocaleString('en-US', { month: 'short' }),
-        year,
-        days,
-      })
-    }
-
-    return months
-  }
-
-  const monthsData = getMonthsData()
-
-  const maxSubmissionsInView = monthsData.reduce((acc, month) => {
-    for (const day of month.days) {
-      if (day.count > acc) acc = day.count
-    }
-    return acc
-  }, 0)
-
-  const getHeatmapColor = (count: number, maxCount: number) => {
-    if (count === 0) return 'bg-gray-700/50'
-    if (maxCount <= 0) return 'bg-gray-700/50'
-    const ratio = count / maxCount
-    if (ratio <= 0.25) return 'bg-emerald-900'
-    if (ratio <= 0.5) return 'bg-emerald-700'
-    if (ratio <= 0.75) return 'bg-emerald-500'
-    return 'bg-emerald-400'
-  }
+  const { name, htmlUrl } = repoData
 
   return (
     <div className="container mx-auto max-w-6xl space-y-8 p-4 md:p-6">
@@ -227,7 +117,6 @@ export const Profile = () => {
                 </p>
               </div>
             </div>
-
             {(repoLoading || repositoryLoading) && (
               <div className="mt-4 space-y-2">
                 <div className="bg-primary/10 h-2 w-full overflow-hidden rounded-full">
@@ -238,69 +127,39 @@ export const Profile = () => {
                 </p>
               </div>
             )}
-
-            {!!repoErrorMessage && (
-              <p className="mt-4 text-sm text-red-400">{repoErrorMessage}</p>
-            )}
-
-            {!!repositoryErrorMessage && (
-              <p className="mt-4 text-sm text-red-400">
-                {repositoryErrorMessage}
-              </p>
-            )}
-
-            {(() => {
-              const resolvedRepo: any = (repoData as any)?.data ?? repoData
-              const repoName =
-                resolvedRepo?.name ??
-                resolvedRepo?.full_name ??
-                resolvedRepo?.fullName
-              const repoUrl =
-                resolvedRepo?.html_url ??
-                resolvedRepo?.htmlUrl ??
-                resolvedRepo?.url
-
-              const hasRepo = !!(resolvedRepo && (repoName || repoUrl))
-
-              if (!hasRepo) {
-                return (
-                  <div className="mt-5">
-                    <button
-                      type="button"
-                      onClick={() => postMutation({ payload: {} })}
-                      disabled={repoLoading || repositoryLoading}
-                      className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-10 w-full items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors disabled:opacity-60"
-                    >
-                      {repositoryLoading ? 'Creating…' : 'Create repository'}
-                    </button>
-                  </div>
-                )
-              }
-
-              return (
-                <div className="mt-4 space-y-3">
-                  <div className="text-sm">
-                    <div className="flex items-center justify-between gap-3">
-                      <span className="text-foreground/60">Name</span>
-                      <span className="truncate font-medium">
-                        {String(repoName ?? 'Repository')}
-                      </span>
-                    </div>
-                  </div>
-
-                  {repoUrl ? (
-                    <Link
-                      href={String(repoUrl)}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-primary hover:text-primary/90 inline-flex items-center text-sm font-medium"
-                    >
-                      Open repository
-                    </Link>
-                  ) : null}
+            <div className="mt-5">
+              {!repoData && (
+                <button
+                  type="button"
+                  onClick={() => postMutation({ payload: {} })}
+                  disabled={repoLoading || repositoryLoading}
+                  className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-10 w-full items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors disabled:opacity-60"
+                >
+                  {repositoryLoading ? 'Creating…' : 'Create repository'}
+                </button>
+              )}
+            </div>
+            <div className="mt-4 space-y-3">
+              <div className="text-sm">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-foreground/60">Name</span>
+                  <span className="truncate font-medium">
+                    {name ?? 'Repository'}
+                  </span>
                 </div>
-              )
-            })()}
+              </div>
+
+              {htmlUrl && (
+                <Link
+                  href={htmlUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-primary hover:text-primary/90 inline-flex items-center text-sm font-medium"
+                >
+                  Open repository
+                </Link>
+              )}
+            </div>
           </div>
 
           <div className="border-primary/20 bg-primary/5 rounded-lg border p-6 shadow-sm">
@@ -501,16 +360,21 @@ export const Profile = () => {
             </h3>
 
             <div className="flex flex-wrap items-start gap-5">
-              {monthsData.map((month) => (
-                <div key={month.key} className="flex flex-col items-center">
+              {monthsData.map((month, index) => (
+                <div
+                  key={month.key + index}
+                  className="flex flex-col items-center"
+                >
                   <div className="grid auto-cols-max grid-flow-col [grid-template-rows:repeat(7,minmax(0,1fr))] gap-0.5">
                     {month.days.map((day) => (
                       <div
                         key={day.date}
                         title={`${day.date}: ${day.count} submissions`}
                         className={`h-2.5 w-2.5 rounded-[2px] ${getHeatmapColor(
-                          day.count,
-                          maxSubmissionsInView
+                          {
+                            count: day.count,
+                            maxCount: maxSubmissionsInView,
+                          }
                         )}`}
                       />
                     ))}

@@ -1,5 +1,11 @@
 import { api } from '@/api/axios'
 import { useCallback, useEffect, useState } from 'react'
+
+export interface RepositoryDataProps {
+  name: string
+  htmlUrl: string
+}
+
 export const useGetRepository = <T>() => {
   const [data, setData] = useState<T>()
   const [loading, setLoading] = useState<boolean>(false)
@@ -13,7 +19,7 @@ export const useGetRepository = <T>() => {
       .get(`/github/repository`, {
         signal: controller.signal,
       })
-      .then((res) => setData(res.data))
+      .then((res) => setData(res.data.data))
       .catch((err) => setError(err))
       .finally(() => setLoading(false))
   }, [])

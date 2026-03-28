@@ -11,11 +11,9 @@ export const useNotificationSSE = () => {
   useEffect(() => {
     const token = authData?.accessToken
     if (!token) {
-      console.log('[SSE] No token, skipping connection')
       return
     }
 
-    console.log('[SSE] Connecting to:', `${baseURL}/notifications/sse`)
     const controller = new AbortController()
 
     const connectSSE = async () => {
@@ -29,14 +27,11 @@ export const useNotificationSSE = () => {
           signal: controller.signal,
         })
 
-        console.log('[SSE] Response status:', response.status)
-
         if (!response.ok || !response.body) {
           throw new Error(`SSE connection failed: ${response.status}`)
         }
 
         setIsConnected(true)
-        console.log('[SSE] Connected successfully!')
 
         const reader = response.body.getReader()
         const decoder = new TextDecoder()
@@ -44,12 +39,10 @@ export const useNotificationSSE = () => {
         while (true) {
           const { done, value } = await reader.read()
           if (done) {
-            console.log('[SSE] Stream ended')
             break
           }
 
           const chunk = decoder.decode(value, { stream: true })
-          console.log('[SSE] Raw chunk:', chunk)
 
           const lines = chunk.split('\n')
 
@@ -57,13 +50,6 @@ export const useNotificationSSE = () => {
             if (line.startsWith('data: ')) {
               const data = line.slice(6)
               if (data) {
-                console.log('[SSE] 📬 Notification received:', data)
-                try {
-                  const parsed = JSON.parse(data)
-                  console.log('[SSE] 📬 Parsed notification:', parsed)
-                } catch {
-                  console.log('[SSE] 📬 Raw data (not JSON):', data)
-                }
                 setMessages((prev) => [...prev, data])
               }
             }
@@ -72,22 +58,18 @@ export const useNotificationSSE = () => {
       } catch (error: any) {
         if (error.name !== 'AbortError') {
           console.error('[SSE] ❌ Error:', error)
-        } else {
-          console.log('[SSE] Connection aborted')
         }
       } finally {
         setIsConnected(false)
-        console.log('[SSE] Disconnected')
       }
     }
 
     connectSSE()
 
     return () => {
-      console.log('[SSE] Cleanup - aborting connection')
       controller.abort()
     }
-  }, [authData?.accessToken])
+  }, [authData])
 
   return { messages, isConnected }
 }

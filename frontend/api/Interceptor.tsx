@@ -1,5 +1,5 @@
 'use client'
-import { useEffect } from 'react'
+import { ReactNode, useEffect } from 'react'
 import { api } from '@/api/axios'
 import { usePostRefreshToken } from '@/hooks/auth/use-post-refresh-token'
 import { Loader } from '@/components/loading/Loader'
@@ -11,7 +11,7 @@ interface AuthContextProps {
   accessToken: string
   user: UserProps
 }
-export const Interceptor = ({ children }: { children: React.ReactNode }) => {
+export const Interceptor = ({ children }: { children: ReactNode }) => {
   const pathname = usePathname()
   const isLoginPage = pathname === '/login'
 
@@ -20,7 +20,7 @@ export const Interceptor = ({ children }: { children: React.ReactNode }) => {
   return <InterceptorInner>{children}</InterceptorInner>
 }
 
-const InterceptorInner = ({ children }: { children: React.ReactNode }) => {
+const InterceptorInner = ({ children }: { children: ReactNode }) => {
   const router = useRouter()
 
   const { data: authData, setData } = useAuth()

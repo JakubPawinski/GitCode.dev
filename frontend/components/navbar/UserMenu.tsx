@@ -57,7 +57,7 @@ export const UserMenu = () => {
         onClick={() => setOpen((v) => !v)}
         aria-haspopup="menu"
         aria-expanded={open}
-        className="border-primary/20 hover:border-primary/40 focus:ring-primary/20 bg-background/40 flex items-center gap-2 rounded-full border p-0.5 transition outline-none focus:ring-2"
+        className="border-primary/20 hover:border-primary/40 focus:ring-primary/20 bg-background/40 flex cursor-pointer items-center gap-2 rounded-full border p-0.5 transition outline-none focus:ring-2"
       >
         <UserImage
           src={user.avatarUrl}
@@ -93,7 +93,7 @@ export const UserMenu = () => {
               role="menuitem"
               type="button"
               onClick={logout}
-              className="hover:bg-destructive/10 text-foreground flex w-full cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm transition"
+              className="hover:bg-primary/10 text-foreground flex w-full cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm transition"
             >
               <LogOut size={18} className="text-foreground/70" />
               <span>Log out</span>

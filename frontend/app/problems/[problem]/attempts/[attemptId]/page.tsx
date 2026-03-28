@@ -1,3 +1,4 @@
+'use client'
 import { Attempt } from '@/components/problem/Attempt'
 
 export default function AttemptPage() {

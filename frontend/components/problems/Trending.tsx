@@ -2,7 +2,7 @@
 import { Error } from '@/components/error/Error'
 import { Loader } from '@/components/loading/Loader'
 import { Topic } from '@/components/problem/Topic'
-import { useGetTrending } from '@/hooks/api/use-get-trending'
+import { useGetTrending } from '@/hooks/api/problems/use-get-trending'
 import Link from 'next/link'
 import { TrendingUp } from 'lucide-react'
 

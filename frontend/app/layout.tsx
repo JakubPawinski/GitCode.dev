@@ -4,6 +4,7 @@ import './globals.css'
 import { Interceptor } from '@/api/Interceptor'
 import { ReactNode } from 'react'
 import { SSEProvider } from '@/components/providers/SSEProvider'
+import { HomeNavbar } from '@/components/navbar/HomeNavbar'
 
 export default function RootLayout({
   children,
@@ -16,7 +17,10 @@ export default function RootLayout({
         <AuthProvider>
           <Interceptor>
             <NotificationProvider>
-              <SSEProvider>{children}</SSEProvider>
+              <SSEProvider>
+                <HomeNavbar />
+                {children}
+              </SSEProvider>
             </NotificationProvider>
           </Interceptor>
         </AuthProvider>

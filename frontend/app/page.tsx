@@ -1,12 +1,9 @@
-import { HomeNavbar } from '@/components/navbar/HomeNavbar'
 import { ArrowRight, Code, Layers, Rocket, TrendingUp } from 'lucide-react'
 import Link from 'next/link'
 
 export default function HomePage() {
   return (
     <div className="bg-background text-foreground w-full">
-      <HomeNavbar />
-
       <section className="border-primary/10 from-background via-primary/5 to-background relative overflow-hidden border-b bg-gradient-to-b py-20 md:py-32">
         <div className="absolute inset-0 z-0 opacity-10">
           <div className="bg-primary/50 absolute top-0 left-0 h-64 w-64 rounded-full blur-3xl"></div>
