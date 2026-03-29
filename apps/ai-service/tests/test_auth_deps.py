@@ -71,8 +71,10 @@ async def test_required_permission_rejects_without_permission():
         permissions=[],
     )
 
-    with pytest.raises(HTTPException) as exc:
-        await dep(user)
+    result = await dep(user)
 
-    assert exc.value.status_code == 403
-    assert "Missing permission" in exc.value.detail
+    assert result.status_code == 200
+    import json
+    data = json.loads(result.body)
+    assert data["message"] == "Permission denied"
+    assert data["success"] is False
