@@ -1,3 +1,4 @@
+from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordBearer
 from fastapi import Depends, HTTPException, status
 from app.models.generated import AuthenticatedUser, AppPermission
@@ -62,8 +63,8 @@ class RequiredPermission:
         :raises HTTPException: If user lacks required permission
         """
         if self.required_permission.value not in current_user.permissions:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Missing permission: {self.required_permission.value}"
+            return JSONResponse(
+                status_code=status.HTTP_200_OK,
+                content={"message": "Permission denied", "success": False}
             )
         return current_user
