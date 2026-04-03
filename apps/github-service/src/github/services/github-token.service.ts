@@ -1,4 +1,9 @@
-import { Injectable, UnauthorizedException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { firstValueFrom } from 'rxjs';
@@ -30,27 +35,31 @@ export class GithubTokenService {
         ),
       );
 
-      const githubToken = response.data.data;
+      const githubToken = response.data?.data;
 
-      if (!githubToken || !githubToken.accessToken) {
-        throw new UnauthorizedException(
-          'GitHub account not connected for this user',
+      // Simply check if the access token exists directly from the DTO structure
+      if (!githubToken?.accessToken) {
+        throw new NotFoundException(
+          'GitHub account not connected. Please connect your GitHub account first.',
         );
       }
 
       return githubToken.accessToken;
     } catch (error) {
-      this.logger.error(
-        `Failed to fetch GitHub token for user ${userId}: ${error.message}`,
-      );
-
-      if (error.response?.status === 404 || error.response?.status === 401) {
-        throw new UnauthorizedException(
-          'GitHub account not connected. Please connect your GitHub account first.',
-        );
+      // If the error is already our NotFoundException, rethrow it directly
+      if (error instanceof NotFoundException) {
+        throw error;
       }
 
-      throw new UnauthorizedException('Failed to authenticate with GitHub');
+      this.logger.error(
+        `Failed to communicate with auth-service for user ${userId}: ${error.message}`,
+      );
+
+      // Any other error means the microservices failed to talk to each other
+      // (e.g. auth service down, internal API key wrong, network issue)
+      throw new UnauthorizedException(
+        'Failed to verify GitHub connection status',
+      );
     }
   }
 }

@@ -1,6 +1,6 @@
 import { Injectable, UnauthorizedException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { JwtService } from '@nestjs/jwt';
+import { JsonWebTokenError, JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../../prisma/prisma.service';
 import * as crypto from 'crypto';
 import { mapRolesToPermissions } from '../mappers/permissions.mapper';
@@ -565,9 +565,11 @@ export class AuthService {
     });
 
     if (!oauthToken) {
-      throw new UnauthorizedException(
-        'GitHub account not connected. Please connect your GitHub account first.',
-      );
+      return {
+        accessToken: null,
+        scope: null,
+        tokenType: null,
+      };
     }
 
     const decryptedAccessToken = this.oauthService.decryptToken(
@@ -592,7 +594,7 @@ export class AuthService {
     });
     if (!oauthToken) {
       this.logger.warn(`Active OAuth token not found with ID: ${oauthTokenId}`);
-      return null
+      return null;
     }
     return oauthToken;
   }
