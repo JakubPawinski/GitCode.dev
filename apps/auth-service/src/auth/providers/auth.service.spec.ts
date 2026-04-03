@@ -570,12 +570,16 @@ describe('AuthService', () => {
       });
     });
 
-    it('should throw if GitHub token not connected', async () => {
+    it('should return null values if GitHub token not connected', async () => {
       (prismaService.oAuthToken.findFirst as jest.Mock).mockResolvedValue(null);
 
-      await expect(service.getOAuthTokenForGithub('1')).rejects.toThrow(
-        UnauthorizedException,
-      );
+      const result = await service.getOAuthTokenForGithub('1');
+
+      expect(result).toEqual({
+        accessToken: null,
+        scope: null,
+        tokenType: null,
+      });
     });
   });
 });
