@@ -1,11 +1,16 @@
 import { test, expect } from '@playwright/test'
+import { testLogin } from './components/auth/testLogin'
+import { testRegister } from './components/auth/testRegister'
 
+test.beforeEach(async ({ page }) => {
+  await testRegister({ page })
+  await testLogin({ page })
+})
 test.describe('Navigation', () => {
   test('should navigate to the home page when clicking the logo', async ({
     page,
   }) => {
     await page.goto('/problems')
-    // Assuming the logo is a link with a specific role or text
     await page.getByRole('link', { name: 'GitCode' }).click()
     await expect(page).toHaveURL('/')
   })

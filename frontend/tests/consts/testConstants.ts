@@ -1,0 +1,5 @@
+export const testEmail = 'test@email.com'
+export const testUsername = 'test'
+export const testFirstName = 'test'
+export const testLastName = 'test'
+export const testPassword = 'test'
