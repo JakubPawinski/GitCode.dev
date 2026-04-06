@@ -70,6 +70,12 @@
           "command": "npx prisma migrate dev --config=apps/problem-service/prisma.config.ts"
         }
       },
+      "prisma-db-push": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "npx prisma db push --config=apps/problem-service/prisma.config.ts"
+        }
+      },
       "serve": {
         "continuous": true,
         "executor": "@nx/js:node",
@@ -81,7 +87,9 @@
         ],
         "options": {
           "buildTarget": "@gitcode/problem-service:build",
-          "runBuildTargetDependencies": false
+          "runBuildTargetDependencies": false,
+          "inspect": "inspect",
+          "port": 9235
         },
         "configurations": {
           "development": {

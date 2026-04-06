@@ -1,13 +1,13 @@
 [tool.coverage.run]
 branch = true
-source = [ "ai_service" ]
+source = [ "app" ]
 
 [tool.coverage.report]
 exclude_lines = ['if TYPE_CHECKING:']
 show_missing = true
 
 [tool.pytest.ini_options]
-addopts = "--cov --cov-fail-under=70 --cov-report html:'../../coverage/apps/ai-service/html' --cov-report xml:'../../coverage/apps/ai-service/coverage.xml' --junitxml='../../reports/apps/ai-service/unittests/junit.xml' --html='../../reports/apps/ai-service/unittests/html/index.html'"
+addopts = "--cov=app --cov-fail-under=70 --cov-report html:'./test-output/coverage/html' --cov-report xml:'./test-output/coverage/coverage.xml' --junitxml='./test-output/unittests/junit.xml' --html='./test-output/unittests/html/index.html'"
 
 [tool.poetry]
 name = "ai-service"
@@ -41,3 +41,12 @@ readme = 'README.md'
 [build-system]
 requires = ["poetry-core==1.1.0"]
 build-backend = "poetry.core.masonry.api"
+
+[dependency-groups]
+dev = [
+    "pytest (>=9.0.2,<10.0.0)",
+    "pytest-cov (>=7.1.0,<8.0.0)",
+    "pytest-html (>=4.2.0,<5.0.0)",
+    "pytest-asyncio (>=1.3.0,<2.0.0)",
+    "flake8 (>=7.3.0,<8.0.0)"
+]
