@@ -13,7 +13,7 @@ test('UserImage renders Image when src is provided', () => {
 
 test('UserImage renders User icon when src is not provided', () => {
   render(<UserImage width={40} height={40} />)
-  const userIcon = screen.getByRole('img', { hidden: true })
+  const userIcon = screen.getByRole('img')
   expect(userIcon).toBeInTheDocument()
 })
 

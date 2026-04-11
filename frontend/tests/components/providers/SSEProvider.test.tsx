@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react'
-import { test, expect, vi } from 'vitest'
+import { test, expect, vi, Mock } from 'vitest'
 import { SSEProvider } from '@/components/providers/SSEProvider'
 import { useNotifications } from '@/contexts/notification/NotificationContext'
 import { useNotificationSSE } from '@/hooks/sse/use-notification-sse'
@@ -20,8 +20,8 @@ vi.mock('../notification/ToastContainer', () => ({
   ),
 }))
 
-const mockUseNotifications = useNotifications as vi.Mock
-const mockUseNotificationSSE = useNotificationSSE as vi.Mock
+const mockUseNotifications = useNotifications as Mock
+const mockUseNotificationSSE = useNotificationSSE as Mock
 
 const mockNotification: Notification = {
   id: '1',
@@ -39,14 +39,9 @@ const mockNotification: Notification = {
 test('SSEProvider processes new messages and adds notifications', () => {
   const addNotification = vi.fn()
   mockUseNotifications.mockReturnValue({ addNotification })
-  const { rerender } = render(
-    <SSEProvider>
-      <div>Child content</div>
-    </SSEProvider>
-  )
+  mockUseNotificationSSE.mockReturnValue({ messages: [] }) // Initial state
 
-  mockUseNotificationSSE.mockReturnValue({ messages: [] })
-  rerender(
+  const { rerender } = render(
     <SSEProvider>
       <div>Child content</div>
     </SSEProvider>
@@ -55,9 +50,11 @@ test('SSEProvider processes new messages and adds notifications', () => {
   expect(addNotification).not.toHaveBeenCalled()
   expect(screen.queryByText('Test message')).not.toBeInTheDocument()
 
+  // Update the mock to return new messages
   mockUseNotificationSSE.mockReturnValue({
     messages: [JSON.stringify(mockNotification)],
   })
+
   rerender(
     <SSEProvider>
       <div>Child content</div>

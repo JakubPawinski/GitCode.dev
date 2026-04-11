@@ -1,12 +1,12 @@
 import { render, screen, fireEvent } from '@testing-library/react'
-import { test, expect, vi } from 'vitest'
+import { test, expect, vi, Mock } from 'vitest'
 import { Login } from '@/components/auth/Login'
 import { getLoginRedirect } from '@/hooks/auth/use-get-login-redirect'
 
 // Mock the hook
 vi.mock('@/hooks/auth/use-get-login-redirect')
 
-const mockGetLoginRedirect = getLoginRedirect as vi.Mock
+const mockGetLoginRedirect = getLoginRedirect as Mock
 
 test('Login renders correctly', () => {
   render(<Login />)

@@ -15,10 +15,13 @@ export const UserImage = ({
   height,
 }: UserImageProps) => {
   if (!src) {
-    return <User className={className} width={width} height={height} />
+    return (
+      <User role="img" className={className} width={width} height={height} />
+    )
   }
   return (
     <Image
+      unoptimized
       alt="user-image"
       loader={() => src}
       className={className}

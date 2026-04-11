@@ -1,5 +1,6 @@
 import { render, screen, fireEvent } from '@testing-library/react'
-import { test, expect, vi } from 'vitest'
+import { test, expect, vi, Mock } from 'vitest'
+
 import { NotificationBell } from '@/components/notification/NotificationBell'
 import { useNotifications } from '@/contexts/notification/NotificationContext'
 import { useRouter } from 'next/navigation'
@@ -7,28 +8,28 @@ import { useRouter } from 'next/navigation'
 // Mock the context and router
 vi.mock('@/contexts/notification/NotificationContext')
 vi.mock('next/navigation', () => ({
-  useRouter: () => ({
-    push: vi.fn(),
-  }),
+  useRouter: vi.fn(),
 }))
 
-const mockUseNotifications = useNotifications as vi.Mock
-const mockRouter = useRouter as vi.Mock
+const mockUseNotifications = useNotifications as Mock
 
 const mockNotifications = [
   {
     id: '1',
-    message: 'Your submission was analyzed.',
     kind: 'SUBMISSION_ANALYZED',
-    payload: { attemptId: 'attempt-123' },
+    payload: {
+      attemptId: 'attempt-123',
+      message: 'Your submission was analyzed.',
+    },
     isRead: false,
     createdAt: new Date().toISOString(),
   },
   {
     id: '2',
-    message: 'Another notification.',
     kind: 'GENERAL',
-    payload: {},
+    payload: {
+      message: 'Another notification.',
+    },
     isRead: true,
     createdAt: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
   },
@@ -63,8 +64,12 @@ test('NotificationBell opens dropdown on click', () => {
   fireEvent.click(screen.getByRole('button'))
 
   expect(screen.getByText('Notifications')).toBeInTheDocument()
-  expect(screen.getByText('Your submission was analyzed.')).toBeInTheDocument()
-  expect(screen.getByText('Another notification.')).toBeInTheDocument()
+  expect(
+    screen.getByText(mockNotifications[0].payload.message)
+  ).toBeInTheDocument()
+  expect(
+    screen.getByText(mockNotifications[1].payload.message)
+  ).toBeInTheDocument()
 })
 
 test('NotificationBell calls markAsRead and navigates on notification click', () => {
@@ -77,12 +82,12 @@ test('NotificationBell calls markAsRead and navigates on notification click', ()
     markAllAsRead: vi.fn(),
     clearAll: vi.fn(),
   })
-  mockRouter.mockReturnValue({ push })
+  ;(useRouter as Mock).mockReturnValue({ push })
 
   render(<NotificationBell />)
 
   fireEvent.click(screen.getByRole('button'))
-  fireEvent.click(screen.getByText('Your submission was analyzed.'))
+  fireEvent.click(screen.getByText(mockNotifications[0].payload.message))
 
   expect(markAsRead).toHaveBeenCalledWith('1')
   expect(push).toHaveBeenCalledWith('/problems/two-sum/submissions/attempt-123')
