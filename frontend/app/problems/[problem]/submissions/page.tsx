@@ -33,7 +33,6 @@ export default function SubmissionsPage() {
       </div>
     )
   }
-  console.log(attempts)
 
   return (
     <div className="space-y-2">

@@ -1,6 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { testRegister } from './components/auth/testRegister'
-import { testLogin } from './components/auth/testLogin'
+import { testRegister } from './e2e/components/auth/testRegister'
 
 test.describe('Authentication with Keycloak', () => {
   test('should redirect to /login when trying to access a protected route and then to Keycloak', async ({
@@ -25,7 +24,6 @@ test.describe('Authentication with Keycloak', () => {
   test('should show an error message with invalid credentials on Keycloak page', async ({
     page,
   }) => {
-    await testLogin({ page })
     await expect(page.getByText('Invalid username or password')).toBeVisible()
   })
   test('should show an error message with invalid credentials on Keycloak register page', async ({

@@ -3,7 +3,7 @@ import {
   testFirstName,
   testLastName,
   testPassword,
-} from '@/tests/consts/testConstants'
+} from '@/tests/e2e/consts/testConstants'
 import { expect, Page } from '@playwright/test'
 
 export const testRegister = async ({ page }: { page: Page }) => {
