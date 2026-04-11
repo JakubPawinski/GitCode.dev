@@ -1,32 +1,25 @@
 'use client'
 
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { LogOut, UserRound } from 'lucide-react'
-import { UserProps } from '@/components/user/User'
 import { UserImage } from '@/components/user/UserImage'
 import { usePostLogout } from '@/hooks/auth/use-post-logout'
-import { Loader } from '../loading/Loader'
-import { Error } from '../error/Error'
-import { api } from '@/api/axios'
 import { useAuth } from '@/contexts/auth/AuthContext'
-type UserMenuProps = {
-  user: UserProps
-}
 
-export const UserMenu = ({ user }: UserMenuProps) => {
+export const UserMenu = () => {
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement | null>(null)
-  const router = useRouter()
-  const { setData } = useAuth()
+  const { data } = useAuth()
+
+  const { user } = data
 
   const profileHref = useMemo(
     () => `/profile/${user.username}`,
     [user.username]
   )
 
-  const { postMutation, data, loading, error } = usePostLogout()
+  const { postMutation } = usePostLogout()
 
   useEffect(() => {
     if (!open) return
@@ -53,22 +46,9 @@ export const UserMenu = ({ user }: UserMenuProps) => {
     }
   }, [open])
 
-  if (loading) {
-    return <Loader />
+  const logout = async () => {
+    postMutation()
   }
-  if (error) {
-    return <Error {...error} />
-  }
-
-  // const logout = async () => {
-  //   postMutation().then(() => {
-  //     setData(null)
-  //     delete api.defaults.headers.common.Authorization
-  //     setOpen(false)
-  //     router.replace('/login')
-  //     router.refresh()
-  //   })
-  // }
 
   return (
     <div ref={rootRef} className="relative flex items-center">
@@ -77,7 +57,7 @@ export const UserMenu = ({ user }: UserMenuProps) => {
         onClick={() => setOpen((v) => !v)}
         aria-haspopup="menu"
         aria-expanded={open}
-        className="border-primary/20 hover:border-primary/40 focus:ring-primary/20 bg-background/40 flex items-center gap-2 rounded-full border p-0.5 transition outline-none focus:ring-2"
+        className="border-primary/20 hover:border-primary/40 focus:ring-primary/20 bg-background/40 flex cursor-pointer items-center gap-2 rounded-full border p-0.5 transition outline-none focus:ring-2"
       >
         <UserImage
           src={user.avatarUrl}
@@ -109,16 +89,15 @@ export const UserMenu = ({ user }: UserMenuProps) => {
               <UserRound size={18} className="text-foreground/70" />
               <span>Go to profile</span>
             </Link>
-            {/* 
             <button
               role="menuitem"
               type="button"
               onClick={logout}
-              className="hover:bg-destructive/10 text-foreground flex w-full cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm transition"
+              className="hover:bg-primary/10 text-foreground flex w-full cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm transition"
             >
               <LogOut size={18} className="text-foreground/70" />
               <span>Log out</span>
-            </button> */}
+            </button>
           </div>
         </div>
       )}

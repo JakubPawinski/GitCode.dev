@@ -31,7 +31,7 @@ export const SubmissionLink = ({
   const { problem } = useParams()
   return (
     <Link
-      href={`/problems/${problem}/submissions/${id}`}
+      href={`/problems/${problem}/attempts/${id}`}
       className="hover:bg-primary/10 hover:border-primary/20 flex items-center justify-between rounded-lg border border-transparent p-4 transition-all duration-300 hover:shadow-lg"
     >
       <div className="flex items-center gap-6">

@@ -6,6 +6,7 @@ interface LoaderProps {
 export const Loader = ({ size = 48, center = true }: LoaderProps) => {
   const spinner = (
     <div
+      role="status"
       className="border-primary animate-spin rounded-full border-4 border-solid border-t-transparent"
       style={{ width: size, height: size }}
     />
@@ -14,7 +15,7 @@ export const Loader = ({ size = 48, center = true }: LoaderProps) => {
   if (!center) return spinner
 
   return (
-    <div className="flex h-full w-full items-center justify-center">
+    <div className="absolute flex h-full w-full items-center justify-center">
       {spinner}
     </div>
   )

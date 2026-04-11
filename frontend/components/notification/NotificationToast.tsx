@@ -58,6 +58,7 @@ export const NotificationToast = ({
 
   return (
     <div
+      data-testid="root-div"
       className={`pointer-events-auto w-80 rounded-lg border p-4 shadow-lg backdrop-blur-sm transition-all duration-300 ${getSeverityStyles()} ${
         isVisible && !isLeaving
           ? 'translate-x-0 opacity-100'

@@ -1,29 +1,16 @@
 import { Brain, SendHorizonal } from 'lucide-react'
-import { usePostAiTutor } from '@/hooks/api/use-post-ai-tutor'
+import { usePostAiTutor } from '@/hooks/ai/use-post-ai-tutor'
 import { Controller, useForm } from 'react-hook-form'
 import { ChatSchema, ChatSchemaType } from '@/config/chat-config'
 import { useAiSendMessageContext } from '@/contexts/ai/AiSendMessageContext'
 import { useAiTutorContext } from '@/contexts/ai/AiTutorContext'
-import { Loader } from '../loading/Loader'
-import { Error } from '../error/Error'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 
-type UiChatMessage = {
-  id: string
-  role: 'user' | 'assistant'
+interface Message {
+  role: string
   content: string
-  createdAt?: string
-  status?: 'streaming'
 }
-
-const normalizeRole = (role: unknown): 'user' | 'assistant' =>
-  role === 'user' ? 'user' : 'assistant'
-
-const normalizeContent = (msg: any): string =>
-  (typeof msg?.content === 'string' && msg.content) ||
-  (typeof msg?.message === 'string' && msg.message) ||
-  ''
 
 export const AiTutorAside = () => {
   const { postMutation, data, loading, error } = usePostAiTutor()
@@ -37,99 +24,53 @@ export const AiTutorAside = () => {
       keepDirtyValues: true,
     },
   })
-  const { tutorData, messageLoading, messageError } = useAiTutorContext()
+  const { messages } = useAiTutorContext()
 
-  const initialMessages = useMemo<UiChatMessage[]>(() => {
-    const base = Array.isArray((tutorData as any)?.messages)
-      ? ((tutorData as any).messages as any[])
-      : []
-    return base
-      .map((m, idx) => ({
-        id: `history-${idx}-${m?.createdAt ?? ''}`,
-        role: normalizeRole(m?.role),
-        content: normalizeContent(m),
-        createdAt: typeof m?.createdAt === 'string' ? m.createdAt : undefined,
-      }))
-      .filter((m) => m.content.length > 0)
-  }, [tutorData])
+  const [tutorMessages, setTutorMessages] = useState<Message[]>(messages)
 
-  const [messages, setMessages] = useState<UiChatMessage[]>([])
-  const listRef = useRef<HTMLDivElement | null>(null)
-  const streamingAssistantIdRef = useRef<string | null>(null)
-  const didInitRef = useRef(false)
-
-  useEffect(() => {
-    setMessages(initialMessages)
-    streamingAssistantIdRef.current = null
-    didInitRef.current = true
-    queueMicrotask(() => {
-      listRef.current?.scrollTo({ top: 0 })
-    })
-  }, [initialMessages])
-
-  useEffect(() => {
-    const id = streamingAssistantIdRef.current
-    if (!id) return
-
-    setMessages((prev) =>
-      prev.map((m) => (m.id === id ? { ...m, content: data } : m))
-    )
-
-    listRef.current?.scrollTo({ top: listRef.current.scrollHeight })
-  }, [data])
-
-  useEffect(() => {
-    if (!didInitRef.current) return
-    if (!loading && streamingAssistantIdRef.current) {
-      const id = streamingAssistantIdRef.current
-      streamingAssistantIdRef.current = null
-      setMessages((prev) =>
-        prev.map((m) => (m.id === id ? { ...m, status: undefined } : m))
-      )
-    }
-  }, [loading])
-
-  if (messageLoading) {
-    return <Loader />
-  }
-  if (messageError) {
-    return <Error {...messageError} />
-  }
+  const messageRef = useRef<null | HTMLElement>(null)
 
   const partialMessageToSend = useAiSendMessageContext()
+
+  useEffect(() => {
+    queueMicrotask(() => {
+      messageRef.current?.scrollTo({ top: messageRef.current.scrollHeight })
+    })
+    if (data) {
+      const tutorMessage = {
+        role: 'assistant',
+        content: data,
+      }
+      setTutorMessages((previous: Message[]) => [...previous, tutorMessage])
+      queueMicrotask(() => {
+        messageRef.current?.scrollTo({ top: messageRef.current.scrollHeight })
+      })
+    }
+    if (error)
+      queueMicrotask(() => {
+        messageRef.current?.scrollTo({ top: messageRef.current.scrollHeight })
+      })
+  }, [data, error])
 
   const onSubmit = (message: ChatSchemaType) => {
     const trimmed = message.message.trim()
     if (!trimmed) return
-
-    const userMsg: UiChatMessage = {
-      id: `local-user-${crypto.randomUUID()}`,
-      role: 'user',
-      content: trimmed,
-      createdAt: new Date().toISOString(),
-    }
-    const assistantId = `local-assistant-${crypto.randomUUID()}`
-    const assistantMsg: UiChatMessage = {
-      id: assistantId,
-      role: 'assistant',
-      content: '',
-      createdAt: new Date().toISOString(),
-      status: 'streaming',
-    }
-
-    streamingAssistantIdRef.current = assistantId
-    setMessages((prev) => [...prev, userMsg, assistantMsg])
-    reset({ message: '' })
-    queueMicrotask(() => {
-      listRef.current?.scrollTo({ top: listRef.current.scrollHeight })
-    })
 
     const payload = {
       code: partialMessageToSend.messageData.code,
       problem_slug: partialMessageToSend.messageData.problemSlug,
       message: trimmed,
     }
+    const newMessage: Message = {
+      role: 'user',
+      content: message.message,
+    }
+    setTutorMessages((previous: Message[]) => [...previous, newMessage])
+    queueMicrotask(() => {
+      messageRef.current?.scrollTo({ top: messageRef.current.scrollHeight })
+    })
     postMutation({ payload })
+    reset({ message: '' })
   }
 
   return (
@@ -150,38 +91,34 @@ export const AiTutorAside = () => {
         </header>
 
         <main
-          ref={listRef}
           className="custom-scrollbar min-h-0 flex-1 overflow-y-auto p-4"
+          ref={messageRef}
         >
           <div className="flex flex-col gap-3">
-            {messages.length === 0 ? (
+            {tutorMessages.length === 0 ? (
               <div className="text-foreground/60 text-sm">
                 No messages yet. Ask something about this problem or your code.
               </div>
             ) : (
-              messages.map((msg) => (
+              tutorMessages.map((message, index) => (
                 <div
-                  key={msg.id}
+                  key={index}
                   className={`flex ${
-                    msg.role === 'user' ? 'justify-end' : 'justify-start'
+                    message.role === 'user' ? 'justify-end' : 'justify-start'
                   }`}
                 >
                   <div
                     className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed break-words whitespace-pre-wrap ${
-                      msg.role === 'user'
+                      message.role === 'user'
                         ? 'bg-primary/20 text-foreground rounded-br-md'
                         : 'bg-muted/50 text-foreground/90 rounded-bl-md'
                     }`}
                   >
-                    {msg.content}
-                    {msg.status === 'streaming' && (
-                      <span className="text-foreground/50">▍</span>
-                    )}
+                    {message.content}
                   </div>
                 </div>
               ))
             )}
-
             {error && (
               <div className="text-destructive text-sm">
                 Failed to get a response from the tutor.

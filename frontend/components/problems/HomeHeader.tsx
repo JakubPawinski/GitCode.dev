@@ -1,12 +1,10 @@
 'use client'
 
 import { availableTopics } from '@/consts/problem/topics'
-import Link from 'next/link'
 import { useMemo, useState } from 'react'
 
-const CHUNK_SIZE = 8
-
 export const HomeHeader = () => {
+  const CHUNK_SIZE = 8
   const [isExpanded, setIsExpanded] = useState<boolean>(false)
 
   const visibleTopics = isExpanded

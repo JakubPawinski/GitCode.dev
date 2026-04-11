@@ -1,13 +1,17 @@
 'use client'
-import { useEffect } from 'react'
+import { ReactNode, useEffect } from 'react'
 import { api } from '@/api/axios'
 import { usePostRefreshToken } from '@/hooks/auth/use-post-refresh-token'
-import { AuthContextProps } from '@/app/auth/callback/page'
 import { Loader } from '@/components/loading/Loader'
 import { useAuth } from '@/contexts/auth/AuthContext'
 import { usePathname, useRouter } from 'next/navigation'
+import { UserProps } from '@/components/user/User'
 
-export const Interceptor = ({ children }: { children: React.ReactNode }) => {
+interface AuthContextProps {
+  accessToken: string
+  user: UserProps
+}
+export const Interceptor = ({ children }: { children: ReactNode }) => {
   const pathname = usePathname()
   const isLoginPage = pathname === '/login'
 
@@ -16,7 +20,7 @@ export const Interceptor = ({ children }: { children: React.ReactNode }) => {
   return <InterceptorInner>{children}</InterceptorInner>
 }
 
-const InterceptorInner = ({ children }: { children: React.ReactNode }) => {
+const InterceptorInner = ({ children }: { children: ReactNode }) => {
   const router = useRouter()
 
   const { data: authData, setData } = useAuth()
@@ -24,7 +28,7 @@ const InterceptorInner = ({ children }: { children: React.ReactNode }) => {
   const { postMutation, data, error } = usePostRefreshToken<AuthContextProps>()
 
   useEffect(() => {
-    if (authData?.accessToken) return
+    if (authData) return
     if (!authData) postMutation()
   }, [authData])
 

@@ -1,14 +1,8 @@
 'use client'
 import { useSearchParams } from 'next/navigation'
-import { useEffect, Suspense } from 'react'
+import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Loader } from '@/components/loading/Loader'
-import { UserProps } from '@/components/user/User'
-
-export interface AuthContextProps {
-  accessToken: string
-  user: UserProps
-}
 
 export default function AuthCallback() {
   const searchParams = useSearchParams()
@@ -17,8 +11,7 @@ export default function AuthCallback() {
 
   useEffect(() => {
     if (success) {
-      localStorage.setItem('is_authenticated', '1')
-      router.push('/')
+      router.push('/problems')
     }
   }, [success, router])
 

@@ -3,7 +3,7 @@ import { useCallback, useState } from 'react'
 export interface PostProps<T> {
   payload: T
 }
-export const usePostCommit = <T>() => {
+export const usePostCommit = <T>() => { 
   const [data, setData] = useState<T>()
   const [loading, setLoading] = useState<boolean>(false)
   const [error, setError] = useState<any>()

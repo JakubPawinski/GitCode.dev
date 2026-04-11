@@ -8,7 +8,7 @@ export const Sort = ({ selectedSortOrder, onSortOrderChange }: SortProps) => {
   const defaultOrder = sortOrder[0]
 
   return (
-    <div className="fixed">
+    <div className="fixed" data-testid="sort-menu">
       <div className="border-primary/30 from-background/95 to-primary/10 absolute top-12 z-[100] min-w-[200px] rounded-xl border bg-gradient-to-b p-4 shadow-2xl backdrop-blur-xl">
         <select
           name="sortOrder"

@@ -18,7 +18,10 @@ export const Filter = ({
 }: FilterProps) => {
   return (
     <div className="fixed">
-      <div className="border-primary/30 from-background/95 to-primary/10 absolute top-12 z-[100] max-w-[280px] min-w-[280px] rounded-xl border bg-gradient-to-b p-3 shadow-2xl backdrop-blur-xl">
+      <div
+        data-testid="filter-menu"
+        className="border-primary/30 from-background/95 to-primary/10 absolute top-12 z-[100] max-w-[280px] min-w-[280px] rounded-xl border bg-gradient-to-b p-3 shadow-2xl backdrop-blur-xl"
+      >
         <div className="space-y-2">
           <div className="space-y-1">
             <div className="text-accent flex items-center gap-2 text-xs font-semibold">

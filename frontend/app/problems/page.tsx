@@ -4,7 +4,7 @@ import { Filter } from '@/components/problems/Filter'
 import { HomeHeader } from '@/components/problems/HomeHeader'
 import { Loader } from '@/components/loading/Loader'
 import { ProblemLink } from '@/components/problem/ProblemLink'
-import { useGetProblems } from '@/hooks/api/use-get-problems'
+import { useGetProblems } from '@/hooks/api/problems/use-get-problems'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Search } from '@/components/problems/Search'
 import { Sort } from '@/components/problems/Sort'
@@ -44,7 +44,7 @@ export default function Home() {
     difficulty: difficulty,
     topic: topic,
     sortOrder: sortOrder,
-    query: debouncedQuery,
+    search: debouncedQuery,
     page: page,
     limit: LIMIT,
   }
@@ -61,7 +61,7 @@ export default function Home() {
     if (!pageRef.current) return
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && !loading) {
+        if (entries[0].isIntersecting) {
           setPage((previous) => previous + 1)
         }
       },
@@ -70,7 +70,7 @@ export default function Home() {
     observer.observe(pageRef.current)
 
     return () => observer.disconnect()
-  }, [pageRef.current, loading])
+  }, [pageRef.current])
 
   useEffect(() => {
     if (!data) return
@@ -96,33 +96,44 @@ export default function Home() {
           <Search onQueryChange={setQuery} />
           <div className="border-accent/40 h-8 w-px border-l"></div>
           <button
+            data-testid="sort-button"
             onClick={() => {
               setSortClicked((previous: boolean) => !previous)
-              if (filterClicked) setFilterClicked(false)
+              setFilterClicked(false)
             }}
-            className="text-foreground hover:text-accent flex items-center gap-2 transition-all duration-300"
+            onBlur={() => setSortClicked(false)}
+            className="hover:bg-primary/20 cursor-pointer rounded-lg p-2 transition-all duration-300"
           >
-            <ArrowDownUp size={20} />
-            <span className="font-semibold">Sort</span>
+            <ArrowDownUp />
           </button>
+          <div className="border-accent/40 h-8 w-px border-l"></div>
+
+          <button
+            data-testid="filter-button"
+            onClick={() => {
+              setFilterClicked((previous: boolean) => !previous)
+              setSortClicked(false)
+            }}
+            onBlur={() => setFilterClicked(false)}
+            className="hover:bg-primary/20 cursor-pointer rounded-lg p-2 transition-all duration-300"
+          >
+            <Funnel />
+          </button>
+
           {sortClicked && (
             <Sort
-              selectedSortOrder={sortOrder}
               onSortOrderChange={setSortOrder}
+              selectedSortOrder={sortOrder}
             />
           )}
 
-          <div className="border-accent/40 h-8 w-px border-l"></div>
           <button
             onClick={() => {
               setFilterClicked((previous: boolean) => !previous)
-              if (sortClicked) setSortClicked(false)
+              setSortClicked(false)
             }}
             className="text-foreground hover:text-accent flex items-center gap-2 transition-all duration-300"
-          >
-            <Funnel size={20} />
-            <span className="font-semibold">Filter</span>
-          </button>
+          ></button>
           {filterClicked && (
             <Filter
               selectedDifficulty={difficulty}

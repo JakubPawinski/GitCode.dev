@@ -11,14 +11,8 @@ export const usePostRefreshToken = <T>() => {
     setError(null)
     return api
       .post('/auth/refresh', null, { withCredentials: true })
-      .then((res) => {
-        setData(res.data.data)
-        return res.data.data
-      })
-      .catch((err) => {
-        setError(err)
-        return Promise.reject(err)
-      })
+      .then((res) => setData(res.data.data))
+      .catch((err) => setError(err))
       .finally(() => setLoading(false))
   }, [])
 

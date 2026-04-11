@@ -2,10 +2,12 @@
 
 import { Error } from '@/components/error/Error'
 import { Loader } from '@/components/loading/Loader'
+import { useAiAnalysisContext } from '@/contexts/ai/AiAnalysisContext'
+
 import {
   useGetAttemptDetails,
   TestResult,
-} from '@/hooks/api/use-get-attempt-details'
+} from '@/hooks/api/submissions/use-get-attempt-details'
 import { useParams } from 'next/navigation'
 import {
   CheckCircle,
@@ -17,10 +19,12 @@ import {
 } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 
-export default function SubmissionPage() {
-  const { submissionId } = useParams()
+export const Attempt = () => {
+  const { attemptId } = useParams()
 
-  const { data, loading, error } = useGetAttemptDetails(submissionId as string)
+  const { data, loading, error } = useGetAttemptDetails({
+    attemptId: attemptId as string,
+  })
 
   if (loading) return <Loader />
   if (error) return <Error {...error} />
@@ -31,6 +35,11 @@ export default function SubmissionPage() {
     data.totalTests > 0
       ? ((data.passedTests / data.totalTests) * 100).toFixed(1)
       : '0'
+  const maxTestLength = 3
+  const croppedTests =
+    data.failedTestsDetails.length > maxTestLength
+      ? data.failedTestsDetails.slice(0, maxTestLength)
+      : data.failedTestsDetails
 
   return (
     <div className="space-y-6 p-4">
@@ -177,7 +186,7 @@ export default function SubmissionPage() {
       {data.failedTestsDetails.length > 0 && (
         <div className="space-y-4">
           <h2 className="text-lg font-semibold text-red-400">Failed Tests</h2>
-          {data.failedTestsDetails.map((test) => (
+          {croppedTests.map((test) => (
             <TestResultCard key={test.testIndex} test={test} />
           ))}
         </div>

@@ -1,14 +1,10 @@
 import { api } from '@/api/axios'
+import { useRouter } from 'next/navigation'
 import { useCallback, useState } from 'react'
 
-export const usePostLogout = <T>() => {
-  const [data, setData] = useState<T>()
-  const [loading, setLoading] = useState<boolean>(false)
-  const [error, setError] = useState<any>()
-
+export const usePostLogout = () => {
+  const router = useRouter()
   const postMutation = useCallback(async () => {
-    setLoading(true)
-    setError(null)
     return api
       .post(
         '/auth/logout',
@@ -17,10 +13,8 @@ export const usePostLogout = <T>() => {
           withCredentials: true,
         }
       )
-      .then((res) => setData(res.data.data))
-      .catch((err) => setError(err))
-      .finally(() => setLoading(false))
+      .then(() => router.push('/login'))
   }, [])
 
-  return { postMutation, data, loading, error }
+  return { postMutation }
 }

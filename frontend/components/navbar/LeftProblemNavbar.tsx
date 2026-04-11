@@ -1,28 +1,28 @@
 'use client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { NotepadText, Clock8, Sparkles } from 'lucide-react'
-import { SubmissionResultLink } from './SubmissionResultLink'
+import { NotepadText, Clock8 } from 'lucide-react'
 import { ChartNoAxesCombined } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
-import { usePostCommit } from '@/hooks/api/use-post-commit'
+import { usePostCommit } from '@/hooks/github/use-post-commit'
 import { useAiSendMessageContext } from '@/contexts/ai/AiSendMessageContext'
-import { useAuth } from '@/contexts/auth/AuthContext'
+import { AttemptResultLink } from './AttemptResultLink'
+import { useRouter } from 'next/navigation'
 
 interface NavbarProps {
+  attemptId?: string
   submissionId?: string
-  submissionMessages: any
-  onCommitConfirm?: (submissionId: string, commitMessage?: string) => void
+  attemptMessages: any
 }
 
 export const LeftProblemNavbar = ({
-  submissionId,
-  submissionMessages,
-  onCommitConfirm,
+  attemptId,
+  attemptMessages,
 }: NavbarProps) => {
   const { postMutation, data, loading, error } = usePostCommit()
-  const auth = useAuth()
   const { messageData } = useAiSendMessageContext()
+
+  const router = useRouter()
 
   const pathname = usePathname()
   const pathParts = pathname.split('/')
@@ -33,18 +33,18 @@ export const LeftProblemNavbar = ({
   const lastPromptedSubmissionId = useRef<string | undefined>(undefined)
 
   const status =
-    submissionMessages?.submission_complete?.status ??
-    submissionMessages?.submission_analyzed?.status ??
-    submissionMessages?.attempt_update?.status
+    attemptMessages?.submission_complete?.status ??
+    attemptMessages?.submission_analyzed?.status ??
+    attemptMessages?.attempt_update?.status
 
   useEffect(() => {
-    if (!submissionId) return
+    if (!attemptId) return
     if (status !== 'success') return
 
-    if (lastPromptedSubmissionId.current === submissionId) return
-    lastPromptedSubmissionId.current = submissionId
+    if (lastPromptedSubmissionId.current === attemptId) return
+    lastPromptedSubmissionId.current = attemptId
     setIsCommitModalOpen(true)
-  }, [status, submissionId])
+  }, [status, attemptId])
 
   useEffect(() => {
     if (!isCommitModalOpen) return
@@ -59,7 +59,7 @@ export const LeftProblemNavbar = ({
     if (!data) return
     setIsCommitModalOpen(false)
   }, [data, isCommitModalOpen])
-  const aiAnalysis = submissionMessages?.submission_analyzed
+  const aiAnalysis = attemptMessages?.submission_analyzed
   const hasAiAnalysis = !!aiAnalysis?.attemptId
 
   const linkClasses =
@@ -86,6 +86,11 @@ export const LeftProblemNavbar = ({
     postMutation({ payload })
   }
 
+  useEffect(() => {
+    if (attemptId && !isCommitModalOpen) {
+      router.push(`${basePath}/attempts/${attemptId}`)
+    }
+  }, [attemptId, isCommitModalOpen])
   return (
     <div>
       <nav className="border-primary/30 flex items-center gap-4 border-b bg-transparent p-3">
@@ -103,23 +108,12 @@ export const LeftProblemNavbar = ({
           <span className="tracking-wide">Stats</span>
         </Link>
 
-        {submissionId && status && (
-          <SubmissionResultLink
+        {attemptId && status && (
+          <AttemptResultLink
             basePath={basePath}
             status={status}
-            submissionId={submissionId}
+            attemptId={attemptId}
           />
-        )}
-
-        {hasAiAnalysis && (
-          <Link
-            href={`${basePath}/submissions/${aiAnalysis.attemptId}`}
-            className="flex items-center gap-2 rounded-md bg-gradient-to-r from-purple-500/20 to-blue-500/20 px-4 py-2 text-purple-400 transition-all duration-300 hover:from-purple-500/30 hover:to-blue-500/30"
-            title="View AI Analysis"
-          >
-            <Sparkles size={20} className="animate-pulse" />
-            <span className="tracking-wide">AI Analysis</span>
-          </Link>
         )}
       </nav>
 

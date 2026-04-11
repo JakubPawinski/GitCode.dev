@@ -2,24 +2,27 @@ import { AuthProvider } from '@/contexts/auth/AuthContext'
 import { NotificationProvider } from '@/contexts/notification/NotificationContext'
 import './globals.css'
 import { Interceptor } from '@/api/Interceptor'
-import { HomeNavbar } from '@/components/navbar/HomeNavbar'
+import { ReactNode } from 'react'
 import { SSEProvider } from '@/components/providers/SSEProvider'
+import { HomeNavbar } from '@/components/navbar/HomeNavbar'
 
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode
+  children: ReactNode
 }>) {
   return (
     <html lang="en">
       <body className="from-background via-background to-primary/100 text-foreground bg-background h-screen">
         <AuthProvider>
-          <NotificationProvider>
-            <Interceptor>
-              <HomeNavbar />
-              <SSEProvider>{children}</SSEProvider>
-            </Interceptor>
-          </NotificationProvider>
+          <Interceptor>
+            <NotificationProvider>
+              <SSEProvider>
+                <HomeNavbar />
+                {children}
+              </SSEProvider>
+            </NotificationProvider>
+          </Interceptor>
         </AuthProvider>
       </body>
     </html>

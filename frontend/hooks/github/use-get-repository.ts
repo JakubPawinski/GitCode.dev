@@ -1,6 +1,12 @@
 import { api } from '@/api/axios'
 import { useCallback, useEffect, useState } from 'react'
-export const useGetUserStats = <T>() => {
+
+export interface RepositoryDataProps {
+  name: string
+  htmlUrl: string
+}
+
+export const useGetRepository = <T>() => {
   const [data, setData] = useState<T>()
   const [loading, setLoading] = useState<boolean>(false)
   const [error, setError] = useState<any>()
@@ -10,7 +16,7 @@ export const useGetUserStats = <T>() => {
     setLoading(true)
     setError(null)
     api
-      .get(`/submissions/stats/extended/`, {
+      .get(`/github/repository`, {
         signal: controller.signal,
       })
       .then((res) => setData(res.data.data))

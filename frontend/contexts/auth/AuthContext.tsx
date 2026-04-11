@@ -1,6 +1,6 @@
 'use client'
 import { createContext, PropsWithChildren, useContext, useState } from 'react'
-import { AuthContextProps } from '@/app/auth/callback/page'
+import { AuthContextProps } from '@/api/Interceptor'
 
 export interface AuthContextType {
   data: AuthContextProps | null

@@ -10,8 +10,13 @@ import { Brain } from 'lucide-react'
 import { ProfileLink } from './ProfileLink'
 import { useAuth } from '@/contexts/auth/AuthContext'
 import { useParams } from 'next/navigation'
-import { useGetAiTutorHistory } from '@/hooks/api/use-get-ai-tutor-history'
-import { AiTutorContextProvider } from '@/contexts/ai/AiTutorContext'
+import { useGetAiTutorHistory } from '@/hooks/ai/use-get-ai-tutor-history'
+import {
+  AiTutorContextProps,
+  AiTutorContextProvider,
+} from '@/contexts/ai/AiTutorContext'
+import { NotificationBell } from '../notification/NotificationBell'
+import { UserMenu } from './UserMenu'
 interface NavbarSubmitProps {
   onSubmit: () => void
   setAiTutorOpen: Dispatch<SetStateAction<boolean>>
@@ -30,18 +35,21 @@ export const PrimaryProblemNavbar = ({
   if (!data) return null
 
   const { user } = data
-  const params = useParams()
-  const problemSlug = params.problem!.toString()
+  const { problem } = useParams()
 
   const {
     data: tutorData,
     loading: tutorLoading,
     error: tutorError,
-  } = useGetAiTutorHistory({ problem: problemSlug })
+  } = useGetAiTutorHistory<AiTutorContextProps>({ problem: problem as string })
+
+  if (tutorLoading) return <Loader />
+  if (tutorError) return <Error {...tutorError} />
+  if (!tutorData) return null
 
   return (
-    <AiTutorContextProvider tutorData={tutorData}>
-      <nav className="border-primary/30 grid h-22 grid-cols-3 items-center border-b bg-transparent px-4 shadow-lg">
+    <AiTutorContextProvider messages={tutorData.messages}>
+      <nav className="border-primary/30 grid grid-cols-3 items-center border-b bg-transparent px-4 py-2 shadow-lg">
         <div className="flex items-center gap-6">
           <Link
             href="/"
@@ -91,8 +99,9 @@ export const PrimaryProblemNavbar = ({
             <div className="font-semibold tracking-wider">AI Tutor</div>
           </div>
         </div>
-        <div className="flex justify-end">
-          <ProfileLink {...user} />
+        <div className="flex items-center justify-end gap-4">
+          <NotificationBell />
+          <UserMenu />
         </div>
         {submissionError && <Error {...submissionError} />}
       </nav>

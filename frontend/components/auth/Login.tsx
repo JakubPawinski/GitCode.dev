@@ -21,6 +21,7 @@ export const Login = () => {
         <button
           onClick={getLoginRedirect}
           className="from-primary to-accent text-foreground hover:shadow-primary/30 mt-8 flex w-full transform cursor-pointer items-center justify-center gap-3 rounded-lg bg-gradient-to-r px-6 py-3 font-bold shadow-lg transition-all duration-300 hover:scale-105"
+          data-testid="login-button"
         >
           <LogIn size={20} />
           <span>Sign In</span>

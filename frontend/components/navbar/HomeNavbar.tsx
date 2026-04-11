@@ -1,22 +1,19 @@
 'use client'
 import Image from 'next/image'
 import Link from 'next/link'
-import { useParams } from 'next/navigation'
-import { useAuth } from '@/contexts/auth/AuthContext'
-import { ProfileLink } from './ProfileLink'
+import { useParams, usePathname } from 'next/navigation'
 import { NotificationBell } from '../notification/NotificationBell'
 import { UserMenu } from './UserMenu'
 
 export const HomeNavbar = () => {
   const { problem } = useParams()
-  const { data } = useAuth()
+  const pathname = usePathname()
+  const isLoginPage = pathname.includes('/login')
 
-  if (problem || !data) return null
-
-  const { user } = data
+  if (problem || isLoginPage) return null
 
   return (
-    <nav className="border-primary/30 flex h-12 items-center justify-between border-b bg-transparent px-6 shadow-lg">
+    <nav className="border-primary/30 flex items-center justify-between border-b bg-transparent px-4 py-2 shadow-lg">
       <div className="flex items-center gap-6">
         <Link
           href="/"
@@ -34,7 +31,7 @@ export const HomeNavbar = () => {
       </div>
       <div className="flex items-center gap-4">
         <NotificationBell />
-        <UserMenu user={user} />
+        <UserMenu />
       </div>
     </nav>
   )
