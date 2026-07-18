@@ -1,5 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { FriendRequestStatus } from '../enums/friendRequest.enum';
 import { UUID } from '@gitcode/types';
 import {
@@ -15,10 +14,13 @@ import {
   FriendshipRequestedEvent,
   SOCIAL_PATTERNS,
 } from '@gitcode/contracts';
+import { PrismaClient } from '@prisma/client-auth';
+import { TokenName } from '../../shared/enums/nest-token.enum.ts';
 @Injectable()
 export class SocialService {
   constructor(
-    private readonly prismaService: PrismaService,
+    @Inject(TokenName.PRISMA_CONNECTION)
+    private readonly prismaConnectionService: PrismaClient,
     private readonly eventBus: EventBus,
   ) {}
 
@@ -26,32 +28,33 @@ export class SocialService {
    * Get all friends for a user
    */
   public async getFriends(userId: string): Promise<GetFriendDto[]> {
-    const foundFriends = await this.prismaService.friendRequest.findMany({
-      where: {
-        status: FriendRequestStatus.ACCEPTED,
-        OR: [{ requesterId: userId }, { addresseeId: userId }],
-      },
-      select: {
-        requester: {
-          select: {
-            id: true,
-            username: true,
-            avatarUrl: true,
-            firstName: true,
-            lastName: true,
+    const foundFriends =
+      await this.prismaConnectionService.friendRequest.findMany({
+        where: {
+          status: FriendRequestStatus.ACCEPTED,
+          OR: [{ requesterId: userId }, { addresseeId: userId }],
+        },
+        select: {
+          requester: {
+            select: {
+              id: true,
+              username: true,
+              avatarUrl: true,
+              firstName: true,
+              lastName: true,
+            },
+          },
+          addressee: {
+            select: {
+              id: true,
+              username: true,
+              avatarUrl: true,
+              firstName: true,
+              lastName: true,
+            },
           },
         },
-        addressee: {
-          select: {
-            id: true,
-            username: true,
-            avatarUrl: true,
-            firstName: true,
-            lastName: true,
-          },
-        },
-      },
-    });
+      });
 
     const mappedFriends = foundFriends.map((friendRequest) => {
       const friend =
@@ -80,35 +83,36 @@ export class SocialService {
   ): Promise<FriendRequestDto> {
     const { addresseeId } = inviteFriendDto;
 
-    const friendRequest = await this.prismaService.friendRequest.create({
-      data: {
-        requesterId: senderId,
-        addresseeId,
-        status: FriendRequestStatus.PENDING,
-      },
-      select: {
-        id: true,
-        requester: {
-          select: {
-            id: true,
-            username: true,
-            avatarUrl: true,
-            firstName: true,
-            lastName: true,
-          },
+    const friendRequest =
+      await this.prismaConnectionService.friendRequest.create({
+        data: {
+          requesterId: senderId,
+          addresseeId,
+          status: FriendRequestStatus.PENDING,
         },
-        addressee: {
-          select: {
-            id: true,
-            username: true,
-            avatarUrl: true,
-            firstName: true,
-            lastName: true,
+        select: {
+          id: true,
+          requester: {
+            select: {
+              id: true,
+              username: true,
+              avatarUrl: true,
+              firstName: true,
+              lastName: true,
+            },
           },
+          addressee: {
+            select: {
+              id: true,
+              username: true,
+              avatarUrl: true,
+              firstName: true,
+              lastName: true,
+            },
+          },
+          status: true,
         },
-        status: true,
-      },
-    });
+      });
 
     // Create event for friend request sent
     await this.eventBus.publish(
@@ -153,36 +157,37 @@ export class SocialService {
   ): Promise<FriendRequestDto> {
     const { status } = respondFriendRequestDto;
 
-    const updatedFriendRequest = await this.prismaService.friendRequest.update({
-      where: {
-        id: requestId,
-      },
-      data: {
-        status,
-      },
-      select: {
-        id: true,
-        requester: {
-          select: {
-            id: true,
-            username: true,
-            avatarUrl: true,
-            firstName: true,
-            lastName: true,
-          },
+    const updatedFriendRequest =
+      await this.prismaConnectionService.friendRequest.update({
+        where: {
+          id: requestId,
         },
-        addressee: {
-          select: {
-            id: true,
-            username: true,
-            avatarUrl: true,
-            firstName: true,
-            lastName: true,
-          },
+        data: {
+          status,
         },
-        status: true,
-      },
-    });
+        select: {
+          id: true,
+          requester: {
+            select: {
+              id: true,
+              username: true,
+              avatarUrl: true,
+              firstName: true,
+              lastName: true,
+            },
+          },
+          addressee: {
+            select: {
+              id: true,
+              username: true,
+              avatarUrl: true,
+              firstName: true,
+              lastName: true,
+            },
+          },
+          status: true,
+        },
+      });
 
     // Create event for friend request response
     switch (status) {
@@ -250,15 +255,16 @@ export class SocialService {
         { requesterId: friendId, addresseeId: userId },
       ],
     };
-    const friendFound = await this.prismaService.friendRequest.findFirst({
-      where: whereCondition,
-    });
+    const friendFound =
+      await this.prismaConnectionService.friendRequest.findFirst({
+        where: whereCondition,
+      });
 
     if (!friendFound) {
       throw new NotFoundException('Friend relationship not found');
     }
 
-    await this.prismaService.friendRequest.deleteMany({
+    await this.prismaConnectionService.friendRequest.deleteMany({
       where: whereCondition,
     });
 
@@ -273,36 +279,37 @@ export class SocialService {
    * Get incoming or rejected friend requests
    */
   public async getFriendRequests(userId: UUID): Promise<FriendRequestDto[]> {
-    const foundRequests = await this.prismaService.friendRequest.findMany({
-      where: {
-        addresseeId: userId,
-        status: {
-          in: [FriendRequestStatus.PENDING, FriendRequestStatus.REJECTED],
-        },
-      },
-      select: {
-        id: true,
-        requester: {
-          select: {
-            id: true,
-            username: true,
-            avatarUrl: true,
-            firstName: true,
-            lastName: true,
+    const foundRequests =
+      await this.prismaConnectionService.friendRequest.findMany({
+        where: {
+          addresseeId: userId,
+          status: {
+            in: [FriendRequestStatus.PENDING, FriendRequestStatus.REJECTED],
           },
         },
-        addressee: {
-          select: {
-            id: true,
-            username: true,
-            avatarUrl: true,
-            firstName: true,
-            lastName: true,
+        select: {
+          id: true,
+          requester: {
+            select: {
+              id: true,
+              username: true,
+              avatarUrl: true,
+              firstName: true,
+              lastName: true,
+            },
           },
+          addressee: {
+            select: {
+              id: true,
+              username: true,
+              avatarUrl: true,
+              firstName: true,
+              lastName: true,
+            },
+          },
+          status: true,
         },
-        status: true,
-      },
-    });
+      });
 
     const mappedRequests: FriendRequestDto[] = foundRequests.map((request) => ({
       id: request.id,

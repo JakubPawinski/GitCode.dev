@@ -7,7 +7,7 @@ import { UsersModule } from './users/users.module';
 import { SocialModule } from './social/social.module';
 import configuration from './config/configuration';
 import { GitCodeCommonModule } from '@gitcode/common';
-import { PrismaModule } from './prisma/prisma.module';
+import { AuthPrismaModule } from './prisma/prisma.module';
 import { RedisModule } from './redis/redis.module';
 import { GitCodeAuthModule } from '@gitcode/auth';
 import { MessagingModule } from '@gitcode/messaging';
@@ -19,7 +19,7 @@ import { MessagingModule } from '@gitcode/messaging';
       load: [configuration],
     }),
     AuthModule,
-    PrismaModule,
+    AuthPrismaModule,
     RedisModule,
     UsersModule,
     SocialModule,

@@ -1,5 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import {
   UUID,
   themeEnum,
@@ -28,11 +27,13 @@ import {
   UserProfileUpdatedEvent,
   UserSoftDeletedEvent,
 } from '@gitcode/contracts';
+import { PrismaClient } from '@prisma/client/extension';
+import { TokenName } from '../../shared/enums/nest-token.enum.ts';
 
 @Injectable()
 export class UsersService {
   constructor(
-    private readonly prismaService: PrismaService,
+    @Inject(TokenName.PRISMA_CONNECTION) private readonly prismaConnectionService: PrismaClient,
     private readonly eventBus: EventBus,
   ) {}
 
@@ -41,7 +42,7 @@ export class UsersService {
    */
   public async getUserProfile(id: UUID): Promise<GetProfileDto> {
     // Fetch user from database
-    const userProfile = await this.prismaService.user.findUnique({
+    const userProfile = await this.prismaConnectionService.user.findUnique({
       where: { id },
     });
 
@@ -102,7 +103,7 @@ export class UsersService {
     patchUsersDto: PatchProfileDto,
   ): Promise<GetProfileDto> {
     // Fetch user from database
-    const existingUser = await this.prismaService.user.findUnique({
+    const existingUser = await this.prismaConnectionService.user.findUnique({
       where: { id: userId },
     });
 
@@ -112,7 +113,7 @@ export class UsersService {
     }
 
     // Update user in database
-    const updatedUser = await this.prismaService.user.update({
+    const updatedUser = await this.prismaConnectionService.user.update({
       where: { id: userId },
       data: {
         ...patchUsersDto,
@@ -148,7 +149,7 @@ export class UsersService {
    */
   public async softDeleteUserAccount(userId: UUID): Promise<GetProfileDto> {
     // Check if user exists
-    const existingUser = await this.prismaService.user.findUnique({
+    const existingUser = await this.prismaConnectionService.user.findUnique({
       where: { id: userId },
     });
 
@@ -157,7 +158,7 @@ export class UsersService {
     }
 
     // Soft delete user in database
-    const softDeletedUser = await this.prismaService.user.update({
+    const softDeletedUser = await this.prismaConnectionService.user.update({
       where: { id: userId },
       data: {
         userStatus: UserStatus.DELETED,
@@ -193,7 +194,7 @@ export class UsersService {
    */
   public async getUserPreferences(userId: UUID): Promise<GetPreferencesDto> {
     // Fetch user preferences from database
-    const userPreferences = await this.prismaService.userPreferences.findUnique(
+    const userPreferences = await this.prismaConnectionService.userPreferences.findUnique(
       {
         where: { userId: userId },
       },
@@ -221,7 +222,7 @@ export class UsersService {
   ): Promise<GetPreferencesDto> {
     // Fetch existing user preferences from database
     const existingPreferences =
-      await this.prismaService.userPreferences.findUnique({
+      await this.prismaConnectionService.userPreferences.findUnique({
         where: { userId },
       });
 
@@ -230,7 +231,7 @@ export class UsersService {
     }
 
     // Update preferences in database
-    const updatedPreferences = await this.prismaService.userPreferences.update({
+    const updatedPreferences = await this.prismaConnectionService.userPreferences.update({
       where: { userId },
       data: {
         ...patchPreferencesDto,
@@ -251,7 +252,7 @@ export class UsersService {
    */
   public async getUserById(id: UUID): Promise<GetUserDto> {
     // Fetch user from database
-    const user = await this.prismaService.user.findUnique({
+    const user = await this.prismaConnectionService.user.findUnique({
       where: { id },
       include: { preferences: true },
     });
@@ -302,13 +303,13 @@ export class UsersService {
     const skip = (page - 1) * limit;
 
     const [users, totalItems] = await Promise.all([
-      this.prismaService.user.findMany({
+      this.prismaConnectionService.user.findMany({
         skip,
         take: limit,
         orderBy: [{ id: 'asc' }, { [sortBy]: sortOrder }],
         include: { preferences: true },
       }),
-      this.prismaService.user.count(),
+      this.prismaConnectionService.user.count(),
     ]);
 
     const totalPages = Math.ceil(totalItems / limit);
@@ -356,7 +357,7 @@ export class UsersService {
    */
   public async banUserById(id: string): Promise<GetUserDto> {
     // Check if user exists
-    const userToBan = await this.prismaService.user.findUnique({
+    const userToBan = await this.prismaConnectionService.user.findUnique({
       where: { id },
     });
 
@@ -365,13 +366,13 @@ export class UsersService {
     }
 
     // Ban user in database
-    const [bannedUser] = await this.prismaService.$transaction([
-      this.prismaService.user.update({
+    const [bannedUser] = await this.prismaConnectionService.$transaction([
+      this.prismaConnectionService.user.update({
         where: { id },
         data: { userStatus: UserStatus.BANNED },
         include: { preferences: true },
       }),
-      this.prismaService.oAuthToken.deleteMany({
+      this.prismaConnectionService.oAuthToken.deleteMany({
         where: { userId: id },
       }),
     ]);
@@ -434,7 +435,7 @@ export class UsersService {
     };
 
     const [usersFound, totalItems] = await Promise.all([
-      this.prismaService.user.findMany({
+      this.prismaConnectionService.user.findMany({
         where: whereCondition,
         skip,
         take: limit,
@@ -448,7 +449,7 @@ export class UsersService {
           bio: true,
         },
       }),
-      this.prismaService.user.count({
+      this.prismaConnectionService.user.count({
         where: whereCondition,
       }),
     ]);
@@ -512,14 +513,14 @@ export class UsersService {
     };
 
     const [usersFound, totalItems] = await Promise.all([
-      this.prismaService.user.findMany({
+      this.prismaConnectionService.user.findMany({
         where: whereCondition,
         skip,
         take: limit,
         orderBy: [{ username: 'asc' }, { [sortBy]: sortOrder }],
         include: { preferences: true },
       }),
-      this.prismaService.user.count({
+      this.prismaConnectionService.user.count({
         where: whereCondition,
       }),
     ]);
@@ -569,7 +570,7 @@ export class UsersService {
    */
   public async restoreUserById(id: UUID): Promise<GetUserDto> {
     // Fetch user from database
-    const existingUser = await this.prismaService.user.findUnique({
+    const existingUser = await this.prismaConnectionService.user.findUnique({
       where: { id },
     });
 
@@ -577,7 +578,7 @@ export class UsersService {
       throw new NotFoundException('User not found');
     }
 
-    const updatedUser = await this.prismaService.user.update({
+    const updatedUser = await this.prismaConnectionService.user.update({
       where: { id },
       data: {
         userStatus: UserStatus.ACTIVE,
