@@ -1,7 +1,6 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import type { Job } from 'bullmq';
-import { Logger } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import { Inject, Logger } from '@nestjs/common';
 import { DockerExecutorService } from './docker-executor.service';
 import { SubmissionGateway } from './submission.gateway';
 import { AttemptStatus } from './enum';
@@ -11,12 +10,14 @@ import {
   SubmissionCompletedEvent,
   SubmissionFailedEvent,
 } from '@gitcode/contracts';
+import { TokenName } from '../shared/token-name.enum.ts';
+import { PrismaClient } from '@prisma/client/extension';
 @Processor('submissions')
 export class SubmissionProcessor extends WorkerHost {
   private readonly logger = new Logger(SubmissionProcessor.name);
 
   constructor(
-    private prisma: PrismaService,
+    @Inject(TokenName.PRISMA_PROBLEM) private prismaConnectionService: PrismaClient,
     private codeExecutor: DockerExecutorService,
     private submissionGateway: SubmissionGateway,
     private eventBus: EventBus,
@@ -33,7 +34,7 @@ export class SubmissionProcessor extends WorkerHost {
 
     try {
       // Update status
-      await this.prisma.solutionAttempt.update({
+      await this.prismaConnectionService.solutionAttempt.update({
         where: { id: attemptId },
         data: { status: AttemptStatus.RUNNING },
       });
@@ -45,7 +46,7 @@ export class SubmissionProcessor extends WorkerHost {
       });
 
       // Get test cases for this problem
-      const testCases = await this.prisma.testCase.findMany({
+      const testCases = await this.prismaConnectionService.testCase.findMany({
         where: { problemId },
         orderBy: { orderIndex: 'asc' },
       });
@@ -67,7 +68,7 @@ export class SubmissionProcessor extends WorkerHost {
         const result = results[i];
         const testCase = testCases[i];
 
-        await this.prisma.testResult.create({
+        await this.prismaConnectionService.testResult.create({
           data: {
             attemptId,
             testCaseId: testCase.id,
@@ -121,7 +122,7 @@ export class SubmissionProcessor extends WorkerHost {
           `Sending 'submission-completed' event to user ${userId}`,
         );
 
-        const problemDescription: string = await this.prisma.problem
+        const problemDescription: string = await this.prismaConnectionService.problem
           .findUnique({
             where: { id: problemId },
             select: { description: true },
@@ -151,7 +152,7 @@ export class SubmissionProcessor extends WorkerHost {
         this.logger.log(`Attempt ${attemptId} failed some tests!`);
         this.logger.log(`Sending 'submission-failed' event to user ${userId}`);
 
-        const problemDescription: string = await this.prisma.problem
+        const problemDescription: string = await this.prismaConnectionService.problem
           .findUnique({
             where: { id: problemId },
             select: { description: true },
@@ -177,7 +178,7 @@ export class SubmissionProcessor extends WorkerHost {
       }
 
       // Update attempt with results
-      await this.prisma.solutionAttempt.update({
+      await this.prismaConnectionService.solutionAttempt.update({
         where: { id: attemptId },
         data: {
           status,
@@ -190,13 +191,13 @@ export class SubmissionProcessor extends WorkerHost {
       });
 
       // Get current submission to check if already accepted
-      const currentSubmission = await this.prisma.userSubmission.findUnique({
+      const currentSubmission = await this.prismaConnectionService.userSubmission.findUnique({
         where: { id: submissionId },
         select: { isSolved: true, solvedAt: true, submittedAt: true },
       });
 
       // Update user submission
-      await this.prisma.userSubmission.update({
+      await this.prismaConnectionService.userSubmission.update({
         where: { id: submissionId },
         data: {
           isSolved: isAllPassed || currentSubmission?.isSolved,
@@ -212,7 +213,7 @@ export class SubmissionProcessor extends WorkerHost {
       });
 
       // Get current problem stats
-      const stats = await this.prisma.problemStats.findUnique({
+      const stats = await this.prismaConnectionService.problemStats.findUnique({
         where: { problemId },
       });
 
@@ -227,7 +228,7 @@ export class SubmissionProcessor extends WorkerHost {
         newTotal;
 
       // Upsert in db
-      await this.prisma.problemStats.upsert({
+      await this.prismaConnectionService.problemStats.upsert({
         where: { problemId },
         create: {
           problemId,
@@ -269,7 +270,7 @@ export class SubmissionProcessor extends WorkerHost {
     } catch (error) {
       this.logger.error(`Job ${job.id} failed:`, error);
 
-      await this.prisma.solutionAttempt.update({
+      await this.prismaConnectionService.solutionAttempt.update({
         where: { id: attemptId },
         data: {
           status: AttemptStatus.ERROR,
@@ -280,7 +281,7 @@ export class SubmissionProcessor extends WorkerHost {
       });
 
       // Update user submission on error
-      await this.prisma.userSubmission.update({
+      await this.prismaConnectionService.userSubmission.update({
         where: { id: submissionId },
         data: {
           lastAttemptId: attemptId,

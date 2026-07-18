@@ -23,6 +23,9 @@
   ],
   "references": [
     {
+      "path": "../../packages/prisma-connection/tsconfig.lib.json"
+    },
+    {
       "path": "../../packages/contracts/tsconfig.lib.json"
     },
     {

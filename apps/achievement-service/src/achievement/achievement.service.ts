@@ -1,5 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { PaginatedResult } from '@gitcode/types';
 import { GetAchievementDto } from './dtos/get-achievement.dto';
 import { SearchAchievementsDto } from './dtos/search-achievements.dto';
@@ -13,13 +12,15 @@ import { ConfigService } from '@nestjs/config';
 import { AchievementEventMapperService } from './achievement-event-mapper.service';
 import { EventBus } from '@gitcode/messaging';
 import { AI_PATTERNS, GenerateReadmeCommand } from '@gitcode/contracts';
+import { TokenName } from '../shared/token-name.enum.ts';
+import { PrismaClient } from '@prisma/client/extension';
 
 @Injectable()
 export class AchievementService {
   private readonly logger = new Logger(AchievementService.name);
 
   constructor(
-    private readonly prismaService: PrismaService,
+    @Inject(TokenName.PRISMA_ACHIEVEMENT) private readonly prismaConnectionService: PrismaClient,
     private readonly configService: ConfigService,
     private readonly achievementEventMapperService: AchievementEventMapperService,
     private readonly eventBus: EventBus,
@@ -38,8 +39,8 @@ export class AchievementService {
 
     const where = this.buildAchievementWhereClause(searchAchievementsDto);
 
-    const [achievements, total] = await this.prismaService.$transaction([
-      this.prismaService.achievement.findMany({
+    const [achievements, total] = await this.prismaConnectionService.$transaction([
+      this.prismaConnectionService.achievement.findMany({
         where,
         skip,
         take: searchAchievementsDto.limit,
@@ -47,7 +48,7 @@ export class AchievementService {
           [searchAchievementsDto.sortBy]: searchAchievementsDto.sortOrder,
         },
       }),
-      this.prismaService.achievement.count({ where }),
+      this.prismaConnectionService.achievement.count({ where }),
     ]);
 
     const totalPages = Math.ceil(total / searchAchievementsDto.limit);
@@ -85,8 +86,8 @@ export class AchievementService {
       this.buildAchievementRelationWhereClause(searchAchievementsDto);
     where.userId = userId;
 
-    const [userAchievements, total] = await this.prismaService.$transaction([
-      this.prismaService.userAchievement.findMany({
+    const [userAchievements, total] = await this.prismaConnectionService.$transaction([
+      this.prismaConnectionService.userAchievement.findMany({
         where,
         skip,
         take: searchAchievementsDto.limit,
@@ -99,7 +100,7 @@ export class AchievementService {
           achievement: true,
         },
       }),
-      this.prismaService.userAchievement.count({ where }),
+      this.prismaConnectionService.userAchievement.count({ where }),
     ]);
 
     const totalPages = Math.ceil(total / searchAchievementsDto.limit);
@@ -137,8 +138,8 @@ export class AchievementService {
       this.buildAchievementRelationWhereClause(searchAchievementsDto);
     where.userId = userId;
 
-    const [userProgress, total] = await this.prismaService.$transaction([
-      this.prismaService.userProgress.findMany({
+    const [userProgress, total] = await this.prismaConnectionService.$transaction([
+      this.prismaConnectionService.userProgress.findMany({
         where,
         skip,
         take: searchAchievementsDto.limit,
@@ -146,7 +147,7 @@ export class AchievementService {
           achievement: true,
         },
       }),
-      this.prismaService.userProgress.count({ where }),
+      this.prismaConnectionService.userProgress.count({ where }),
     ]);
 
     const totalPages = Math.ceil(total / searchAchievementsDto.limit);
@@ -178,7 +179,7 @@ export class AchievementService {
   ): Promise<GetAchievementDto> {
     this.logger.log('Creating achievement');
 
-    const achievement = await this.prismaService.achievement.create({
+    const achievement = await this.prismaConnectionService.achievement.create({
       data: {
         code: postAchievementDto.code,
         name: postAchievementDto.name,
@@ -206,7 +207,7 @@ export class AchievementService {
   ): Promise<GetAchievementDto> {
     this.logger.log(`Updating achievement with id ${id}`);
 
-    const achievement = await this.prismaService.achievement.update({
+    const achievement = await this.prismaConnectionService.achievement.update({
       where: { id },
       data: {
         name: patchAchievementDto.name,
@@ -231,7 +232,7 @@ export class AchievementService {
   public async deleteAchievement(id: string): Promise<void> {
     this.logger.log(`Deleting achievement with id ${id}`);
 
-    await this.prismaService.achievement.delete({
+    await this.prismaConnectionService.achievement.delete({
       where: { id },
     });
   }
@@ -400,7 +401,7 @@ export class AchievementService {
   ): Promise<Array<{ code: string; name: string }>> {
     const unlockedAchievements: Array<{ code: string; name: string }> = [];
 
-    await this.prismaService.$transaction(async (prisma) => {
+    await this.prismaConnectionService.$transaction(async (prisma) => {
       // Find all achievements matching this event type
       const achievements = await prisma.achievement.findMany({
         where: { eventType },

@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { PrismaModule } from '../prisma/prisma.module';
+import { AchievementPrismaModule } from '../prisma/prisma.module';
 import { MessagingModule } from '@gitcode/messaging';
 import { ConfigModule } from '@nestjs/config';
 import envValidation from './config/env.validation';
@@ -13,7 +13,7 @@ import { GitCodeAuthModule } from '@gitcode/auth';
 
 @Module({
   imports: [
-    PrismaModule,
+    AchievementPrismaModule,
     MessagingModule.forRoot([process.env.RABBITMQ_URL]),
     ConfigModule.forRoot({
       isGlobal: true,

@@ -1,10 +1,14 @@
-import { Injectable, Logger, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  BadRequestException,
+  Inject,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Octokit } from '@octokit/rest';
 import { GithubTokenService } from './github-token.service';
-import { FileChangeDto } from '../dto/commit-changes.dto';
-import { CommitResponseDto } from '../dto/github-response.dto';
-import { PrismaService } from '../../prisma/prisma.service';
+import { FileChangeDto } from '../dto';
+import { CommitResponseDto } from '../dto';
 import { EventBus } from '@gitcode/messaging';
 import {
   AI_PATTERNS,
@@ -12,6 +16,8 @@ import {
   GITHUB_PATTERNS,
   FileCommittedEvent,
 } from '@gitcode/contracts';
+import { TokenName } from '../../shared/token-name.enum.ts';
+import { PrismaClient } from '@prisma/client/extension';
 
 @Injectable()
 export class CommitService {
@@ -20,7 +26,7 @@ export class CommitService {
   constructor(
     private readonly tokenService: GithubTokenService,
     private readonly configService: ConfigService,
-    private readonly prisma: PrismaService,
+    @Inject(TokenName.PRISMA_GITHUB) private readonly prismaConnectionService: PrismaClient,
     private eventBus: EventBus,
   ) {
     this.DEFAULT_REPO_NAME = this.configService.get<string>(
@@ -111,7 +117,7 @@ export class CommitService {
       this.logger.log(`Successfully committed: ${newCommit.sha}`);
 
       // Find repository in database
-      const repository = await this.prisma.repository.findUnique({
+      const repository = await this.prismaConnectionService.repository.findUnique({
         where: {
           userId_name: {
             userId,
@@ -127,7 +133,7 @@ export class CommitService {
       }
 
       // Save commit to database
-      await this.prisma.commit.create({
+      await this.prismaConnectionService.commit.create({
         data: {
           userId,
           repositoryId: repository.id,

@@ -1,10 +1,10 @@
 import {
+  Inject,
   Injectable,
   Logger,
   NotFoundException,
   OnModuleInit,
 } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
 import { RealtimeService } from '../../realtime/realtime.service';
 import { ChannelType, NotificationType } from '@prisma/client-notification';
 import { PaginatedResult, UUID } from '@gitcode/types';
@@ -12,9 +12,9 @@ import {
   GetNotificationPreferencesDto,
   UpdateNotificationPreferencesDto,
 } from '../dtos';
-import { PostNotificationDto, GetNotificationDto } from '../dtos/index';
+import { PostNotificationDto, GetNotificationDto } from '../dtos';
 import { NotificationKind } from '../enums';
-import type { NotificationPayload } from '../types/index';
+import type { NotificationPayload } from '../types';
 import { NotifyParams } from '../interfaces';
 import { PaginationQueryDto } from '@gitcode/common';
 import { DEFAULT_NOTIFICATION_PREFERENCES } from '../../app/config/default-preferences.const';
@@ -23,6 +23,8 @@ import {
   NOTIFICATION_PATTERNS,
   SendNotificationCommand,
 } from '@gitcode/contracts';
+import { TokenName } from '../../shared/token-name.enum.ts';
+import { PrismaClient } from '@prisma/client/extension';
 
 @Injectable()
 export class NotificationService implements OnModuleInit {
@@ -32,7 +34,7 @@ export class NotificationService implements OnModuleInit {
   private configCache = new Map<string, boolean>();
 
   constructor(
-    private readonly prismaService: PrismaService,
+    @Inject(TokenName.PRISMA_NOTIFICATION) private readonly prismaConnectionService: PrismaClient,
     private readonly realtimeService: RealtimeService,
     private readonly eventBus: EventBus,
   ) {}
@@ -50,7 +52,7 @@ export class NotificationService implements OnModuleInit {
    */
   public async refreshConfigCache() {
     // Load notification configurations from the database
-    const configs = await this.prismaService.notificationConfig.findMany();
+    const configs = await this.prismaConnectionService.notificationConfig.findMany();
 
     // Clear existing cache
     this.configCache.clear();
@@ -186,7 +188,7 @@ export class NotificationService implements OnModuleInit {
     data: PostNotificationDto,
   ): Promise<GetNotificationDto> {
     // Save notification record
-    const notification = await this.prismaService.notification.create({
+    const notification = await this.prismaConnectionService.notification.create({
       data: {
         userId: data.userId,
         severity: data.severity,
@@ -244,7 +246,7 @@ export class NotificationService implements OnModuleInit {
     this.logger.log(`Fetching notification preferences for user ${userId}`);
 
     // Fetch preferences from the database
-    const rows = await this.prismaService.notificationPreference.findMany({
+    const rows = await this.prismaConnectionService.notificationPreference.findMany({
       where: { userId },
     });
 
@@ -282,7 +284,7 @@ export class NotificationService implements OnModuleInit {
     );
     // Create default preferences in the database
     const defaultPreferences = Object.values(NotificationType).map((type) => {
-      return this.prismaService.notificationPreference.upsert({
+      return this.prismaConnectionService.notificationPreference.upsert({
         where: {
           userId_type: {
             userId,
@@ -317,7 +319,7 @@ export class NotificationService implements OnModuleInit {
 
     // Upsert each preference into the database
     const updates = Object.entries(preferences).map(([type, channels]) => {
-      return this.prismaService.notificationPreference.upsert({
+      return this.prismaConnectionService.notificationPreference.upsert({
         where: {
           userId_type: {
             userId,
@@ -361,13 +363,13 @@ export class NotificationService implements OnModuleInit {
 
     // Fetch notifications from the database
     const [notifications, total] = await Promise.all([
-      this.prismaService.notification.findMany({
+      this.prismaConnectionService.notification.findMany({
         where: { userId },
         orderBy: { [sortBy]: sortOrder },
         skip,
         take: limit,
       }),
-      this.prismaService.notification.count({
+      this.prismaConnectionService.notification.count({
         where: { userId },
       }),
     ]);
@@ -416,13 +418,13 @@ export class NotificationService implements OnModuleInit {
 
     // Fetch unread notifications from the database
     const [notifications, total] = await Promise.all([
-      this.prismaService.notification.findMany({
+      this.prismaConnectionService.notification.findMany({
         where: { userId, isRead: false },
         orderBy: { [sortBy]: sortOrder },
         skip,
         take: limit,
       }),
-      this.prismaService.notification.count({
+      this.prismaConnectionService.notification.count({
         where: { userId, isRead: false },
       }),
     ]);
@@ -458,7 +460,7 @@ export class NotificationService implements OnModuleInit {
   public async getUnreadNotificationCount(userId: UUID): Promise<number> {
     this.logger.log(`Counting unread notifications for user ${userId}`);
     // Count unread notifications from the database
-    return this.prismaService.notification.count({
+    return this.prismaConnectionService.notification.count({
       where: { userId, isRead: false },
     });
   }
@@ -469,7 +471,7 @@ export class NotificationService implements OnModuleInit {
   public async markAsRead(userId: UUID, id: UUID): Promise<GetNotificationDto> {
     this.logger.log(`Marking notification ${id} as read for user ${userId}`);
     // Update the notification to mark it as read
-    const notification = await this.prismaService.notification.findFirst({
+    const notification = await this.prismaConnectionService.notification.findFirst({
       where: { id: id, userId: userId },
     });
 
@@ -479,7 +481,7 @@ export class NotificationService implements OnModuleInit {
     }
 
     // Update the notification to mark it as read
-    const updatedNotification = await this.prismaService.notification.update({
+    const updatedNotification = await this.prismaConnectionService.notification.update({
       where: { id: notification.id },
       data: { isRead: true },
     });
@@ -505,7 +507,7 @@ export class NotificationService implements OnModuleInit {
   public async markAllAsRead(userId: UUID): Promise<void> {
     this.logger.log(`Marking all notifications as read for user ${userId}`);
     // Update all notifications to mark them as read
-    await this.prismaService.notification.updateMany({
+    await this.prismaConnectionService.notification.updateMany({
       where: { userId, isRead: false },
       data: { isRead: true },
     });
@@ -521,7 +523,7 @@ export class NotificationService implements OnModuleInit {
     this.logger.log(`Fetching notification ${id} for user ${userId}`);
 
     // Fetch the notification from the database
-    const notification = await this.prismaService.notification.findUnique({
+    const notification = await this.prismaConnectionService.notification.findUnique({
       where: { id, userId },
     });
 
