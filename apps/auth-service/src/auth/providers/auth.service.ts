@@ -17,7 +17,7 @@ import { SessionService } from './session.service';
 import { UpdateUserDto } from '../dto/update-user.dto';
 import { AppPermissions, AppRoles, UUID } from '@gitcode/types';
 import { TokenName } from '../../shared/enums/nest-token.enum.ts';
-import { PrismaClient } from '@prisma/client/extension';
+import { PrismaClient } from '@prisma/client-auth';
 
 @Injectable()
 export class AuthService {

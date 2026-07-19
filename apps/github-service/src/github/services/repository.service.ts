@@ -10,7 +10,7 @@ import { Octokit } from '@octokit/rest';
 import { GithubTokenService } from './github-token.service';
 import { RepositoryResponseDto } from '../dto';
 import { TokenName } from '../../shared/token-name.enum.ts';
-import { PrismaClient } from '@prisma/client/extension';
+import { PrismaClient } from '@prisma/client-github';
 
 @Injectable()
 export class RepositoryService {

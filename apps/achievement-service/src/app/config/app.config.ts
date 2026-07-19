@@ -5,5 +5,5 @@ export default registerAs('app', () => ({
   environment: process.env.NODE_ENV || 'development',
   INTERNAL_API_KEY: process.env.INTERNAL_API_KEY,
   PROBLEM_SERVICE_URL: process.env.PROBLEM_SERVICE_URL,
-  DB_URL: process.env.AUTH_DATABASE_URL,
+  DB_URL: process.env.ACHIEVEMENT_DATABASE_URL,
 }));

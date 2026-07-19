@@ -27,7 +27,7 @@ import {
   UserProfileUpdatedEvent,
   UserSoftDeletedEvent,
 } from '@gitcode/contracts';
-import { PrismaClient } from '@prisma/client/extension';
+import { PrismaClient } from '@prisma/client-auth';
 import { TokenName } from '../../shared/enums/nest-token.enum.ts';
 
 @Injectable()

@@ -13,7 +13,7 @@ import { AchievementEventMapperService } from './achievement-event-mapper.servic
 import { EventBus } from '@gitcode/messaging';
 import { AI_PATTERNS, GenerateReadmeCommand } from '@gitcode/contracts';
 import { TokenName } from '../shared/token-name.enum.ts';
-import { PrismaClient } from '@prisma/client/extension';
+import { PrismaClient } from '@prisma/client-achievement';
 
 @Injectable()
 export class AchievementService {

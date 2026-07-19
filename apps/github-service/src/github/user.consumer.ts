@@ -8,7 +8,7 @@ import { AUTH_PATTERNS } from '@gitcode/contracts';
 import { RABBIT_CONFIG } from '../app/config/rabbitmq.config';
 import { UserCreatedEnvelope } from './events/envelopes';
 import { TokenName } from '../shared/token-name.enum.ts';
-import { PrismaClient } from '@prisma/client/extension';
+import { PrismaClient } from '@prisma/client-github';
 
 @Controller()
 export class UserConsumer {

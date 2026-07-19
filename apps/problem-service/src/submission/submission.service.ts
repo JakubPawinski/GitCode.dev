@@ -45,7 +45,7 @@ import {
   RecentActivityDto,
 } from './dto/user-stats-extended.dto';
 import { TokenName } from '../shared/token-name.enum.ts';
-import { PrismaClient } from '@prisma/client/extension';
+import { PrismaClient } from '@prisma/client-problem';
 
 @Injectable()
 export class SubmissionService {

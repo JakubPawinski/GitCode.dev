@@ -11,7 +11,7 @@ import {
   SubmissionFailedEvent,
 } from '@gitcode/contracts';
 import { TokenName } from '../shared/token-name.enum.ts';
-import { PrismaClient } from '@prisma/client/extension';
+import { PrismaClient } from '@prisma/client-problem';
 @Processor('submissions')
 export class SubmissionProcessor extends WorkerHost {
   private readonly logger = new Logger(SubmissionProcessor.name);
