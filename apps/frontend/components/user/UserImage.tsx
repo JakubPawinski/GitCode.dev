@@ -15,7 +15,16 @@ export const UserImage = ({
   height,
 }: UserImageProps) => {
   if (!src) {
-    return <User className={className} width={width} height={height} />
+    // `className` (rounding/sizing/color) is applied to this wrapper, not the
+    // icon itself — an SVG has no fill box for `rounded-full` etc. to act on,
+    // which is what made the fallback avatar look angular instead of circular.
+    return (
+      <span
+        className={`inline-flex items-center justify-center bg-white/10 ${className ?? ''}`}
+      >
+        <User className="h-[58%] w-[58%]" />
+      </span>
+    )
   }
   return (
     <Image
