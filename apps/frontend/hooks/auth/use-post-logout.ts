@@ -18,7 +18,10 @@ export const usePostLogout = <T>() => {
         }
       )
       .then((res) => setData(res.data.data))
-      .catch((err) => setError(err))
+      .catch((err) => {
+        setError(err)
+        return Promise.reject(err)
+      })
       .finally(() => setLoading(false))
   }, [])
 

@@ -188,6 +188,21 @@
   opacity: 0.5;
 }
 
+@keyframes gc-dropdown-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.gc-dropdown-enter {
+  transform-origin: top right;
+  animation: gc-dropdown-in 0.16s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
 @media (max-width: 1024px) {
   .gc-hero-section {
     min-height: auto !important;
@@ -204,7 +219,8 @@
   .gc-pulse,
   .gc-glass,
   .gc-glass-accent,
-  .gc-feature-card {
+  .gc-feature-card,
+  .gc-dropdown-enter {
     animation: none !important;
     transition: none !important;
   }

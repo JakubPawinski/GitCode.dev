@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/auth/AuthContext'
 import { useTheme } from '@/contexts/theme/ThemeContext'
+import { getLoginRedirect } from '@/hooks/auth/use-get-login-redirect'
 import { FaultyTerminal } from '@/components/effects/FaultyTerminal'
 
 const YEARS = [2026, 2025, 2024] as const
@@ -61,7 +62,6 @@ export const Hero = () => {
   }, [])
 
   const cells = useMemo(() => cellsByYear?.[year] ?? [], [cellsByYear, year])
-  const primaryCtaHref = data ? '/problems' : '/login'
 
   return (
     <section
@@ -125,12 +125,22 @@ export const Hero = () => {
             to your GitHub repository.
           </p>
           <div className="mt-7 flex flex-wrap gap-3.5">
-            <Link
-              href={primaryCtaHref}
-              className="gc-glass-accent inline-flex h-12 items-center rounded-full px-7 text-[14.5px] font-bold text-white"
-            >
-              Start Your Journey
-            </Link>
+            {data ? (
+              <Link
+                href="/problems"
+                className="gc-glass-accent inline-flex h-12 items-center rounded-full px-7 text-[14.5px] font-bold text-white"
+              >
+                Start Your Journey
+              </Link>
+            ) : (
+              <button
+                type="button"
+                onClick={getLoginRedirect}
+                className="gc-glass-accent inline-flex h-12 items-center rounded-full px-7 text-[14.5px] font-bold text-white"
+              >
+                Start Your Journey
+              </button>
+            )}
             <a
               href="#features"
               className="gc-glass text-gc-text inline-flex h-12 items-center rounded-full px-7 text-[14.5px] font-semibold"
