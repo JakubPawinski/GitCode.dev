@@ -1,27 +1,6 @@
 version: '3.8'
 
 services:
-  # Remove after frontend migration to Nx
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-      target: development
-    container_name: gitcode-frontend-dev
-    env_file:
-      - .env
-    environment:
-      - NODE_ENV=development
-      - PORT=${FRONTEND_PORT}
-      - API_GATEWAY_URL=http://api-gateway:${API_GATEWAY_PORT}
-    ports:
-      - '${FRONTEND_PORT}:${FRONTEND_PORT}'
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
-    networks:
-      - gitcodedev-network
-    restart: unless-stopped
   api-gateway:
     image: traefik:v3.5
     container_name: api-gateway-dev

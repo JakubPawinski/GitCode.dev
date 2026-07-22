@@ -33,8 +33,17 @@
         "packages/auth/*",
         "packages/common/*",
         "packages/messaging/*",
+        "apps/frontend/*"
         "packages/prisma-connection/*"
       ]
+    },
+    {
+      "plugin": "@nx/next/plugin",
+      "options": {
+        "buildTargetName": "build",
+        "devTargetName": "dev",
+        "startTargetName": "start"
+      }
     },
     {
       "plugin": "@nx/webpack/plugin",

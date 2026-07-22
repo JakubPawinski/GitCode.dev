@@ -9,7 +9,7 @@
     "start:infra": "docker compose -f docker-compose.infra.yml up -d",
     "start:infra-prod": "docker compose -f docker-compose.infra.prod.yml up -d",
     "stop:infra": "docker compose -f docker-compose.infra.yml down",
-    "dev": "npm run start:infra && npm run nx:daemon && cross-env NX_DAEMON=true npx nx run-many -t serve -p auth-service problem-service swagger-docs notification-service ai-service github-service achievement-service",
+    "dev": "npm run start:infra && npm run nx:daemon && cross-env NX_DAEMON=true npx nx run-many -t serve -p auth-service problem-service swagger-docs notification-service ai-service github-service achievement-service frontend",
     "prod": "npm run start:infra-prod && npx nx run-many -t serve -p auth-service problem-service swagger-docs notification-service ai-service github-service achievement-service",
     "seed": "npm run seed:problems && npm run seed:achievements",
     "seed:achievements": "ts-node apps/achievement-service/prisma/seed.ts",
