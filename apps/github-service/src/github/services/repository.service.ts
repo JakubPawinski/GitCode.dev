@@ -3,12 +3,14 @@ import {
   Logger,
   BadRequestException,
   HttpException,
+  Inject,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Octokit } from '@octokit/rest';
 import { GithubTokenService } from './github-token.service';
-import { RepositoryResponseDto } from '../dto/github-response.dto';
-import { PrismaService } from '../../prisma/prisma.service';
+import { RepositoryResponseDto } from '../dto';
+import { TokenName } from '../../shared/token-name.enum.ts';
+import { PrismaClient } from '@prisma/client-github';
 
 @Injectable()
 export class RepositoryService {
@@ -18,7 +20,7 @@ export class RepositoryService {
 
   constructor(
     private readonly tokenService: GithubTokenService,
-    private readonly prisma: PrismaService,
+    @Inject(TokenName.PRISMA_GITHUB) private readonly prismaConnectionService: PrismaClient,
     private readonly configService: ConfigService,
   ) {
     this.DEFAULT_REPO_NAME = this.configService.get<string>(
@@ -40,7 +42,7 @@ export class RepositoryService {
       const repoName = this.DEFAULT_REPO_NAME;
 
       // Check database first
-      const dbRepo = await this.prisma.repository.findUnique({
+      const dbRepo = await this.prismaConnectionService.repository.findUnique({
         where: {
           userId_name: {
             userId,
@@ -73,7 +75,7 @@ export class RepositoryService {
       } catch (error) {
         if (error.status === 404) {
           // Repo exists in DB but not on GitHub, clean up DB
-          await this.prisma.repository.delete({
+          await this.prismaConnectionService.repository.delete({
             where: { id: dbRepo.id },
           });
           return { repository: null };
@@ -99,7 +101,7 @@ export class RepositoryService {
 
     try {
       // Find user in github-service database by userId from auth-service
-      const dbUser = await this.prisma.user.findUnique({
+      const dbUser = await this.prismaConnectionService.user.findUnique({
         where: { userId },
       });
 
@@ -137,7 +139,7 @@ export class RepositoryService {
       }
 
       // Upsert repository in our database
-      await this.prisma.repository.upsert({
+      await this.prismaConnectionService.repository.upsert({
         where: {
           userId_name: {
             userId,

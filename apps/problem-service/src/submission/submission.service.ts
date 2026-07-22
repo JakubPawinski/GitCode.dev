@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  Inject,
   Injectable,
   Logger,
   NotFoundException,
@@ -15,7 +16,6 @@ import {
   AttemptDetailsDto,
   DeleteResponseDto,
 } from './dto';
-import { PrismaService } from '../prisma/prisma.service';
 import { InjectQueue } from '@nestjs/bullmq';
 import type { Queue } from 'bull';
 import { SubmissionGateway } from './submission.gateway';
@@ -44,12 +44,14 @@ import {
   MilestoneDto,
   RecentActivityDto,
 } from './dto/user-stats-extended.dto';
+import { TokenName } from '../shared/token-name.enum.ts';
+import { PrismaClient } from '@prisma/client-problem';
 
 @Injectable()
 export class SubmissionService {
   private readonly logger = new Logger(SubmissionService.name);
   constructor(
-    private prisma: PrismaService,
+    @Inject(TokenName.PRISMA_PROBLEM) private prismaConnectionService: PrismaClient,
     @InjectQueue('submissions') private submissionsQueue: Queue,
     private submissionGateway: SubmissionGateway,
   ) {}
@@ -59,7 +61,7 @@ export class SubmissionService {
     userId: string,
   ): Promise<CreateSubmissionResponseDto> {
     // Find problem from submisson
-    const problem = await this.prisma.problem.findUnique({
+    const problem = await this.prismaConnectionService.problem.findUnique({
       where: { id: createSubmissionDto.problemId },
       include: { testCases: true },
     });
@@ -76,7 +78,7 @@ export class SubmissionService {
       throw new BadRequestException(`Submission language not supported.`);
 
     // Create/Update user submission object in db
-    const userSubmission = await this.prisma.userSubmission.upsert({
+    const userSubmission = await this.prismaConnectionService.userSubmission.upsert({
       where: {
         userId_problemId: {
           userId,
@@ -99,13 +101,13 @@ export class SubmissionService {
     });
 
     // Create new attempt object in db
-    const attempt = await this.prisma.solutionAttempt.create({
+    const attempt = await this.prismaConnectionService.solutionAttempt.create({
       data: {
         submissionId: userSubmission.id,
         code: createSubmissionDto.code,
         language: createSubmissionDto.language,
         attemptNumber:
-          (await this.prisma.solutionAttempt.count({
+          (await this.prismaConnectionService.solutionAttempt.count({
             where: { submissionId: userSubmission.id },
           })) + 1,
         status: AttemptStatus.PENDING,
@@ -155,7 +157,7 @@ export class SubmissionService {
   }
 
   async getAttemptDetails(attemptId: string): Promise<AttemptDetailsDto> {
-    const attempt = await this.prisma.solutionAttempt.findUnique({
+    const attempt = await this.prismaConnectionService.solutionAttempt.findUnique({
       where: { id: attemptId },
       include: {
         feedbacks: true,
@@ -222,11 +224,11 @@ export class SubmissionService {
 
     const where = { userId };
 
-    const total = await this.prisma.userSubmission.count({ where });
+    const total = await this.prismaConnectionService.userSubmission.count({ where });
     const totalPages = Math.ceil(total / limit);
     const skip = (page - 1) * limit;
 
-    const submissions = await this.prisma.userSubmission.findMany({
+    const submissions = await this.prismaConnectionService.userSubmission.findMany({
       where,
       skip,
       take: +limit,
@@ -292,7 +294,7 @@ export class SubmissionService {
   }
 
   async getUserStats(userId: string): Promise<SubmissionStatsDto> {
-    const submissions = await this.prisma.userSubmission.findMany({
+    const submissions = await this.prismaConnectionService.userSubmission.findMany({
       where: { userId },
       include: {
         attempts: {
@@ -351,7 +353,7 @@ export class SubmissionService {
     userId: string,
     limit: number = 10,
   ): Promise<RecentSubmissionDto[]> {
-    const attempts = await this.prisma.solutionAttempt.findMany({
+    const attempts = await this.prismaConnectionService.solutionAttempt.findMany({
       where: {
         submission: {
           userId,
@@ -395,7 +397,7 @@ export class SubmissionService {
     submissionId: string,
     userId: string,
   ): Promise<SubmissionDetailDto> {
-    const submission = await this.prisma.userSubmission.findFirst({
+    const submission = await this.prismaConnectionService.userSubmission.findFirst({
       where: {
         id: submissionId,
         userId,
@@ -465,7 +467,7 @@ export class SubmissionService {
     submissionId: string,
     userId: string,
   ): Promise<DeleteResponseDto> {
-    const submission = await this.prisma.userSubmission.findFirst({
+    const submission = await this.prismaConnectionService.userSubmission.findFirst({
       where: {
         id: submissionId,
         userId,
@@ -476,7 +478,7 @@ export class SubmissionService {
       throw new NotFoundException(`Submission ${submissionId} not found`);
     }
 
-    await this.prisma.userSubmission.delete({
+    await this.prismaConnectionService.userSubmission.delete({
       where: { id: submissionId },
     });
 
@@ -500,7 +502,7 @@ export class SubmissionService {
       `Handling AI analysis result for submission ${submissionId}`,
     );
 
-    const submission = await this.prisma.userSubmission.findUnique({
+    const submission = await this.prismaConnectionService.userSubmission.findUnique({
       where: { id: submissionId },
       select: { userId: true },
     });
@@ -512,7 +514,7 @@ export class SubmissionService {
     }
 
     // Store AI analysis feedback in database
-    await this.prisma.aIFeedback.create({
+    await this.prismaConnectionService.aIFeedback.create({
       data: {
         submissionId,
         attemptId: payload.attemptId,
@@ -549,7 +551,7 @@ export class SubmissionService {
     }
 
     try {
-      await this.prisma.userSubmission.update({
+      await this.prismaConnectionService.userSubmission.update({
         where: { id: submissionId },
         data: {
           commitHash: payload.commitSha,
@@ -600,7 +602,7 @@ export class SubmissionService {
 
     // Fetch all submissions and all feedbacks
     const [submissions, allFeedbacks] = await Promise.all([
-      this.prisma.userSubmission.findMany({
+      this.prismaConnectionService.userSubmission.findMany({
         where: { userId },
         include: {
           problem: {
@@ -617,7 +619,7 @@ export class SubmissionService {
           feedbacks: true,
         },
       }),
-      this.prisma.aIFeedback.findMany({
+      this.prismaConnectionService.aIFeedback.findMany({
         where: {
           submission: { userId },
         },

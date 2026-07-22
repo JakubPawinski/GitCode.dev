@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { ConfigService } from '@nestjs/config';
 import { AppService } from './app.service';
-import { PrismaModule } from './prisma/prisma.module';
+import { ProblemPrismaModule } from './prisma/prisma.module';
 import { ProblemModule } from './problem/problem.module';
 import { SubmissionModule } from './submission/submission.module';
 import { BullModule } from '@nestjs/bullmq';
@@ -16,7 +16,7 @@ import rabbitmqConfig from './config/rabbitmq.config';
 @Module({
   imports: [
     ProblemModule,
-    PrismaModule,
+    ProblemPrismaModule,
     SubmissionModule,
     ConfigModule.forRoot({
       isGlobal: true,

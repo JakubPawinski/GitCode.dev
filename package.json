@@ -13,7 +13,13 @@
     "prod": "npm run start:infra-prod && npx nx run-many -t serve -p auth-service problem-service swagger-docs notification-service ai-service github-service achievement-service",
     "seed": "npm run seed:problems && npm run seed:achievements",
     "seed:achievements": "ts-node apps/achievement-service/prisma/seed.ts",
-    "seed:problems": "ts-node apps/problem-service/prisma/seed.ts"
+    "seed:problems": "ts-node apps/problem-service/prisma/seed.ts",
+    "prisma-generate:auth": "npx prisma generate --config=apps/auth-service/prisma.config.ts",
+    "prisma-generate:problem": "npx prisma generate --config=apps/problem-service/prisma.config.ts",
+    "prisma-generate:notification": "npx prisma generate --config=apps/notification-service/prisma.config.ts",
+    "prisma-generate:achievement": "npx prisma generate --config=apps/achievement-service/prisma.config.ts",
+    "prisma-generate:github": "npx prisma generate --config=apps/github-service/prisma.config.ts",
+    "prisma-generate": "npm run prisma-generate:auth && npm run prisma-generate:problem && npm run prisma-generate:notification && npm run prisma-generate:achievement && npm run prisma-generate:github"
   },
   "keywords": [],
   "author": "",

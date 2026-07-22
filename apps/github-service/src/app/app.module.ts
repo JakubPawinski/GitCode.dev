@@ -6,6 +6,8 @@ import { GithubModule } from '../github/github.module';
 import { GitCodeAuthModule } from '@gitcode/auth';
 import rabbitmqConfig from './config/rabbitmq.config';
 import { MessagingModule } from '@gitcode/messaging';
+import appConfig from './config/app.config';
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -19,6 +21,7 @@ import { MessagingModule } from '@gitcode/messaging';
           },
         }),
         rabbitmqConfig,
+        appConfig,
       ],
     }),
     GitCodeAuthModule,

@@ -1,8 +1,20 @@
 import { Module } from '@nestjs/common';
-import { PrismaService } from './prisma.service';
+import { createPrismaConnectionModule } from '@gitcode/prisma-connection';
+import { PrismaClient } from '@prisma/client-notification';
+import { TokenName } from '../shared/token-name.enum.ts';
+import { ConfigService } from '@nestjs/config';
+
+const BaseNotificationPrismaModule = createPrismaConnectionModule(PrismaClient, TokenName.PRISMA_NOTIFICATION)
 
 @Module({
-  providers: [PrismaService],
-  exports: [PrismaService],
+  imports: [
+    BaseNotificationPrismaModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        connectionString: configService.getOrThrow<string>('database.url'),
+      }),
+    }),
+  ],
+  exports: [BaseNotificationPrismaModule],
 })
-export class PrismaModule {}
+export class NotificationPrismaModule {}

@@ -1,5 +1,4 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import {
   CreateProblemDto,
   UpdateProblemDto,
@@ -14,11 +13,14 @@ import {
 } from './dto';
 import { PaginatedResult } from '@gitcode/types';
 import { CodeSnippet } from '@prisma/client-problem';
+import { TokenName } from '../shared/token-name.enum.ts';
+import { PrismaClient } from '@prisma/client-problem';
 
 @Injectable()
 export class ProblemService {
   private readonly logger = new Logger(ProblemService.name);
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    @Inject(TokenName.PRISMA_PROBLEM) private prismaConnectionService: PrismaClient) {}
   getHealth() {
     return { status: 'Problem Service is healthy' };
   }
@@ -77,12 +79,12 @@ export class ProblemService {
     this.logger.debug(`Constructed where clause: ${JSON.stringify(where)}`);
 
     // Get total count for pagination
-    const total = await this.prisma.problem.count({ where });
+    const total = await this.prismaConnectionService.problem.count({ where });
     const totalPages = Math.ceil(total / limit);
     const skip = (page - 1) * limit;
 
     // Fetch paginated data
-    const data = await this.prisma.problem.findMany({
+    const data = await this.prismaConnectionService.problem.findMany({
       where,
       skip,
       take: +limit,
@@ -175,7 +177,7 @@ export class ProblemService {
   private async findProblemWithDetails(
     where: any,
   ): Promise<any> {
-    return await this.prisma.problem.findUnique({
+    return await this.prismaConnectionService.problem.findUnique({
       where,
       select: {
         id: true,
@@ -271,7 +273,7 @@ export class ProblemService {
       solutions,
     } = createProblemDto;
 
-    const problem = await this.prisma.problem.create({
+    const problem = await this.prismaConnectionService.problem.create({
       data: {
         title,
         problemId,
@@ -340,7 +342,7 @@ export class ProblemService {
       },
     });
 
-    await this.prisma.problemStats.create({
+    await this.prismaConnectionService.problemStats.create({
       data: {
         problemId: problem.id,
         totalSubmissions: 0,
@@ -384,7 +386,7 @@ export class ProblemService {
     const { topics, examples, constraints, hints, testCases, ...rest } =
       updateProblemDto;
 
-    const problem = await this.prisma.problem.update({
+    const problem = await this.prismaConnectionService.problem.update({
       where: { id },
       data: {
         ...rest,
@@ -486,7 +488,7 @@ export class ProblemService {
   }
 
   async deleteProblem(id: string) {
-    const problem = await this.prisma.problem.findUnique({
+    const problem = await this.prismaConnectionService.problem.findUnique({
       where: { id },
     });
 
@@ -494,7 +496,7 @@ export class ProblemService {
       throw new NotFoundException(`Problem with id "${id}" not found`);
     }
 
-    await this.prisma.problem.delete({
+    await this.prismaConnectionService.problem.delete({
       where: { id },
     });
 
@@ -505,7 +507,7 @@ export class ProblemService {
   }
 
   async getProblemStats(slug: string): Promise<ProblemStatsResponseDto> {
-    const problem = await this.prisma.problem.findUnique({
+    const problem = await this.prismaConnectionService.problem.findUnique({
       where: { problemSlug: slug },
       select: { id: true },
     });
@@ -514,7 +516,7 @@ export class ProblemService {
       throw new NotFoundException(`Problem with slug "${slug}" not found`);
     }
 
-    const stats = await this.prisma.problemStats.findUnique({
+    const stats = await this.prismaConnectionService.problemStats.findUnique({
       where: { problemId: problem.id },
     });
 
@@ -534,7 +536,7 @@ export class ProblemService {
 
   async getTrending(): Promise<TrendingResponseDto> {
     // Get all problems
-    const trendingProblems = await this.prisma.problem.findMany({
+    const trendingProblems = await this.prismaConnectionService.problem.findMany({
       select: {
         id: true,
         problemId: true,
@@ -593,7 +595,7 @@ export class ProblemService {
   }
   //USER METHODS
   async getUserProgress(userId: string): Promise<UserProgressResponseDto> {
-    const userSubmissions = await this.prisma.userSubmission.findMany({
+    const userSubmissions = await this.prismaConnectionService.userSubmission.findMany({
       where: { userId },
       include: {
         problem: {
@@ -615,7 +617,7 @@ export class ProblemService {
       },
     });
 
-    const totalProblems = await this.prisma.problem.count({
+    const totalProblems = await this.prismaConnectionService.problem.count({
       where: { isActive: true },
     });
 
@@ -644,7 +646,7 @@ export class ProblemService {
     slug: string,
     userId: string,
   ): Promise<UserSubmissionDto> {
-    const problem = await this.prisma.problem.findUnique({
+    const problem = await this.prismaConnectionService.problem.findUnique({
       where: { problemSlug: slug },
       select: { id: true },
     });
@@ -653,7 +655,7 @@ export class ProblemService {
       throw new NotFoundException(`Problem with slug "${slug}" not found`);
     }
 
-    const userSubmission = await this.prisma.userSubmission.findUnique({
+    const userSubmission = await this.prismaConnectionService.userSubmission.findUnique({
       where: {
         userId_problemId: {
           userId,
@@ -730,7 +732,7 @@ export class ProblemService {
   }
 
   async getRecommended(userId: string): Promise<RecommendedResponseDto> {
-    const solvedProblems = await this.prisma.userSubmission.findMany({
+    const solvedProblems = await this.prismaConnectionService.userSubmission.findMany({
       where: {
         userId,
         isSolved: true,
@@ -742,7 +744,7 @@ export class ProblemService {
 
     const solvedProblemIds = solvedProblems.map((sub) => sub.problemId);
 
-    const userTopics = await this.prisma.problemTopic.findMany({
+    const userTopics = await this.prismaConnectionService.problemTopic.findMany({
       where: {
         problemId: {
           in: solvedProblemIds,
@@ -756,7 +758,7 @@ export class ProblemService {
 
     const userTopicList = userTopics.map((t) => t.topic);
 
-    const recommendedProblems = await this.prisma.problem.findMany({
+    const recommendedProblems = await this.prismaConnectionService.problem.findMany({
       where: {
         id: {
           notIn: solvedProblemIds,
