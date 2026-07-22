@@ -1,0 +1,3 @@
+export enum TokenName {
+  PRISMA_NOTIFICATION = 'PRISMA_NOTIFICATION',
+}

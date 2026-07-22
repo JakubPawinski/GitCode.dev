@@ -1,7 +1,11 @@
-import { Injectable, UnauthorizedException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  Logger,
+  Inject,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { PrismaService } from '../../prisma/prisma.service';
 import * as crypto from 'crypto';
 import { mapRolesToPermissions } from '../mappers/permissions.mapper';
 import { mapRealmRolesToAppRoles } from '../mappers/roles.mapper';
@@ -12,12 +16,14 @@ import { OauthService } from './oauth.service';
 import { SessionService } from './session.service';
 import { UpdateUserDto } from '../dto/update-user.dto';
 import { AppPermissions, AppRoles, UUID } from '@gitcode/types';
+import { TokenName } from '../../shared/enums/nest-token.enum.ts';
+import { PrismaClient } from '@prisma/client-auth';
 
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
   constructor(
-    private prisma: PrismaService,
+    @Inject(TokenName.PRISMA_CONNECTION) private prisma: PrismaClient,
     private jwtService: JwtService,
     private configService: ConfigService,
     private eventBus: EventBus,

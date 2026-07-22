@@ -34,6 +34,7 @@
         "packages/common/*",
         "packages/messaging/*",
         "apps/frontend/*"
+        "packages/prisma-connection/*"
       ]
     },
     {
@@ -60,7 +61,8 @@
       "include": [
         "packages/auth/*",
         "packages/common/*",
-        "packages/messaging/*"
+        "packages/messaging/*",
+        "packages/prisma-connection/*"
       ],
       "options": {
         "typecheck": {

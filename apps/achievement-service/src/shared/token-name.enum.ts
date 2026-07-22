@@ -1,0 +1,3 @@
+export enum TokenName {
+  PRISMA_ACHIEVEMENT = 'PRISMA_ACHIEVEMENT',
+}

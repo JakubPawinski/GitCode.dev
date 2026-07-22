@@ -1,19 +1,21 @@
-import { Controller, Logger } from '@nestjs/common';
+import { Controller, Inject, Logger } from '@nestjs/common';
 import {
   RabbitSubscribe,
   RabbitPayload,
   MessageHandlerErrorBehavior,
 } from '@golevelup/nestjs-rabbitmq';
 import { AUTH_PATTERNS } from '@gitcode/contracts';
-import { PrismaService } from '../prisma/prisma.service';
 import { RABBIT_CONFIG } from '../app/config/rabbitmq.config';
 import { UserCreatedEnvelope } from './events/envelopes';
+import { TokenName } from '../shared/token-name.enum.ts';
+import { PrismaClient } from '@prisma/client-github';
 
 @Controller()
 export class UserConsumer {
   private readonly logger = new Logger(UserConsumer.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    @Inject(TokenName.PRISMA_GITHUB) private readonly prismaConnectionService: PrismaClient) {}
 
   /*
    * Handle user created events to sync users to the github-service database
@@ -31,7 +33,7 @@ export class UserConsumer {
     this.logger.log(`User created event received: ${event.payload.userId}`);
 
     try {
-      await this.prisma.user.create({
+      await this.prismaConnectionService.user.create({
         data: {
           userId: event.payload.userId,
           username: event.payload.username,

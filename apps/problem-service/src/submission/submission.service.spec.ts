@@ -1,17 +1,18 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { SubmissionService } from './submission.service';
-import { PrismaService } from '../prisma/prisma.service';
+import { TokenName } from '../shared/token-name.enum.ts';
+import type { PrismaClient } from '@prisma/client/extension';
 import { SubmissionGateway } from './submission.gateway';
 import { DockerExecutorService } from './docker-executor.service';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
-import { CreateSubmissionDto } from './dto/create-submission.dto';
+import { CreateSubmissionDto } from './dto';
 import { Queue } from 'bull';
 import { getQueueToken } from '@nestjs/bullmq';
 import { PaginationQueryDto } from '@gitcode/common';
 
 describe('SubmissionService', () => {
   let service: SubmissionService;
-  let prisma: PrismaService;
+  let prisma: Partial<PrismaClient>;
   let submissionGateway: SubmissionGateway;
   let submissionsQueue: Queue;
 
@@ -77,6 +78,35 @@ describe('SubmissionService', () => {
     sortOrder: 'desc',
   };
 
+  const prismaMock = {
+    problem: {
+      findUnique: jest.fn(),
+      findMany: jest.fn(),
+    },
+    userSubmission: {
+      findUnique: jest.fn(),
+      findFirst: jest.fn(),
+      findMany: jest.fn(),
+      upsert: jest.fn(),
+      delete: jest.fn(),
+      count: jest.fn(),
+    },
+    solutionAttempt: {
+      findUnique: jest.fn(),
+      findMany: jest.fn(),
+      create: jest.fn(),
+      count: jest.fn(),
+    },
+    testResult: {
+      create: jest.fn(),
+      findMany: jest.fn(),
+    },
+    aIFeedback: {
+      create: jest.fn(),
+      findMany: jest.fn().mockResolvedValue([]),
+    },
+  } satisfies Partial<PrismaClient>;
+
   beforeEach(async () => {
     const mockSubmissionsQueue = {
       add: jest.fn(),
@@ -88,36 +118,9 @@ describe('SubmissionService', () => {
       providers: [
         SubmissionService,
         {
-          provide: PrismaService,
-          useValue: {
-            problem: {
-              findUnique: jest.fn(),
-              findMany: jest.fn(),
-            },
-            userSubmission: {
-              findUnique: jest.fn(),
-              findFirst: jest.fn(),
-              findMany: jest.fn(),
-              upsert: jest.fn(),
-              delete: jest.fn(),
-              count: jest.fn(),
-            },
-            solutionAttempt: {
-              findUnique: jest.fn(),
-              findMany: jest.fn(),
-              create: jest.fn(),
-              count: jest.fn(),
-            },
-            testResult: {
-              create: jest.fn(),
-              findMany: jest.fn(),
-            },
-            aIFeedback: {
-              create: jest.fn(),
-              findMany: jest.fn().mockResolvedValue([]),
-            },
+          provide: TokenName.PRISMA_PROBLEM,
+          useValue: prismaMock,
           },
-        },
         {
           provide: SubmissionGateway,
           useValue: {
@@ -140,7 +143,7 @@ describe('SubmissionService', () => {
     }).compile();
 
     service = module.get<SubmissionService>(SubmissionService);
-    prisma = module.get<PrismaService>(PrismaService);
+    prisma = module.get<PrismaClient>(TokenName.PRISMA_PROBLEM);
     submissionGateway = module.get<SubmissionGateway>(SubmissionGateway);
     submissionsQueue = module.get<Queue>(getQueueToken('submissions'));
   });

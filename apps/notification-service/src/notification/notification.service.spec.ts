@@ -5,7 +5,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { RealtimeService } from '../realtime/realtime.service';
 import { EventBus } from '@gitcode/messaging';
 import { ChannelType, NotificationType } from '@prisma/client-notification';
-import { NotificationKind } from './enums/notification-kind.enum';
+import { NotificationKind } from './enums';
 import { PaginationQueryDto } from '@gitcode/common';
 
 describe('NotificationService', () => {

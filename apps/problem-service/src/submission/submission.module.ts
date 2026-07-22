@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
-import { PrismaModule } from '../prisma/prisma.module';
+import { ProblemPrismaModule } from '../prisma/prisma.module';
 import { SubmissionService } from './submission.service';
 import { SubmissionController } from './submission.controller';
 import { SubmissionProcessor } from './submission.processor';
@@ -10,7 +10,7 @@ import { SubmissionConsumer } from './submission.consumer';
 
 @Module({
   imports: [
-    PrismaModule,
+    ProblemPrismaModule,
     BullModule.registerQueue({
       name: 'submissions',
       defaultJobOptions: {

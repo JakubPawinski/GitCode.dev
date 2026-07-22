@@ -1,8 +1,26 @@
+
+import { PrismaClient } from '@prisma/client-auth';
+import { createPrismaConnectionModule} from '@gitcode/prisma-connection'
+import { TokenName } from '../shared/enums/nest-token.enum.ts';
+import { ConfigService } from '@nestjs/config';
 import { Module } from '@nestjs/common';
-import { PrismaService } from './prisma.service';
+
+export const BaseAuthPrismaModule = createPrismaConnectionModule(PrismaClient, TokenName.PRISMA_CONNECTION);
+
 
 @Module({
-  providers: [PrismaService],
-  exports: [PrismaService],
+  imports: [
+    BaseAuthPrismaModule.forRootAsync(
+      {
+        inject: [ConfigService],
+        useFactory: (configService: ConfigService) => ({
+          connectionString: configService.getOrThrow<string>('database.url'),
+        })
+      }
+    )
+  ],
+  exports: [
+    BaseAuthPrismaModule,
+  ]
 })
-export class PrismaModule {}
+export class AuthPrismaModule {}

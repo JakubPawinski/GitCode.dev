@@ -4,12 +4,12 @@ import { PassportModule } from '@nestjs/passport';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ProblemService } from './problem.service';
 import { ProblemController } from './problem.controller';
-import { PrismaModule } from '../prisma/prisma.module';
+import { ProblemPrismaModule } from '../prisma/prisma.module';
 
 @Module({
   imports: [
     ConfigModule,
-    PrismaModule,
+    ProblemPrismaModule,
     PassportModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
