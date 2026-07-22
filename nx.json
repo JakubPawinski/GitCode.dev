@@ -32,8 +32,17 @@
       "exclude": [
         "packages/auth/*",
         "packages/common/*",
-        "packages/messaging/*"
+        "packages/messaging/*",
+        "apps/frontend/*"
       ]
+    },
+    {
+      "plugin": "@nx/next/plugin",
+      "options": {
+        "buildTargetName": "build",
+        "devTargetName": "dev",
+        "startTargetName": "start"
+      }
     },
     {
       "plugin": "@nx/webpack/plugin",

@@ -50,16 +50,11 @@ To run GitCode.dev locally, follow these steps:
    ```
 4. **Set Up Environment Variables**  
    Create a `.env` file in the root directory and configure the necessary environment variables (see `.env.example` for reference).
-5. **Run the Backend**
+5. **Run the Application**
    ```bash
    npm run dev
    ```
-6. **Run the Frontend**
-   ```bash
-   cd frontend
-   npm run dev
-   ```
-7. **Access the Application**  
+6. **Access the Application**  
    Open your browser and navigate to `http://localhost:3000` to start using GitCode.dev.
 
 ---
@@ -78,7 +73,7 @@ GitCode.dev is built using a **microservices architecture**, organized as an **N
 | **Notification Service** | Handles real-time alerts and email notifications.                                | [README](apps/notification-service/README.md) |
 | **Swagger API Docs**     | Auto-generated API documentation for backend services.                           |     [README](apps/swagger-docs/README.md)     |
 | **Shared Libraries**     | Common utilities, types, and interfaces.                                         |         [README](packages/README.md)          |
-| **Frontend**             | Next.js application for user interface and interaction.                          |         [README](frontend/README.md)          |
+| **Frontend**             | Next.js application for user interface and interaction.                          |         [README](apps/frontend/README.md)          |
 
 [↑ Back to Top](#gitcodedev--solve-commit-grow)
 

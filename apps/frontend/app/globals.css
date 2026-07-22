@@ -1,0 +1,255 @@
+@import 'tailwindcss';
+@theme {
+  --color-primary: #8b5cf6;
+  --color-foreground: #f9fafb;
+  --color-background: #111827;
+  --color-accent: #ec4899;
+  --color-success: #22c55e;
+  --color-error: #ef4444;
+}
+
+/**
+ * GitCode design system (gc-*) — new dark/light token set + reusable classes,
+ * scoped to the redesigned surfaces (landing, navbar, login) only. Kept
+ * separate from the legacy tokens above so the rest of the app is unaffected
+ * until it gets its own redesign pass.
+ */
+:root {
+  --bg: #050507;
+  --surface: #0a0a0d;
+  --surface-2: #0e0e13;
+  --border: rgba(255, 255, 255, 0.07);
+  --border-hover: rgba(255, 255, 255, 0.15);
+  --text: #f2f0f5;
+  --text-muted: #9a97a3;
+  --text-dim: #5c5966;
+  --accent: #8b5cf6;
+  --accent-2: #6d28d9;
+  --accent-soft: rgba(139, 92, 246, 0.14);
+  --success: #3ddc97;
+  --focus: #c9a6ff;
+}
+
+[data-theme='light'] {
+  --bg: #faf9fc;
+  --surface: #ffffff;
+  --surface-2: #f3f1f8;
+  --border: rgba(20, 10, 40, 0.09);
+  --border-hover: rgba(20, 10, 40, 0.18);
+  --text: #1c1526;
+  --text-muted: #6b6478;
+  --text-dim: #9b95a8;
+  --accent: #7c3aed;
+  --accent-2: #5b21b6;
+  --accent-soft: rgba(124, 58, 237, 0.1);
+  --success: #0f9d63;
+  --focus: #7c3aed;
+}
+
+@theme {
+  --color-gc-bg: var(--bg);
+  --color-gc-surface: var(--surface);
+  --color-gc-surface-2: var(--surface-2);
+  --color-gc-border: var(--border);
+  --color-gc-border-hover: var(--border-hover);
+  --color-gc-text: var(--text);
+  --color-gc-text-muted: var(--text-muted);
+  --color-gc-text-dim: var(--text-dim);
+  --color-gc-accent: var(--accent);
+  --color-gc-accent-2: var(--accent-2);
+  --color-gc-accent-soft: var(--accent-soft);
+  --color-gc-success: var(--success);
+  --color-gc-focus: var(--focus);
+  --font-gc-sans: var(--font-inter);
+  --font-gc-mono: var(--font-jetbrains-mono);
+}
+
+@keyframes gc-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+.gc-pulse {
+  animation: gc-pulse 3.5s ease-in-out infinite;
+}
+
+.gc-navlink {
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 10px 2px;
+  border-bottom: 2px solid transparent;
+  transition:
+    color 0.2s ease,
+    border-color 0.2s ease;
+}
+.gc-navlink.active {
+  color: var(--text);
+  border-bottom-color: var(--accent);
+}
+.gc-navlink:hover {
+  color: var(--text);
+}
+
+.gc-glass {
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    0 4px 18px -6px rgba(0, 0, 0, 0.5);
+  transition:
+    transform 0.18s cubic-bezier(0.2, 0.8, 0.2, 1),
+    background 0.18s ease,
+    box-shadow 0.18s ease;
+}
+[data-theme='light'] .gc-glass {
+  background: rgba(20, 10, 40, 0.03);
+  border: 1px solid rgba(20, 10, 40, 0.12);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    0 2px 10px -4px rgba(20, 10, 40, 0.12);
+}
+.gc-glass:hover {
+  background: rgba(255, 255, 255, 0.11);
+  transform: translateY(-1px);
+}
+[data-theme='light'] .gc-glass:hover {
+  background: rgba(20, 10, 40, 0.06);
+}
+.gc-glass:active {
+  transform: translateY(0);
+}
+
+.gc-glass-accent {
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  background: linear-gradient(
+    135deg,
+    rgba(139, 92, 246, 0.55),
+    rgba(109, 40, 217, 0.5)
+  );
+  border: 1px solid rgba(196, 167, 255, 0.4);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.25),
+    0 6px 20px -6px rgba(139, 92, 246, 0.55);
+  transition:
+    transform 0.18s cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 0.18s ease;
+}
+[data-theme='light'] .gc-glass-accent {
+  background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+  border: 1px solid rgba(124, 58, 237, 0.5);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.25),
+    0 6px 20px -6px rgba(124, 58, 237, 0.45);
+}
+.gc-glass-accent:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    0 8px 26px -6px rgba(139, 92, 246, 0.7);
+}
+.gc-glass-accent:active {
+  transform: translateY(0);
+}
+
+.gc-feature-card {
+  transition:
+    border-color 0.25s ease,
+    transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.gc-feature-card:hover {
+  border-color: var(--border-hover);
+  transform: translateY(-3px);
+}
+
+.gc-yearbtn {
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.gc-dot-ring {
+  animation: gc-pulse 3.5s ease-in-out infinite;
+}
+
+.gc-corner {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-color: var(--accent);
+  opacity: 0.5;
+}
+
+@media (max-width: 1024px) {
+  .gc-hero-section {
+    min-height: auto !important;
+    padding-top: 140px !important;
+    padding-bottom: 60px !important;
+  }
+  .gc-hero-grid {
+    grid-template-columns: 1fr !important;
+    gap: 40px !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gc-pulse,
+  .gc-glass,
+  .gc-glass-accent,
+  .gc-feature-card {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 14px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(139, 92, 246, 0.05);
+  border-radius: 10px;
+  margin: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: linear-gradient(
+    180deg,
+    rgba(139, 92, 246, 0.6),
+    rgba(236, 72, 153, 0.6)
+  );
+  border-radius: 10px;
+  border: 2px solid rgba(17, 24, 39, 0.3);
+  transition: all 0.3s ease;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(
+    180deg,
+    rgba(139, 92, 246, 0.9),
+    rgba(236, 72, 153, 0.9)
+  );
+  border-color: rgba(139, 92, 246, 0.3);
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:active {
+  background: linear-gradient(
+    180deg,
+    rgba(139, 92, 246, 1),
+    rgba(236, 72, 153, 1)
+  );
+}
+
+/* Firefox */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(139, 92, 246, 0.6) rgba(139, 92, 246, 0.05);
+}

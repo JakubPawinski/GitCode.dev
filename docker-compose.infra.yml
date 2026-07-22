@@ -1,27 +1,6 @@
 version: '3.8'
 
 services:
-  # Remove after frontend migration to Nx
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-      target: development
-    container_name: gitcode-frontend-dev
-    env_file:
-      - .env
-    environment:
-      - NODE_ENV=development
-      - PORT=${FRONTEND_PORT}
-      - API_GATEWAY_URL=http://api-gateway:${API_GATEWAY_PORT}
-    ports:
-      - '${FRONTEND_PORT}:${FRONTEND_PORT}'
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
-    networks:
-      - gitcodedev-network
-    restart: unless-stopped
   api-gateway:
     image: traefik:v3.5
     container_name: api-gateway-dev
@@ -49,7 +28,7 @@ services:
     ports:
       - '${AUTH_DB_PORT}:5432'
     volumes:
-      - auth-db-data-dev:/var/lib/postgresql/data
+      - auth-db-data-dev:/var/lib/postgresql
     networks:
       - gitcodedev-network
     healthcheck:
@@ -115,7 +94,7 @@ services:
       - POSTGRES_USER=${KEYCLOAK_DB_USER}
       - POSTGRES_PASSWORD=${KEYCLOAK_DB_PASSWORD}
     volumes:
-      - keycloak-db-data-dev:/var/lib/postgresql/data
+      - keycloak-db-data-dev:/var/lib/postgresql
     networks:
       - gitcodedev-network
     healthcheck:
@@ -141,7 +120,7 @@ services:
     ports:
       - '${PROBLEM_DB_PORT}:5432'
     volumes:
-      - problem-db-data-dev:/var/lib/postgresql/data
+      - problem-db-data-dev:/var/lib/postgresql
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U ${PROBLEM_DB_USER}']
       interval: 10s
@@ -162,7 +141,7 @@ services:
     ports:
       - '${ACHIEVEMENT_DB_PORT}:5432'
     volumes:
-      - achievement-db-data-dev:/var/lib/postgresql/data
+      - achievement-db-data-dev:/var/lib/postgresql
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U ${ACHIEVEMENT_DB_USER}']
       interval: 10s
@@ -230,7 +209,7 @@ services:
     ports:
       - '${NOTIFICATION_DB_PORT}:5432'
     volumes:
-      - notification-db-data-dev:/var/lib/postgresql/data
+      - notification-db-data-dev:/var/lib/postgresql
     networks:
       - gitcodedev-network
     healthcheck:
@@ -256,7 +235,7 @@ services:
     ports:
       - '${AI_DB_PORT}:5432'
     volumes:
-      - ai-db-data-dev:/var/lib/postgresql/data
+      - ai-db-data-dev:/var/lib/postgresql
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U ${AI_DB_USER}']
       interval: 10s
@@ -278,7 +257,7 @@ services:
     ports:
       - '${GITHUB_DB_PORT}:5432'
     volumes:
-      - github_postgres_data:/var/lib/postgresql/data
+      - github_postgres_data:/var/lib/postgresql
     networks:
       - gitcodedev-network
     healthcheck:

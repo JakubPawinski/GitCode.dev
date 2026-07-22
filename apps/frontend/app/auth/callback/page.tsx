@@ -1,6 +1,6 @@
 'use client'
 import { useSearchParams } from 'next/navigation'
-import { useEffect, Suspense } from 'react'
+import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Loader } from '@/components/loading/Loader'
 import { UserProps } from '@/components/user/User'
@@ -22,5 +22,9 @@ export default function AuthCallback() {
     }
   }, [success, router])
 
-  return <Loader />
+  return (
+    <div className="bg-gc-bg flex h-screen w-full items-center justify-center">
+      <Loader />
+    </div>
+  )
 }

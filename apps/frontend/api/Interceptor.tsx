@@ -7,16 +7,31 @@ import { Loader } from '@/components/loading/Loader'
 import { useAuth } from '@/contexts/auth/AuthContext'
 import { usePathname, useRouter } from 'next/navigation'
 
+// Pages a guest can view without a session. The silent token refresh still
+// runs on them, so a returning user gets logged in automatically — but a
+// failed refresh must not bounce a guest to /login.
+const PUBLIC_ROUTES = ['/', '/trending']
+
 export const Interceptor = ({ children }: { children: React.ReactNode }) => {
   const pathname = usePathname()
   const isLoginPage = pathname === '/login'
 
   if (isLoginPage) return children
 
-  return <InterceptorInner>{children}</InterceptorInner>
+  return (
+    <InterceptorInner isPublic={PUBLIC_ROUTES.includes(pathname)}>
+      {children}
+    </InterceptorInner>
+  )
 }
 
-const InterceptorInner = ({ children }: { children: React.ReactNode }) => {
+const InterceptorInner = ({
+  children,
+  isPublic,
+}: {
+  children: React.ReactNode
+  isPublic: boolean
+}) => {
   const router = useRouter()
 
   const { data: authData, setData } = useAuth()
@@ -35,10 +50,10 @@ const InterceptorInner = ({ children }: { children: React.ReactNode }) => {
   }, [data, authData])
 
   useEffect(() => {
-    if (error) {
+    if (error && !isPublic) {
       router.push('/login')
     }
-  }, [router, error])
+  }, [router, error, isPublic])
 
   useEffect(() => {
     const token = data?.accessToken
@@ -75,6 +90,9 @@ const InterceptorInner = ({ children }: { children: React.ReactNode }) => {
   }, [data?.accessToken])
 
   if (!authData?.accessToken) {
+    // Guests may view public pages while the silent refresh resolves (or fails)
+    // in the background; protected pages keep the loader until a token exists.
+    if (isPublic) return children
     return <Loader />
   }
   return children
