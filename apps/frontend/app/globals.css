@@ -9,7 +9,7 @@
 }
 
 /**
- * GitCode design system (gc-*) — new dark/light token set + reusable classes,
+ * GitCode design system (gc-*): dark/light token set + reusable classes,
  * scoped to the redesigned surfaces (landing, navbar, login) only. Kept
  * separate from the legacy tokens above so the rest of the app is unaffected
  * until it gets its own redesign pass.
@@ -22,7 +22,8 @@
   --border-hover: rgba(255, 255, 255, 0.15);
   --text: #f2f0f5;
   --text-muted: #9a97a3;
-  --text-dim: #5c5966;
+  /* Lifted from #5c5966 so small dim text clears WCAG AA (4.5:1) on --bg. */
+  --text-dim: #7d7a88;
   --accent: #8b5cf6;
   --accent-2: #6d28d9;
   --accent-soft: rgba(139, 92, 246, 0.14);
@@ -38,7 +39,8 @@
   --border-hover: rgba(20, 10, 40, 0.18);
   --text: #1c1526;
   --text-muted: #6b6478;
-  --text-dim: #9b95a8;
+  /* Darkened from #9b95a8 (2.9:1, failed AA) to clear 4.5:1 on --bg. */
+  --text-dim: #6f6a7d;
   --accent: #7c3aed;
   --accent-2: #5b21b6;
   --accent-soft: rgba(124, 58, 237, 0.1);
@@ -188,16 +190,141 @@
   opacity: 0.5;
 }
 
+<<<<<<< Updated upstream
 @media (max-width: 1024px) {
   .gc-hero-section {
     min-height: auto !important;
     padding-top: 140px !important;
     padding-bottom: 60px !important;
+=======
+@keyframes gc-dropdown-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.97);
   }
-  .gc-hero-grid {
-    grid-template-columns: 1fr !important;
-    gap: 40px !important;
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
+}
+.gc-dropdown-enter {
+  transform-origin: top right;
+  animation: gc-dropdown-in 0.16s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* Scroll reveal. Driven by IntersectionObserver (see hooks/use-reveal.ts),
+   never a scroll listener. Purpose: sequence content as it enters, so each
+   section reads as one deliberate beat instead of arriving all at once. */
+.gc-reveal {
+  opacity: 0;
+  transform: translateY(18px);
+  transition:
+    opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+  transition-delay: calc(var(--gc-delay, 0) * 1ms);
+}
+.gc-reveal.is-in {
+  opacity: 1;
+  transform: none;
+}
+
+/* Ledger cells light up as the reader advances through the beats, so the
+   graph fills like a year of work rather than decorating the page. */
+.gc-cell {
+  background: var(--surface-2);
+  transition:
+    background-color 0.55s cubic-bezier(0.2, 0.8, 0.2, 1),
+    transform 0.55s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition-delay: calc(var(--gc-col, 0) * 6ms);
+}
+.gc-cell.is-lit {
+  background: var(--gc-fill);
+}
+
+/* The hero's second line demonstrates its own meaning: the practice is there,
+   then it is not. One motivated loop, killed under reduced motion. */
+@keyframes gc-vanish {
+  0%,
+  55% {
+    opacity: 1;
+    filter: blur(0);
+>>>>>>> Stashed changes
+  }
+  66% {
+    opacity: 0.45;
+    filter: blur(3px);
+  }
+  74% {
+    opacity: 0.78;
+    filter: blur(1px);
+  }
+  82% {
+    opacity: 0.36;
+    filter: blur(5px);
+  }
+  92%,
+  100% {
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+.gc-vanish {
+  animation: gc-vanish 7s ease-in-out 1.6s infinite;
+}
+
+/* One continuous sweep across the whole stepper, running from load. The step
+   labels light up as the fill reaches each quarter, so the bar and the
+   highlight read as the same motion rather than two separate ones. */
+@keyframes gc-rail-fill {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+.gc-rail-fill {
+  transform-origin: left;
+  animation: gc-rail-fill var(--gc-total, 22s) linear infinite;
+}
+
+/* Cursor-tracked highlight. --mx/--my are written straight to the node on
+   pointermove, never through React state. */
+.gc-spot::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  background: radial-gradient(
+    340px circle at var(--mx, 50%) var(--my, 50%),
+    color-mix(in srgb, var(--accent) 14%, transparent),
+    transparent 70%
+  );
+}
+.gc-spot:hover::after {
+  opacity: 1;
+}
+
+.gc-dotgrid {
+  background-image: radial-gradient(var(--border-hover) 1px, transparent 1px);
+  background-size: 14px 14px;
+}
+
+.gc-rail-node::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  background: var(--accent);
+  opacity: 0.18;
+  transform: scale(1);
+  transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.gc-rail-step:hover .gc-rail-node::before {
+  transform: scale(2.1);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -207,6 +334,24 @@
   .gc-feature-card {
     animation: none !important;
     transition: none !important;
+  }
+  .gc-reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  .gc-cell {
+    transition: none;
+  }
+  .gc-vanish {
+    animation: none;
+  }
+  .gc-rail-fill {
+    animation: none;
+    transform: scaleX(1);
+  }
+  .gc-spot::after {
+    transition: none;
   }
 }
 
