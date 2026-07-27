@@ -1,58 +1,22 @@
 'use client'
-import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/auth/AuthContext'
 import { useTheme } from '@/contexts/theme/ThemeContext'
+<<<<<<< Updated upstream
+=======
 import { getLoginRedirect } from '@/hooks/auth/use-get-login-redirect'
+import { useReveal } from '@/hooks/use-reveal'
+>>>>>>> Stashed changes
 import { FaultyTerminal } from '@/components/effects/FaultyTerminal'
-
-const YEARS = [2026, 2025, 2024] as const
-const MONTH_LABELS = [
-  'Jan',
-  'Feb',
-  'Mar',
-  'Apr',
-  'May',
-  'Jun',
-  'Jul',
-  'Aug',
-  'Sep',
-  'Oct',
-  'Nov',
-  'Dec',
-]
-const COMMIT_COUNTS: Record<number, number> = {
-  2026: 312,
-  2025: 481,
-  2024: 226,
-}
-const ACTIVITY_COLORS = [
-  'rgba(139,92,246,0.08)',
-  'rgba(139,92,246,0.22)',
-  'rgba(139,92,246,0.42)',
-  'rgba(139,92,246,0.65)',
-  '#8b5cf6',
-]
-
-type ActivityCell = { color: string }
-
-function generateActivityCells(): ActivityCell[] {
-  return Array.from({ length: 371 }, () => ({
-    color: ACTIVITY_COLORS[Math.floor(Math.random() * ACTIVITY_COLORS.length)],
-  }))
-}
 
 export const Hero = () => {
   const { data } = useAuth()
   const { theme } = useTheme()
-  const [year, setYear] = useState<(typeof YEARS)[number]>(2026)
-  // Cell colors are randomized decoration — generated client-side after mount
-  // so the server-rendered markup and the first client render always match.
-  const [cellsByYear, setCellsByYear] = useState<Record<
-    number,
-    ActivityCell[]
-  > | null>(null)
+  const { ref, shown } = useReveal<HTMLDivElement>()
+  const isDark = theme === 'dark'
+  const inView = shown ? 'is-in' : ''
 
+<<<<<<< Updated upstream
   useEffect(() => {
     setCellsByYear({
       2026: generateActivityCells(),
@@ -62,29 +26,34 @@ export const Hero = () => {
   }, [])
 
   const cells = useMemo(() => cellsByYear?.[year] ?? [], [cellsByYear, year])
+  const primaryCtaHref = data ? '/problems' : '/login'
+=======
+  const ctaClass =
+    'gc-glass-accent inline-flex h-11 items-center rounded-full px-6 text-[14px] font-bold text-white'
+>>>>>>> Stashed changes
 
   return (
     <section
       aria-label="Introduction"
-      className="gc-hero-section relative box-border flex min-h-screen items-center overflow-hidden px-6 py-10 sm:px-10"
+      className="relative flex min-h-[calc(100dvh-3.5rem)] items-center overflow-hidden px-6 pt-16 pb-20 sm:px-10 lg:pt-20"
     >
       <div
         aria-hidden="true"
         className="absolute inset-0"
-        style={{ opacity: theme === 'dark' ? 0.5 : 0.35 }}
+        style={{ opacity: isDark ? 0.45 : 0.3 }}
       >
         <FaultyTerminal
-          tint={theme === 'dark' ? '#8b5cf6' : '#7c3aed'}
-          scale={2.4}
+          tint={isDark ? '#8b5cf6' : '#7c3aed'}
+          scale={2.6}
           digitSize={1.1}
           scanlineIntensity={0.4}
-          glitchAmount={0.6}
-          flickerAmount={0.6}
-          noiseAmp={0.8}
+          glitchAmount={0.7}
+          flickerAmount={0.7}
+          noiseAmp={0.85}
           curvature={0}
           mouseReact
-          mouseStrength={0.3}
-          brightness={theme === 'dark' ? 0.8 : 0.7}
+          mouseStrength={0.35}
+          brightness={isDark ? 0.8 : 0.7}
           pageLoadAnimation
         />
       </div>
@@ -93,19 +62,12 @@ export const Hero = () => {
         className="absolute inset-0"
         style={{
           background: `linear-gradient(to bottom, ${
-            theme === 'dark' ? 'rgba(5,5,7,0.2)' : 'rgba(250,249,252,0.3)'
-          }, var(--bg) 92%)`,
-        }}
-      />
-      <div
-        aria-hidden="true"
-        className="absolute top-15 right-[10%] h-[520px] w-[520px] rounded-full blur-[30px]"
-        style={{
-          background:
-            'radial-gradient(circle, var(--accent-soft), transparent 70%)',
+            isDark ? 'rgba(5,5,7,0.3)' : 'rgba(250,249,252,0.42)'
+          }, var(--bg) 95%)`,
         }}
       />
 
+<<<<<<< Updated upstream
       <div className="gc-hero-grid relative mx-auto grid w-full max-w-6xl [grid-template-columns:0.85fr_1.15fr] items-center gap-9">
         <div>
           <div className="text-gc-text-muted font-gc-mono border-gc-border mb-5 inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-[11.5px] font-bold tracking-[0.08em] uppercase">
@@ -125,22 +87,12 @@ export const Hero = () => {
             to your GitHub repository.
           </p>
           <div className="mt-7 flex flex-wrap gap-3.5">
-            {data ? (
-              <Link
-                href="/problems"
-                className="gc-glass-accent inline-flex h-12 items-center rounded-full px-7 text-[14.5px] font-bold text-white"
-              >
-                Start Your Journey
-              </Link>
-            ) : (
-              <button
-                type="button"
-                onClick={getLoginRedirect}
-                className="gc-glass-accent inline-flex h-12 items-center rounded-full px-7 text-[14.5px] font-bold text-white"
-              >
-                Start Your Journey
-              </button>
-            )}
+            <Link
+              href={primaryCtaHref}
+              className="gc-glass-accent inline-flex h-12 items-center rounded-full px-7 text-[14.5px] font-bold text-white"
+            >
+              Start Your Journey
+            </Link>
             <a
               href="#features"
               className="gc-glass text-gc-text inline-flex h-12 items-center rounded-full px-7 text-[14.5px] font-semibold"
@@ -149,188 +101,50 @@ export const Hero = () => {
             </a>
           </div>
         </div>
+=======
+      <div ref={ref} className="relative mx-auto w-full max-w-[1400px]">
+        <h1
+          className={`gc-reveal ${inView} text-gc-text m-0 max-w-[18ch] text-[clamp(2.1rem,4.4vw,3.5rem)] leading-[1.02] font-extrabold tracking-[-0.035em]`}
+        >
+          You solved it.
+          <br />
+          <span className="text-gc-accent gc-vanish inline-block pb-2">
+            Then it was gone.
+          </span>
+        </h1>
+
+        <p
+          className={`gc-reveal ${inView} text-gc-text-muted mt-6 max-w-[50ch] text-[15.5px] leading-[1.65] sm:text-[16.5px]`}
+          style={{ '--gc-delay': 140 } as React.CSSProperties}
+        >
+          Practice normally leaves nothing behind. GitCode judges your solution,
+          reviews how you got there, and commits it to your own GitHub.
+        </p>
+>>>>>>> Stashed changes
 
         <div
-          role="img"
-          aria-label="Code editor showing a JavaScript twoSum solution being committed and pushed to GitHub"
-          className="border-gc-border bg-gc-surface relative overflow-hidden rounded-2xl border"
-          style={{ boxShadow: '0 40px 100px -30px rgba(139,92,246,0.4)' }}
+          className={`gc-reveal ${inView} mt-8 flex flex-wrap items-center gap-3`}
+          style={{ '--gc-delay': 260 } as React.CSSProperties}
         >
-          <span
-            className="gc-corner"
-            aria-hidden="true"
-            style={{
-              top: '-1px',
-              left: '-1px',
-              borderTop: '2px solid',
-              borderLeft: '2px solid',
-              borderRadius: '14px 0 0 0',
-            }}
-          />
-          <span
-            className="gc-corner"
-            aria-hidden="true"
-            style={{
-              bottom: '-1px',
-              right: '-1px',
-              borderBottom: '2px solid',
-              borderRight: '2px solid',
-              borderRadius: '0 0 14px 0',
-            }}
-          />
-          <div className="border-gc-border flex items-center justify-between border-b px-4 py-3">
-            <div className="flex gap-1.5">
-              <span
-                className="h-2.5 w-2.5 rounded-full"
-                style={{ background: '#ff6169' }}
-              />
-              <span
-                className="h-2.5 w-2.5 rounded-full"
-                style={{ background: '#ffbd44' }}
-              />
-              <span
-                className="h-2.5 w-2.5 rounded-full"
-                style={{ background: '#00ca4e' }}
-              />
-            </div>
-            <span className="text-gc-text-dim font-gc-mono text-[11px]">
-              solution.js
-            </span>
-          </div>
-          <div className="font-gc-mono px-5.5 pt-5.5 pb-4.5 text-[12.5px] leading-[1.85]">
-            <div>
-              <span className="text-gc-focus">function</span> twoSum(nums,
-              target) {'{'}
-            </div>
-            <div className="pl-4.5">
-              <span className="text-gc-focus">const</span> map ={' '}
-              <span className="text-gc-focus">new</span> Map();
-            </div>
-            <div className="pl-4.5">
-              <span className="text-gc-focus">for</span> (
-              <span className="text-gc-focus">let</span> i = 0; i &lt;
-              nums.length; i++) {'{'}
-            </div>
-            <div className="pl-9">
-              <span className="text-gc-focus">const</span> complement = target -
-              nums[i];
-            </div>
-            <div className="pl-9">
-              <span className="text-gc-focus">if</span> (map.has(complement)){' '}
-              {'{'}
-            </div>
-            <div className="pl-[54px]">
-              <span className="text-gc-focus">return</span>{' '}
-              [map.get(complement), i];
-            </div>
-            <div className="pl-9">{'}'}</div>
-            <div className="pl-4.5">map.set(nums[i], i);</div>
-            <div className="pl-4.5">{'}'}</div>
-            <div>{'}'}</div>
-            <div className="text-gc-text-dim mt-2.5">
-              // AI: Efficient O(n) solution achieved.
-            </div>
-          </div>
-          <div className="border-gc-border bg-gc-bg border-t">
-            <div className="flex items-center gap-1.5 px-5.5 pt-2.5">
-              <span className="bg-gc-success h-1.5 w-1.5 rounded-full" />
-              <span className="text-gc-text-dim font-gc-mono text-[9px] tracking-[0.08em] uppercase">
-                Terminal
-              </span>
-            </div>
-            <div className="font-gc-mono px-5.5 pt-2 pb-4 text-xs leading-[1.8]">
-              <div>
-                <span className="text-gc-accent">❯</span>{' '}
-                <span className="text-gc-text-muted">
-                  git commit -m &quot;feat: implement optimized twoSum&quot;
-                </span>
-              </div>
-              <div>
-                <span className="text-gc-accent">❯</span>{' '}
-                <span className="text-gc-text-muted">git push origin main</span>
-              </div>
-              <div className="text-gc-success">
-                ✓ synced to github.com/you/algorithms
-              </div>
-            </div>
-          </div>
-          <div className="border-gc-border border-t px-5 pt-3 pb-3.5">
-            <div className="mb-2 flex items-center justify-between">
-              <span className="text-gc-text-dim font-gc-mono text-[9px] tracking-[0.08em] uppercase">
-                Activity
-              </span>
-              <div className="flex items-center gap-2.5">
-                <span className="text-gc-text-dim font-gc-mono text-[9px]">
-                  {COMMIT_COUNTS[year]} commits
-                </span>
-                <div
-                  role="tablist"
-                  aria-label="Activity year"
-                  className="flex gap-0.5"
-                >
-                  {YEARS.map((y) => (
-                    <button
-                      key={y}
-                      role="tab"
-                      aria-selected={year === y}
-                      onClick={() => setYear(y)}
-                      className={`gc-yearbtn font-gc-mono rounded px-2 py-1 text-[9px] font-bold ${
-                        year === y
-                          ? 'bg-gc-accent text-white'
-                          : 'text-gc-text-dim bg-transparent'
-                      }`}
-                    >
-                      {y}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-            <div>
-              <div
-                aria-hidden="true"
-                className="font-gc-mono text-gc-text-dim mb-1 flex gap-[3px] pl-4 text-[8px]"
-              >
-                {MONTH_LABELS.map((m) => (
-                  <span key={m} className="flex-none">
-                    {m}
-                  </span>
-                ))}
-              </div>
-              <div className="flex gap-[3px]">
-                <div
-                  aria-hidden="true"
-                  className="font-gc-mono text-gc-text-dim flex w-[13px] flex-none flex-col justify-between gap-0.5 text-[7px]"
-                >
-                  <span>Mon</span>
-                  <span>Wed</span>
-                  <span>Fri</span>
-                </div>
-                <div
-                  aria-hidden="true"
-                  className="grid gap-0.5"
-                  style={{
-                    gridTemplateRows: 'repeat(7, 1fr)',
-                    gridAutoFlow: 'column',
-                    gridAutoColumns: '9px',
-                  }}
-                >
-                  {(cells.length ? cells : Array.from({ length: 371 })).map(
-                    (cell, i) => (
-                      <span
-                        key={i}
-                        className="h-[9px] w-[9px] rounded-sm"
-                        style={{
-                          background:
-                            (cell as ActivityCell)?.color ?? 'var(--surface-2)',
-                        }}
-                      />
-                    )
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
+          {data ? (
+            <Link href="/problems" className={ctaClass}>
+              Start solving
+            </Link>
+          ) : (
+            <button
+              type="button"
+              onClick={getLoginRedirect}
+              className={ctaClass}
+            >
+              Start solving
+            </button>
+          )}
+          <a
+            href="#ledger-heading"
+            className="gc-glass text-gc-text inline-flex h-11 items-center rounded-full px-6 text-[14px] font-semibold"
+          >
+            See what it leaves behind
+          </a>
         </div>
       </div>
     </section>
