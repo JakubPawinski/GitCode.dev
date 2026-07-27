@@ -33,7 +33,7 @@
         "packages/auth/*",
         "packages/common/*",
         "packages/messaging/*",
-        "apps/frontend/*"
+        "apps/frontend/*",
         "packages/prisma-connection/*"
       ]
     },

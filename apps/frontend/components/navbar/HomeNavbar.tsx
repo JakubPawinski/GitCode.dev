@@ -2,6 +2,7 @@
 import Link from 'next/link'
 import { usePathname, useParams } from 'next/navigation'
 import { useAuth } from '@/contexts/auth/AuthContext'
+import { getLoginRedirect } from '@/hooks/auth/use-get-login-redirect'
 import { Logo } from '@/components/branding/Logo'
 import { ThemeToggle } from '@/components/theme/ThemeToggle'
 import { NotificationBell } from '../notification/NotificationBell'
@@ -52,12 +53,13 @@ export const HomeNavbar = () => {
             <UserMenu user={data.user} />
           </>
         ) : (
-          <Link
-            href="/login"
+          <button
+            type="button"
+            onClick={getLoginRedirect}
             className="gc-glass-accent inline-flex h-9 items-center rounded-full px-5 text-sm font-bold text-white"
           >
             Sign in
-          </Link>
+          </button>
         )}
       </div>
     </nav>

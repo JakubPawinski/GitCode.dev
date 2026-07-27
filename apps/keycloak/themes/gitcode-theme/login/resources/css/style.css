@@ -1,31 +1,36 @@
 /* ========================================================================
-   1. CONFIGURACJA & VARIABLES
+   1. CONFIGURACJA & VARIABLES (gitcode.dev gc-* design system, dark)
    ======================================================================== */
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800;900&display=swap');
+
 :root {
-    --primary-rgb: 139, 92, 246;
-    --accent-rgb: 236, 72, 153;
-    --background-rgb: 17, 24, 39;
-    --foreground-rgb: 249, 250, 251;
+    --bg: #050507;
+    --surface: #0a0a0d;
+    --surface-2: #0e0e13;
+    --border: rgba(255, 255, 255, 0.07);
+    --border-hover: rgba(255, 255, 255, 0.15);
+    --text: #f2f0f5;
+    --text-muted: #9a97a3;
+    --text-dim: #5c5966;
+    --accent: #8b5cf6;
+    --accent-2: #6d28d9;
+    --accent-soft: rgba(139, 92, 246, 0.14);
+    --success: #3ddc97;
     --error-color: #ef4444;
+    --focus: #c9a6ff;
     --font-stack: 'Inter', system-ui, -apple-system, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, monospace;
 }
 
 /* ========================================================================
    2. GLOBAL LAYOUT & BACKGROUND
    ======================================================================== */
-body, 
+body,
 .login-pf-page {
-    background-color: rgb(var(--background-rgb)) !important;
-    background-image: linear-gradient(
-        135deg, 
-        rgb(var(--background-rgb)) 0%, 
-        rgba(var(--primary-rgb), 0.15) 50%, 
-        rgba(var(--accent-rgb), 0.15) 100%
-    ) !important;
-    background-attachment: fixed;
-    background-size: cover;
+    background-color: var(--bg) !important;
+    background-image: none !important;
     font-family: var(--font-stack) !important;
-    color: rgb(var(--foreground-rgb)) !important;
+    color: var(--text) !important;
     min-height: 100vh;
     display: flex !important;
     align-items: center !important;
@@ -33,10 +38,35 @@ body,
     margin: 0 !important;
     padding: 0 !important;
     overflow-x: hidden;
+    position: relative;
+}
+
+/* Animated terminal background canvas — injected by js/background.js.
+   Falls back to just this static glow when prefers-reduced-motion is set,
+   since the script bails out early in that case. */
+#gc-bg-canvas {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+}
+
+body::before {
+    content: '';
+    position: fixed;
+    top: 10%;
+    right: 8%;
+    width: 560px;
+    height: 560px;
+    border-radius: 50%;
+    background: radial-gradient(circle, var(--accent-soft), transparent 70%);
+    filter: blur(40px);
+    z-index: 1;
+    pointer-events: none;
 }
 
 #kc-header, .kc-logo-text {
-    display: none !important; 
+    display: none !important;
 }
 
 .login-pf-page .card-pf {
@@ -55,16 +85,45 @@ body,
     position: relative;
     box-sizing: border-box !important;
     width: 100% !important;
-    max-width: 550px !important;
-    background-color: rgba(var(--background-rgb), 0.4) !important;
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(var(--primary-rgb), 0.3) !important;
-    border-radius: 16px !important;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
-    padding: 2.5rem 3rem !important;
+    max-width: 440px !important;
+    background-color: rgba(10, 10, 13, 0.55) !important;
+    backdrop-filter: blur(20px) saturate(160%);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    border: 1px solid var(--border-hover) !important;
+    border-radius: 18px !important;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.06),
+        0 30px 70px -20px rgba(0, 0, 0, 0.6) !important;
+    padding: 2.5rem 2.75rem !important;
     margin: auto !important;
     z-index: 10;
+}
+
+#kc-content::before,
+#kc-content::after {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    border-color: var(--accent);
+    opacity: 0.55;
+    pointer-events: none;
+}
+
+#kc-content::before {
+    top: -1px;
+    left: -1px;
+    border-top: 2px solid;
+    border-left: 2px solid;
+    border-radius: 18px 0 0 0;
+}
+
+#kc-content::after {
+    bottom: -1px;
+    right: -1px;
+    border-bottom: 2px solid;
+    border-right: 2px solid;
+    border-radius: 0 0 18px 0;
 }
 
 #kc-content-wrapper {
@@ -77,24 +136,25 @@ body,
    4. TYPOGRAPHY & LOGO
    ======================================================================== */
 #kc-page-title {
-    font-size: 1.75rem !important;
-    font-weight: 700 !important;
+    font-size: 1.5rem !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.01em !important;
     text-align: center !important;
     margin-bottom: 0.5rem !important;
-    color: rgb(var(--foreground-rgb)) !important;
+    color: var(--text) !important;
     display: block !important;
     text-transform: none !important;
     position: relative;
 }
 
 #kc-page-title::before {
-    content: "" !important;
+    content: '' !important;
     display: block !important;
-    width: 80px !important;
-    height: 80px !important;
-    margin: 0 auto 0.5rem auto !important;
-    background-image: url('../img/logo.png') !important; 
-    background-size: contain !important; 
+    width: 56px !important;
+    height: 56px !important;
+    margin: 0 auto 1.1rem auto !important;
+    background-image: url('../img/logo.svg') !important;
+    background-size: contain !important;
     background-position: center !important;
     background-repeat: no-repeat !important;
     background-color: transparent !important;
@@ -104,7 +164,7 @@ body,
 }
 
 #kc-header-wrapper {
-    display: none !important; 
+    display: none !important;
 }
 
 /* ========================================================================
@@ -115,37 +175,42 @@ div.form-group, .pf-c-form__group {
 }
 
 label {
-    color: rgba(var(--foreground-rgb), 0.8) !important;
-    font-size: 0.875rem !important;
+    color: var(--text-muted) !important;
+    font-size: 0.8125rem !important;
+    font-weight: 600 !important;
     margin-bottom: 8px !important;
     display: block !important;
-    font-weight: 500 !important;
 }
 
 .pf-c-form-control,
 input.form-control,
-input[type="text"], 
+input[type="text"],
 input[type="password"] {
-    background-color: rgba(0, 0, 0, 0.3) !important;
-    border: 1px solid rgba(var(--primary-rgb), 0.2) !important;
-    color: rgb(var(--foreground-rgb)) !important;
-    border-radius: 8px !important;
-    height: 48px !important;
+    background-color: rgba(255, 255, 255, 0.04) !important;
+    border: 1px solid var(--border) !important;
+    color: var(--text) !important;
+    border-radius: 10px !important;
+    height: 46px !important;
     padding: 0 16px !important;
-    font-size: 1rem !important;
+    font-size: 0.9375rem !important;
     outline: none !important;
     width: 100% !important;
     box-sizing: border-box !important;
     transition: all 0.2s ease-in-out !important;
 }
 
+.pf-c-form-control::placeholder,
+input.form-control::placeholder {
+    color: var(--text-dim) !important;
+}
+
 .pf-c-form-control:focus,
 input.form-control:focus,
 input[type="text"]:focus,
 input[type="password"]:focus {
-    border-color: rgb(var(--primary-rgb)) !important;
-    box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.3) !important;
-    background-color: rgba(0, 0, 0, 0.5) !important;
+    border-color: var(--accent) !important;
+    box-shadow: 0 0 0 2px var(--accent-soft) !important;
+    background-color: rgba(255, 255, 255, 0.06) !important;
 }
 
 .pf-c-input-group {
@@ -159,7 +224,7 @@ input[type="password"]:focus {
 
 .pf-c-input-group input,
 .pf-c-input-group .pf-c-form-control {
-    width: 100% !important; 
+    width: 100% !important;
     padding-right: 45px !important;
 }
 
@@ -173,7 +238,7 @@ input[type="password"]:focus {
     border: none !important;
     box-shadow: none !important;
     outline: none !important;
-    color: rgba(var(--foreground-rgb), 0.5) !important;
+    color: var(--text-dim) !important;
     z-index: 10 !important;
     margin: 0 !important;
     display: flex !important;
@@ -182,7 +247,7 @@ input[type="password"]:focus {
 }
 
 .pf-c-input-group .pf-c-button.pf-m-control:hover {
-    color: rgb(var(--primary-rgb)) !important;
+    color: var(--accent) !important;
 }
 
 .pf-c-button.pf-m-control::after,
@@ -193,7 +258,7 @@ input[type="password"]:focus {
 /* ========================================================================
    6. CUSTOM CHECKBOX
    ======================================================================== */
-.checkbox, .checkbox label, 
+.checkbox, .checkbox label,
 .pf-c-check {
     display: flex !important;
     flex-direction: row !important;
@@ -208,8 +273,8 @@ input[type="password"]:focus {
 
 .checkbox label span,
 .pf-c-check__label {
-    color: rgba(var(--foreground-rgb), 0.7) !important;
-    font-size: 0.9rem !important;
+    color: var(--text-muted) !important;
+    font-size: 0.875rem !important;
     font-weight: 400 !important;
     line-height: 1.5 !important;
     padding: 0 !important;
@@ -222,12 +287,12 @@ input[type="checkbox"],
     -webkit-appearance: none !important;
     appearance: none !important;
     position: static !important;
-    background-color: rgba(0, 0, 0, 0.3) !important;
+    background-color: rgba(255, 255, 255, 0.04) !important;
     margin: 0 !important;
     flex-shrink: 0 !important;
     width: 20px !important;
     height: 20px !important;
-    border: 1px solid rgba(var(--primary-rgb), 0.3) !important;
+    border: 1px solid var(--border) !important;
     border-radius: 6px !important;
     display: grid !important;
     place-content: center !important;
@@ -237,13 +302,13 @@ input[type="checkbox"],
 
 input[type="checkbox"]:hover,
 .pf-c-check__input:hover {
-    border-color: rgb(var(--primary-rgb)) !important;
-    background-color: rgba(0, 0, 0, 0.5) !important;
+    border-color: var(--accent) !important;
+    background-color: rgba(255, 255, 255, 0.07) !important;
 }
 
 input[type="checkbox"]:checked,
 .pf-c-check__input:checked {
-    background-image: linear-gradient(135deg, rgb(var(--primary-rgb)), rgb(var(--accent-rgb))) !important;
+    background-image: linear-gradient(135deg, var(--accent), var(--accent-2)) !important;
     border-color: transparent !important;
 }
 
@@ -282,16 +347,17 @@ input[type="checkbox"]:checked::before,
     margin: 0 !important;
     margin-left: auto !important;
     padding: 0 !important;
-    font-size: 0.9rem !important;
+    font-size: 0.875rem !important;
+    font-weight: 600 !important;
     line-height: 1.5 !important;
-    color: rgb(var(--primary-rgb)) !important;
+    color: var(--accent) !important;
     text-decoration: none !important;
     position: relative !important;
     top: 1px !important;
 }
 
 .login-pf-settings a:hover {
-    color: rgb(var(--accent-rgb)) !important;
+    color: var(--focus) !important;
 }
 
 /* ========================================================================
@@ -307,37 +373,38 @@ input[type="checkbox"]:checked::before,
 
 #kc-content input[type="submit"],
 #kc-content button[type="submit"],
-#kc-content .pf-c-button:not(.pf-m-control), 
+#kc-content .pf-c-button:not(.pf-m-control),
 #kc-login {
-    width: 100% !important;   
-    height: 48px !important;  
+    width: 100% !important;
+    height: 46px !important;
     display: block !important;
     box-sizing: border-box !important;
     padding: 0 !important;
     margin: 0 !important;
-    background-image: linear-gradient(to right, rgb(var(--primary-rgb)), rgb(var(--accent-rgb))) !important;
-    background-color: rgb(var(--primary-rgb)) !important;
-    border: none !important;
-    border-radius: 8px !important;
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.9), rgba(109, 40, 217, 0.95)) !important;
+    border: 1px solid rgba(196, 167, 255, 0.4) !important;
+    border-radius: 10px !important;
     color: white !important;
-    font-weight: 600 !important;
-    font-size: 1rem !important;
+    font-weight: 700 !important;
+    font-size: 0.9375rem !important;
     text-transform: none !important;
     cursor: pointer !important;
-    line-height: 48px !important;
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-    transform: scale(1) !important;
+    line-height: 44px !important;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.25),
+        0 8px 20px -6px rgba(139, 92, 246, 0.55) !important;
+    transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
+    transform: translateY(0) !important;
 }
 
 #kc-content input[type="submit"]:hover,
 #kc-content button[type="submit"]:hover,
 #kc-content .pf-c-button:not(.pf-m-control):hover,
 #kc-login:hover {
-    transform: scale(1.05) !important; 
-    filter: brightness(1.1);
-    box-shadow: 0 20px 25px -5px rgba(var(--primary-rgb), 0.3), 
-                0 10px 10px -5px rgba(var(--primary-rgb), 0.2) !important;
+    transform: translateY(-1px) !important;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.3),
+        0 12px 26px -6px rgba(139, 92, 246, 0.7) !important;
 }
 
 .pf-c-button.pf-m-control {
@@ -358,30 +425,30 @@ input[type="checkbox"]:checked::before,
 
 #kc-reset-password-form .login-pf-settings > div,
 #kc-register-form .form-group:last-of-type > div {
-    width: 100% !important;    
-    padding: 0 !important;     
+    width: 100% !important;
+    padding: 0 !important;
     margin: 0 !important;
-    float: none !important;    
+    float: none !important;
     display: block !important;
     text-align: center !important;
 }
 
 #kc-reset-password-form #kc-form-buttons,
 #kc-register-form #kc-form-buttons {
-    margin-bottom: 15px !important; 
+    margin-bottom: 15px !important;
 }
 
 #kc-reset-password-form #kc-form-options a,
 #kc-register-form #kc-form-options a {
-    color: rgba(var(--foreground-rgb), 0.6) !important;
-    font-size: 0.9rem !important;
+    color: var(--text-muted) !important;
+    font-size: 0.875rem !important;
     text-decoration: none !important;
     display: inline-block !important;
 }
 
 #kc-reset-password-form #kc-form-options a:hover,
 #kc-register-form #kc-form-options a:hover {
-    color: rgb(var(--primary-rgb)) !important;
+    color: var(--accent) !important;
 }
 
 /* ========================================================================
@@ -397,22 +464,23 @@ input[type="checkbox"]:checked::before,
     align-items: center !important;
 }
 
-#kc-social-providers h4, 
-#kc-social-providers span, 
+#kc-social-providers h4,
+#kc-social-providers span,
 .login-pf-social-section-title {
-    font-size: 0.7rem !important;
-    color: rgba(var(--foreground-rgb), 0.5) !important;
+    font-family: var(--font-mono) !important;
+    font-size: 0.6875rem !important;
+    color: var(--text-dim) !important;
     text-transform: uppercase !important;
-    letter-spacing: 0.5px !important;
-    font-weight: 500 !important;
-    margin-top: 7px !important;   
+    letter-spacing: 0.08em !important;
+    font-weight: 700 !important;
+    margin-top: 7px !important;
     margin-bottom: 8px !important;
     text-align: center !important;
     display: block !important;
     line-height: 1 !important;
 }
 
-#kc-social-providers ul, 
+#kc-social-providers ul,
 #kc-social-providers li {
     padding: 0 !important;
     margin: 0 !important;
@@ -423,31 +491,31 @@ input[type="checkbox"]:checked::before,
 #kc-social-providers a.zocial,
 #kc-social-providers .pf-c-button {
     width: 100% !important;
-    height: 40px !important;
-    background-color: rgba(0, 0, 0, 0.4) !important;
-    border: 1px solid rgba(var(--foreground-rgb), 0.1) !important;
-    border-radius: 8px !important;
+    height: 44px !important;
+    background-color: rgba(255, 255, 255, 0.03) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 10px !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
     gap: 10px !important;
-    color: rgb(var(--foreground-rgb)) !important;
+    color: var(--text) !important;
     font-family: var(--font-stack) !important;
-    font-size: 1.1rem !important;
+    font-size: 0.9375rem !important;
     font-weight: 600 !important;
     text-decoration: none !important;
     padding: 0 !important;
     margin: 0 !important;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-    transform: scale(1) !important;
+    transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
+    transform: translateY(0) !important;
     box-shadow: none !important;
 }
 
 #kc-social-providers a.zocial:hover {
-    background-color: rgba(var(--primary-rgb), 0.15) !important;
-    border-color: rgba(var(--primary-rgb), 0.5) !important;
-    transform: scale(1.05) !important;
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3) !important;
+    background-color: rgba(255, 255, 255, 0.06) !important;
+    border-color: var(--border-hover) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 10px 20px -8px rgba(0, 0, 0, 0.5) !important;
 }
 
 #kc-social-providers a.zocial span.text {
@@ -460,7 +528,7 @@ input[type="checkbox"]:checked::before,
 }
 
 #kc-social-providers a.zocial span.icon {
-    font-size: 1.3rem !important;
+    font-size: 1.2rem !important;
     line-height: 1 !important;
     display: flex !important;
     align-items: center !important;
@@ -482,9 +550,9 @@ input[type="checkbox"]:checked::before,
 .login-pf-signup,
 .login-pf-page .login-pf-signup,
 div.login-pf-signup {
-    margin: 5px 0 0 0 !important; 
+    margin: 5px 0 0 0 !important;
     padding: 10px 0 0 0 !important;
-    border-top: 1px solid rgba(var(--foreground-rgb), 0.1) !important;
+    border-top: 1px solid var(--border) !important;
     width: 100% !important;
     display: flex !important;
     flex-direction: row !important;
@@ -496,17 +564,17 @@ div.login-pf-signup {
 
 #kc-registration span,
 .login-pf-signup span {
-    color: rgba(var(--foreground-rgb), 0.6) !important;
-    font-size: 0.9rem !important;
+    color: var(--text-muted) !important;
+    font-size: 0.875rem !important;
     margin: 0 !important;
     white-space: nowrap !important;
 }
 
 #kc-registration a,
 .login-pf-signup a {
-    color: rgb(var(--primary-rgb)) !important;
-    font-weight: 600 !important;
-    font-size: 1rem !important;
+    color: var(--accent) !important;
+    font-weight: 700 !important;
+    font-size: 0.9375rem !important;
     text-decoration: none !important;
     position: relative;
     white-space: nowrap !important;
@@ -514,7 +582,7 @@ div.login-pf-signup {
 
 #kc-registration a:hover,
 .login-pf-signup a:hover {
-    color: rgb(var(--accent-rgb)) !important;
+    color: var(--focus) !important;
 }
 
 #kc-content hr,
@@ -544,8 +612,8 @@ div.login-pf-signup {
 #kc-registration,
 .login-pf-page .login-pf-signup {
     margin-top: 0.8rem !important;
-    padding-top: 0 !important; 
-    border-top: none !important; 
+    padding-top: 0 !important;
+    border-top: none !important;
     width: 100% !important;
     display: flex !important;
     flex-direction: row !important;
@@ -553,4 +621,27 @@ div.login-pf-signup {
     align-items: center !important;
     gap: 8px !important;
     text-align: center !important;
+}
+
+/* ========================================================================
+   11. ALERTS / ERROR MESSAGES
+   ======================================================================== */
+.alert,
+.pf-c-alert {
+    background-color: rgba(239, 68, 68, 0.1) !important;
+    border: 1px solid rgba(239, 68, 68, 0.35) !important;
+    border-radius: 10px !important;
+    color: var(--text) !important;
+    padding: 10px 14px !important;
+    font-size: 0.875rem !important;
+    margin-bottom: 1.25rem !important;
+}
+
+.alert *,
+.pf-c-alert * {
+    color: var(--text) !important;
+}
+
+.pf-c-alert__icon {
+    color: var(--error-color) !important;
 }
