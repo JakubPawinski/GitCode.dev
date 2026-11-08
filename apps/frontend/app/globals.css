@@ -190,13 +190,12 @@
   opacity: 0.5;
 }
 
-<<<<<<< Updated upstream
 @media (max-width: 1024px) {
   .gc-hero-section {
     min-height: auto !important;
     padding-top: 140px !important;
     padding-bottom: 60px !important;
-=======
+
 @keyframes gc-dropdown-in {
   from {
     opacity: 0;
@@ -248,7 +247,6 @@
   55% {
     opacity: 1;
     filter: blur(0);
->>>>>>> Stashed changes
   }
   66% {
     opacity: 0.45;
@@ -397,4 +395,4 @@
 .custom-scrollbar {
   scrollbar-width: thin;
   scrollbar-color: rgba(139, 92, 246, 0.6) rgba(139, 92, 246, 0.05);
-}
+}}}
